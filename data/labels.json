@@ -1,0 +1,53 @@
+{
+  "seed": 20261019,
+  "labels": [
+    {
+      "incident_id": "pool-01",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true
+    },
+    {
+      "incident_id": "pool-02",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true
+    },
+    {
+      "incident_id": "config-01",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true
+    },
+    {
+      "incident_id": "config-02",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true
+    },
+    {
+      "incident_id": "downstream-01",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true
+    },
+    {
+      "incident_id": "downstream-02",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true
+    },
+    {
+      "incident_id": "unknown-01",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false
+    },
+    {
+      "incident_id": "unknown-02",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false
+    }
+  ]
+}
