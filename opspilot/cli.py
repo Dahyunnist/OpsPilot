@@ -32,7 +32,8 @@ def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
 def render_text(report: dict[str, Any]) -> str:
     strategy = report["query_strategy"]
     comparison = report["comparison"]
-    lines = [f"Incident: {report['incident_id']}", f"Status: {report['status']}", f"Conclusion: {report['conclusion'] or 'insufficient evidence'}", f"Query strategy: {strategy['first']} then {', '.join(strategy['followups'])} ({strategy['reason']})", f"Logs-only: {comparison['logs_only']['conclusion'] or 'insufficient evidence'}", "", "Hypothesis ledger:"]
+    no_refutation = comparison["no_refutation"]
+    lines = [f"Incident: {report['incident_id']}", f"Status: {report['status']}", f"Conclusion: {report['conclusion'] or 'insufficient evidence'}", f"Query strategy: {strategy['first']} then {', '.join(strategy['followups'])} ({strategy['reason']})", f"Logs-only: {comparison['logs_only']['conclusion'] or 'insufficient evidence'}", f"No-refutation baseline: {no_refutation['conclusion'] or 'insufficient evidence'}; supported competitors={','.join(no_refutation['supported_competitors']) or 'none'}", "", "Hypothesis ledger:"]
     for hypothesis in report["hypotheses"]:
         lines.append(f"- {hypothesis['title']} (score={hypothesis['score']})")
         lines.append(f"  supports={','.join(hypothesis['support']) or 'none'}; against={','.join(hypothesis['against']) or 'none'}")

@@ -52,10 +52,14 @@ python -m venv .venv
 
 用 `traces` 替换 `logs` 可启动追踪服务。两者均通过 stdio 暴露带时间窗与行数上限的只读工具。
 
+`.\scripts\run_investigation.ps1 -IncidentId downstream-01` 可运行本地调查；`.\scripts\run_mcp.ps1 -Source logs` 可启动日志 MCP 服务。
+
 ## 测试
 
 ```powershell
+\.\scripts\setup.ps1
 \.venv\Scripts\python.exe -m unittest discover -s tests -v
+\.venv\Scripts\python.exe scripts/evaluate.py
 ```
 
 ## 目录
@@ -68,6 +72,11 @@ python -m venv .venv
 - `docs/learning/stage-S1.md`：S1 技术讲解、调查实测、亲手实验和面试问题。
 - `docs/learning/stage-S2.md`：S2 跨信号调查、反证和实测记录。
 - `docs/learning/stage-S3.md`：S3 可靠性、审批模拟、MCP 联调和实测记录。
+- `docs/learning/stage-S4.md`：S4 固定集评测、结果解释和投递材料。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
+- `docs/architecture.md`：系统架构图。
+- `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。
+- `reports/evaluation.json`、`reports/evaluation.md`：固定集两轮运行的逐例原始结果和指标摘要。
+- `scripts/setup.ps1`、`scripts/run_investigation.ps1`、`scripts/run_mcp.ps1`：Windows 本地安装与运行入口。
 - `opspilot/`：只读查询、假设账本与 CLI。
 - `tests/`：各阶段闭环、可靠性和 MCP 联调测试。

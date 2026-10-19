@@ -247,6 +247,14 @@ def investigate(
     log_hypotheses = _ledger([log_query]) if log_query else []
     log_top = log_hypotheses[0] if log_hypotheses else None
     log_conclusion = log_top["title"] if log_top and log_top["support"] else None
+    no_refutation_ranked = sorted(hypotheses, key=lambda item: -len(item["support"]))
+    no_refutation_top = no_refutation_ranked[0]
+    no_refutation_second = len(no_refutation_ranked[1]["support"])
+    no_refutation_conclusion = (
+        no_refutation_top["title"]
+        if len(no_refutation_top["support"]) >= 2 and len(no_refutation_top["support"]) > no_refutation_second
+        else None
+    )
     rejected = [
         {"hypothesis_id": item["hypothesis_id"], "title": item["title"], "counter_evidence": item["against"]}
         for item in hypotheses
@@ -268,6 +276,14 @@ def investigate(
         "query_strategy": {"first": "metrics", "followups": planned_followups, "reason": strategy_reason},
         "comparison": {
             "logs_only": {"status": "tentative" if log_conclusion else "insufficient_evidence", "conclusion": log_conclusion},
+            "no_refutation": {
+                "status": "determined" if no_refutation_conclusion else "insufficient_evidence",
+                "conclusion": no_refutation_conclusion,
+                "supported_competitors": [
+                    item["hypothesis_id"] for item in no_refutation_ranked
+                    if item["support"] and item["title"] != no_refutation_conclusion
+                ],
+            },
             "multi_signal": {"status": status, "conclusion": conclusion},
         },
         "rejected_hypotheses": rejected,

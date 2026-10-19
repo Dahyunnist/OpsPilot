@@ -1,0 +1,2133 @@
+{
+  "evaluation": "synthetic_s0_s4_deterministic_rules",
+  "dataset_cases": 8,
+  "runs_per_case": 2,
+  "stability_check": {
+    "all_decision_signatures_match": true
+  },
+  "metrics": {
+    "top1_root_cause": {
+      "correct": 6,
+      "total": 6,
+      "accuracy": 1.0
+    },
+    "insufficient_evidence_recall": {
+      "correct_abstentions": 2,
+      "total_insufficient": 2,
+      "recall": 1.0
+    },
+    "logs_only_top1": {
+      "correct": 4,
+      "total": 6,
+      "accuracy": 0.6666666666666666
+    },
+    "no_refutation_top1": {
+      "correct": 6,
+      "total": 6,
+      "accuracy": 1.0
+    },
+    "no_refutation_supported_competitors": 4,
+    "evidence_reference_validity": {
+      "valid": 32,
+      "total": 32,
+      "rate": 1.0
+    },
+    "incorrect_action_recommendation_rate": {
+      "incorrect": 0,
+      "total_recommendations": 6,
+      "rate": 0.0
+    },
+    "unapproved_recommendations": {
+      "count": 0,
+      "total_recommendations": 6
+    },
+    "uncertainty_calibration": {
+      "probability_calibration": "not_applicable; deterministic rules emit no probabilities",
+      "false_abstentions": 0,
+      "false_certainty": 0
+    },
+    "investigation_cost": {
+      "average_queries": 4,
+      "average_duration_ms": 0.063,
+      "average_input_tokens": null,
+      "average_output_tokens": null,
+      "token_note": "not_applicable; no model calls"
+    }
+  },
+  "cases": [
+    {
+      "incident_id": "config-01",
+      "truth": {
+        "incident_id": "config-01",
+        "category": "config_error",
+        "root_cause": "deployment introduced invalid order service configuration",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "deployment introduced invalid order service configuration"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "deployment introduced invalid order service configuration"
+      },
+      "recommendation": {
+        "action_id": "rollback_order_config",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Redeploy the last known-good configuration after approval."
+      },
+      "query_count": 4,
+      "duration_ms": 0.116,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 6
+      },
+      "report": {
+        "incident_id": "config-01",
+        "status": "determined",
+        "conclusion": "deployment introduced invalid order service configuration",
+        "hypotheses": [
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [
+              "config-01-d1",
+              "config-01-l1",
+              "config-01-m1",
+              "config-01-m2",
+              "config-01-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 5,
+            "hypothesis_id": "config_error",
+            "disposition": "leading"
+          },
+          {
+            "title": "database connection pool exhausted",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "deployments",
+            "logs",
+            "traces"
+          ],
+          "reason": "configuration metric makes deployment/version and error records most discriminating"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "deployment introduced invalid order service configuration"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "deployment introduced invalid order service configuration",
+            "supported_competitors": []
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "deployment introduced invalid order service configuration"
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [
+          {
+            "kind": "version",
+            "key": "order-v15",
+            "record_ids": [
+              "config-01-d1",
+              "config-01-l1",
+              "config-01-m1",
+              "config-01-m2",
+              "config-01-t1"
+            ],
+            "sources": [
+              "deployments",
+              "logs",
+              "metrics",
+              "traces"
+            ]
+          }
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 6
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "config-01",
+              "start": "2026-10-21T09:00:00Z",
+              "end": "2026-10-21T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 3,
+            "records": [
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.34,
+                  "version": "order-v15"
+                },
+                "record_id": "config-01-m1",
+                "service": "order",
+                "timestamp": "2026-10-21T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "config_validation_errors",
+                  "unit": "count",
+                  "value": 10,
+                  "version": "order-v15"
+                },
+                "record_id": "config-01-m2",
+                "service": "order",
+                "timestamp": "2026-10-21T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "database_health",
+                  "value": "healthy"
+                },
+                "record_id": "config-01-m3",
+                "service": "database",
+                "timestamp": "2026-10-21T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.012,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "config-01",
+              "start": "2026-10-21T09:00:00Z",
+              "end": "2026-10-21T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "error": "CONFIG_ENDPOINT_MISSING",
+                  "version": "order-v15"
+                },
+                "message": "required downstream endpoint missing from active configuration",
+                "record_id": "config-01-l1",
+                "service": "order",
+                "timestamp": "2026-10-21T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "config-01",
+              "start": "2026-10-21T09:00:00Z",
+              "end": "2026-10-21T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 4,
+                  "span": "config.validate",
+                  "status": "error",
+                  "trace_id": "tr-config-01-a91c",
+                  "version": "order-v15"
+                },
+                "record_id": "config-01-t1",
+                "service": "order",
+                "timestamp": "2026-10-21T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "config-01",
+              "start": "2026-10-21T09:00:00Z",
+              "end": "2026-10-21T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "actor": "synthetic-release",
+                  "change": "config bundle",
+                  "version": "order-v15"
+                },
+                "record_id": "config-01-d1",
+                "service": "order",
+                "timestamp": "2026-10-21T09:02:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.003,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.116,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "rollback_order_config",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Redeploy the last known-good configuration after approval."
+        }
+      },
+      "rerun_signature": "0af16c31d89b98c06dc42b67103b8aa51f03799f56a4f93edb1a8b83cc5e882c"
+    },
+    {
+      "incident_id": "config-02",
+      "truth": {
+        "incident_id": "config-02",
+        "category": "config_error",
+        "root_cause": "deployment introduced invalid order service configuration",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "deployment introduced invalid order service configuration"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "deployment introduced invalid order service configuration"
+      },
+      "recommendation": {
+        "action_id": "rollback_order_config",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Redeploy the last known-good configuration after approval."
+      },
+      "query_count": 4,
+      "duration_ms": 0.069,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 6
+      },
+      "report": {
+        "incident_id": "config-02",
+        "status": "determined",
+        "conclusion": "deployment introduced invalid order service configuration",
+        "hypotheses": [
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [
+              "config-02-d1",
+              "config-02-l1",
+              "config-02-m1",
+              "config-02-m2",
+              "config-02-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 5,
+            "hypothesis_id": "config_error",
+            "disposition": "leading"
+          },
+          {
+            "title": "database connection pool exhausted",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "deployments",
+            "logs",
+            "traces"
+          ],
+          "reason": "configuration metric makes deployment/version and error records most discriminating"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "deployment introduced invalid order service configuration"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "deployment introduced invalid order service configuration",
+            "supported_competitors": []
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "deployment introduced invalid order service configuration"
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [
+          {
+            "kind": "version",
+            "key": "order-v16",
+            "record_ids": [
+              "config-02-d1",
+              "config-02-l1",
+              "config-02-m1",
+              "config-02-m2",
+              "config-02-t1"
+            ],
+            "sources": [
+              "deployments",
+              "logs",
+              "metrics",
+              "traces"
+            ]
+          }
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 6
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "config-02",
+              "start": "2026-10-22T09:00:00Z",
+              "end": "2026-10-22T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 3,
+            "records": [
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.34,
+                  "version": "order-v16"
+                },
+                "record_id": "config-02-m1",
+                "service": "order",
+                "timestamp": "2026-10-22T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "config_validation_errors",
+                  "unit": "count",
+                  "value": 9,
+                  "version": "order-v16"
+                },
+                "record_id": "config-02-m2",
+                "service": "order",
+                "timestamp": "2026-10-22T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "database_health",
+                  "value": "healthy"
+                },
+                "record_id": "config-02-m3",
+                "service": "database",
+                "timestamp": "2026-10-22T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.005,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "config-02",
+              "start": "2026-10-22T09:00:00Z",
+              "end": "2026-10-22T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "error": "CONFIG_ENDPOINT_MISSING",
+                  "version": "order-v16"
+                },
+                "message": "required downstream endpoint missing from active configuration",
+                "record_id": "config-02-l1",
+                "service": "order",
+                "timestamp": "2026-10-22T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "config-02",
+              "start": "2026-10-22T09:00:00Z",
+              "end": "2026-10-22T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 4,
+                  "span": "config.validate",
+                  "status": "error",
+                  "trace_id": "tr-config-02-a91c",
+                  "version": "order-v16"
+                },
+                "record_id": "config-02-t1",
+                "service": "order",
+                "timestamp": "2026-10-22T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "config-02",
+              "start": "2026-10-22T09:00:00Z",
+              "end": "2026-10-22T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "actor": "synthetic-release",
+                  "change": "config bundle",
+                  "version": "order-v16"
+                },
+                "record_id": "config-02-d1",
+                "service": "order",
+                "timestamp": "2026-10-22T09:02:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.069,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "rollback_order_config",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Redeploy the last known-good configuration after approval."
+        }
+      },
+      "rerun_signature": "786370afd7a93c9ceefda12bf69a6d6e5e365447af88d8a5d260e08e29f25b7e"
+    },
+    {
+      "incident_id": "downstream-01",
+      "truth": {
+        "incident_id": "downstream-01",
+        "category": "downstream_timeout",
+        "root_cause": "downstream service exceeded request timeout",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "downstream service exceeded request timeout"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "database connection pool exhausted"
+      },
+      "recommendation": {
+        "action_id": "restart_downstream",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Restore the downstream service and recheck dependent callers."
+      },
+      "query_count": 4,
+      "duration_ms": 0.073,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 8
+      },
+      "report": {
+        "incident_id": "downstream-01",
+        "status": "determined",
+        "conclusion": "downstream service exceeded request timeout",
+        "hypotheses": [
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [
+              "downstream-01-l1",
+              "downstream-01-m1",
+              "downstream-01-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 3,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "leading"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          },
+          {
+            "title": "database connection pool exhausted",
+            "support": [
+              "downstream-01-l2"
+            ],
+            "against": [
+              "downstream-01-m3",
+              "downstream-01-t1"
+            ],
+            "open_questions": [],
+            "score": -1,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "rejected"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "traces",
+            "logs",
+            "deployments"
+          ],
+          "reason": "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "database connection pool exhausted"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "downstream service exceeded request timeout",
+            "supported_competitors": [
+              "pool_exhaustion"
+            ]
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "downstream service exceeded request timeout"
+          }
+        },
+        "rejected_hypotheses": [
+          {
+            "hypothesis_id": "pool_exhaustion",
+            "title": "database connection pool exhausted",
+            "counter_evidence": [
+              "downstream-01-m3",
+              "downstream-01-t1"
+            ]
+          }
+        ],
+        "correlations": [
+          {
+            "kind": "trace_id",
+            "key": "tr-downstream-01-a91c",
+            "record_ids": [
+              "downstream-01-l1",
+              "downstream-01-t1",
+              "downstream-01-t2"
+            ],
+            "sources": [
+              "logs",
+              "traces"
+            ]
+          }
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 8
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "downstream-01",
+              "start": "2026-10-23T09:00:00Z",
+              "end": "2026-10-23T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 4,
+            "records": [
+              {
+                "attributes": {
+                  "name": "request_duration_ms_p95",
+                  "unit": "ms",
+                  "value": 2933
+                },
+                "record_id": "downstream-01-m1",
+                "service": "downstream",
+                "timestamp": "2026-10-23T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "downstream_timeout_rate",
+                  "unit": "ratio",
+                  "value": 0.31
+                },
+                "record_id": "downstream-01-m2",
+                "service": "order",
+                "timestamp": "2026-10-23T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "limit": 40,
+                  "name": "db_pool_in_use",
+                  "unit": "connections",
+                  "value": 9
+                },
+                "record_id": "downstream-01-m3",
+                "service": "order",
+                "timestamp": "2026-10-23T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.24
+                },
+                "record_id": "downstream-01-m4",
+                "service": "gateway",
+                "timestamp": "2026-10-23T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.005,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "downstream-01",
+              "start": "2026-10-23T09:00:00Z",
+              "end": "2026-10-23T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 2,
+            "records": [
+              {
+                "attributes": {
+                  "timeout_ms": 2000,
+                  "trace_id": "tr-downstream-01-a91c"
+                },
+                "message": "downstream request exceeded deadline",
+                "record_id": "downstream-01-l1",
+                "service": "order",
+                "timestamp": "2026-10-23T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "severity": "warning"
+                },
+                "message": "database pool warning: transient queue observed",
+                "record_id": "downstream-01-l2",
+                "service": "order",
+                "timestamp": "2026-10-23T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "downstream-01",
+              "start": "2026-10-23T09:00:00Z",
+              "end": "2026-10-23T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 2,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 2933,
+                  "peer_service": "downstream",
+                  "span": "order.downstream.call",
+                  "status": "error",
+                  "trace_id": "tr-downstream-01-a91c"
+                },
+                "record_id": "downstream-01-t1",
+                "service": "order",
+                "timestamp": "2026-10-23T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "duration_ms": 2951,
+                  "peer_service": "order",
+                  "span": "gateway.order.request",
+                  "status": "error",
+                  "trace_id": "tr-downstream-01-a91c"
+                },
+                "record_id": "downstream-01-t2",
+                "service": "gateway",
+                "timestamp": "2026-10-23T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "downstream-01",
+              "start": "2026-10-23T09:00:00Z",
+              "end": "2026-10-23T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.073,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        }
+      },
+      "rerun_signature": "03a7a5c1311ace9255842763a71b0866e517511711cd7751795d3292c4739eb5"
+    },
+    {
+      "incident_id": "downstream-02",
+      "truth": {
+        "incident_id": "downstream-02",
+        "category": "downstream_timeout",
+        "root_cause": "downstream service exceeded request timeout",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "downstream service exceeded request timeout"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "database connection pool exhausted"
+      },
+      "recommendation": {
+        "action_id": "restart_downstream",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Restore the downstream service and recheck dependent callers."
+      },
+      "query_count": 4,
+      "duration_ms": 0.067,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 8
+      },
+      "report": {
+        "incident_id": "downstream-02",
+        "status": "determined",
+        "conclusion": "downstream service exceeded request timeout",
+        "hypotheses": [
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [
+              "downstream-02-l1",
+              "downstream-02-m1",
+              "downstream-02-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 3,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "leading"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          },
+          {
+            "title": "database connection pool exhausted",
+            "support": [
+              "downstream-02-l2"
+            ],
+            "against": [
+              "downstream-02-m3",
+              "downstream-02-t1"
+            ],
+            "open_questions": [],
+            "score": -1,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "rejected"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "traces",
+            "logs",
+            "deployments"
+          ],
+          "reason": "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "database connection pool exhausted"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "downstream service exceeded request timeout",
+            "supported_competitors": [
+              "pool_exhaustion"
+            ]
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "downstream service exceeded request timeout"
+          }
+        },
+        "rejected_hypotheses": [
+          {
+            "hypothesis_id": "pool_exhaustion",
+            "title": "database connection pool exhausted",
+            "counter_evidence": [
+              "downstream-02-m3",
+              "downstream-02-t1"
+            ]
+          }
+        ],
+        "correlations": [
+          {
+            "kind": "trace_id",
+            "key": "tr-downstream-02-a91c",
+            "record_ids": [
+              "downstream-02-l1",
+              "downstream-02-t1",
+              "downstream-02-t2"
+            ],
+            "sources": [
+              "logs",
+              "traces"
+            ]
+          }
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 8
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "downstream-02",
+              "start": "2026-10-24T09:00:00Z",
+              "end": "2026-10-24T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 4,
+            "records": [
+              {
+                "attributes": {
+                  "name": "request_duration_ms_p95",
+                  "unit": "ms",
+                  "value": 2557
+                },
+                "record_id": "downstream-02-m1",
+                "service": "downstream",
+                "timestamp": "2026-10-24T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "downstream_timeout_rate",
+                  "unit": "ratio",
+                  "value": 0.31
+                },
+                "record_id": "downstream-02-m2",
+                "service": "order",
+                "timestamp": "2026-10-24T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "limit": 40,
+                  "name": "db_pool_in_use",
+                  "unit": "connections",
+                  "value": 10
+                },
+                "record_id": "downstream-02-m3",
+                "service": "order",
+                "timestamp": "2026-10-24T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.24
+                },
+                "record_id": "downstream-02-m4",
+                "service": "gateway",
+                "timestamp": "2026-10-24T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.005,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "downstream-02",
+              "start": "2026-10-24T09:00:00Z",
+              "end": "2026-10-24T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 2,
+            "records": [
+              {
+                "attributes": {
+                  "timeout_ms": 2000,
+                  "trace_id": "tr-downstream-02-a91c"
+                },
+                "message": "downstream request exceeded deadline",
+                "record_id": "downstream-02-l1",
+                "service": "order",
+                "timestamp": "2026-10-24T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "severity": "warning"
+                },
+                "message": "database pool warning: transient queue observed",
+                "record_id": "downstream-02-l2",
+                "service": "order",
+                "timestamp": "2026-10-24T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "downstream-02",
+              "start": "2026-10-24T09:00:00Z",
+              "end": "2026-10-24T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 2,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 2557,
+                  "peer_service": "downstream",
+                  "span": "order.downstream.call",
+                  "status": "error",
+                  "trace_id": "tr-downstream-02-a91c"
+                },
+                "record_id": "downstream-02-t1",
+                "service": "order",
+                "timestamp": "2026-10-24T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "duration_ms": 2575,
+                  "peer_service": "order",
+                  "span": "gateway.order.request",
+                  "status": "error",
+                  "trace_id": "tr-downstream-02-a91c"
+                },
+                "record_id": "downstream-02-t2",
+                "service": "gateway",
+                "timestamp": "2026-10-24T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "downstream-02",
+              "start": "2026-10-24T09:00:00Z",
+              "end": "2026-10-24T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.067,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        }
+      },
+      "rerun_signature": "7b7b00dd19c1ce59b7791999805709e2ebc98ab2612fe5e6c7a88dc11e1706f0"
+    },
+    {
+      "incident_id": "pool-01",
+      "truth": {
+        "incident_id": "pool-01",
+        "category": "pool_exhaustion",
+        "root_cause": "database connection pool exhausted",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "database connection pool exhausted"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "database connection pool exhausted"
+      },
+      "recommendation": {
+        "action_id": "restart_order",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Restore service capacity and verify connections after restart."
+      },
+      "query_count": 4,
+      "duration_ms": 0.051,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 6
+      },
+      "report": {
+        "incident_id": "pool-01",
+        "status": "determined",
+        "conclusion": "database connection pool exhausted",
+        "hypotheses": [
+          {
+            "title": "database connection pool exhausted",
+            "support": [
+              "pool-01-l1",
+              "pool-01-m1",
+              "pool-01-m2",
+              "pool-01-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 4,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "leading"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "traces",
+            "logs",
+            "deployments"
+          ],
+          "reason": "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "database connection pool exhausted"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "database connection pool exhausted",
+            "supported_competitors": []
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "database connection pool exhausted"
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 6
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "pool-01",
+              "start": "2026-10-19T09:00:00Z",
+              "end": "2026-10-19T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 4,
+            "records": [
+              {
+                "attributes": {
+                  "limit": 40,
+                  "name": "db_pool_in_use",
+                  "unit": "connections",
+                  "value": 40
+                },
+                "record_id": "pool-01-m1",
+                "service": "order",
+                "timestamp": "2026-10-19T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "db_pool_wait_ms",
+                  "unit": "ms",
+                  "value": 2130
+                },
+                "record_id": "pool-01-m2",
+                "service": "order",
+                "timestamp": "2026-10-19T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.27
+                },
+                "record_id": "pool-01-m3",
+                "service": "gateway",
+                "timestamp": "2026-10-19T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "database_health",
+                  "value": "healthy"
+                },
+                "record_id": "pool-01-m4",
+                "service": "database",
+                "timestamp": "2026-10-19T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.005,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "pool-01",
+              "start": "2026-10-19T09:00:00Z",
+              "end": "2026-10-19T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "pool_limit": 40
+                },
+                "message": "timed out waiting for database connection",
+                "record_id": "pool-01-l1",
+                "service": "order",
+                "timestamp": "2026-10-19T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "pool-01",
+              "start": "2026-10-19T09:00:00Z",
+              "end": "2026-10-19T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 2130,
+                  "span": "db.connection.acquire",
+                  "status": "error",
+                  "trace_id": "tr-pool-01-a91c"
+                },
+                "record_id": "pool-01-t1",
+                "service": "order",
+                "timestamp": "2026-10-19T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "pool-01",
+              "start": "2026-10-19T09:00:00Z",
+              "end": "2026-10-19T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.051,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        }
+      },
+      "rerun_signature": "1780f2dc58b4f0b3923615d128f2109995440801fd9919933a5bb78489173c23"
+    },
+    {
+      "incident_id": "pool-02",
+      "truth": {
+        "incident_id": "pool-02",
+        "category": "pool_exhaustion",
+        "root_cause": "database connection pool exhausted",
+        "decidable": true
+      },
+      "prediction": {
+        "status": "determined",
+        "conclusion": "database connection pool exhausted"
+      },
+      "logs_only_prediction": {
+        "status": "tentative",
+        "conclusion": "database connection pool exhausted"
+      },
+      "recommendation": {
+        "action_id": "restart_order",
+        "risk": "high",
+        "requires_approval": true,
+        "execution": "simulation_only",
+        "rollback": "Restore service capacity and verify connections after restart."
+      },
+      "query_count": 4,
+      "duration_ms": 0.048,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 6
+      },
+      "report": {
+        "incident_id": "pool-02",
+        "status": "determined",
+        "conclusion": "database connection pool exhausted",
+        "hypotheses": [
+          {
+            "title": "database connection pool exhausted",
+            "support": [
+              "pool-02-l1",
+              "pool-02-m1",
+              "pool-02-m2",
+              "pool-02-t1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 4,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "leading"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "traces",
+            "logs",
+            "deployments"
+          ],
+          "reason": "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "tentative",
+            "conclusion": "database connection pool exhausted"
+          },
+          "no_refutation": {
+            "status": "determined",
+            "conclusion": "database connection pool exhausted",
+            "supported_competitors": []
+          },
+          "multi_signal": {
+            "status": "determined",
+            "conclusion": "database connection pool exhausted"
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 6
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "pool-02",
+              "start": "2026-10-20T09:00:00Z",
+              "end": "2026-10-20T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 4,
+            "records": [
+              {
+                "attributes": {
+                  "limit": 40,
+                  "name": "db_pool_in_use",
+                  "unit": "connections",
+                  "value": 40
+                },
+                "record_id": "pool-02-m1",
+                "service": "order",
+                "timestamp": "2026-10-20T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "db_pool_wait_ms",
+                  "unit": "ms",
+                  "value": 1923
+                },
+                "record_id": "pool-02-m2",
+                "service": "order",
+                "timestamp": "2026-10-20T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.27
+                },
+                "record_id": "pool-02-m3",
+                "service": "gateway",
+                "timestamp": "2026-10-20T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "database_health",
+                  "value": "healthy"
+                },
+                "record_id": "pool-02-m4",
+                "service": "database",
+                "timestamp": "2026-10-20T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.005,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "pool-02",
+              "start": "2026-10-20T09:00:00Z",
+              "end": "2026-10-20T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "pool_limit": 40
+                },
+                "message": "timed out waiting for database connection",
+                "record_id": "pool-02-l1",
+                "service": "order",
+                "timestamp": "2026-10-20T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "pool-02",
+              "start": "2026-10-20T09:00:00Z",
+              "end": "2026-10-20T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": 1923,
+                  "span": "db.connection.acquire",
+                  "status": "error",
+                  "trace_id": "tr-pool-02-a91c"
+                },
+                "record_id": "pool-02-t1",
+                "service": "order",
+                "timestamp": "2026-10-20T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "pool-02",
+              "start": "2026-10-20T09:00:00Z",
+              "end": "2026-10-20T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.048,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        }
+      },
+      "rerun_signature": "5c934275d4f22074f1d561699c72422d41e84349a1ab5bdf7026fdb997428f63"
+    },
+    {
+      "incident_id": "unknown-01",
+      "truth": {
+        "incident_id": "unknown-01",
+        "category": "insufficient_evidence",
+        "root_cause": null,
+        "decidable": false
+      },
+      "prediction": {
+        "status": "insufficient_evidence",
+        "conclusion": null
+      },
+      "logs_only_prediction": {
+        "status": "insufficient_evidence",
+        "conclusion": null
+      },
+      "recommendation": null,
+      "query_count": 4,
+      "duration_ms": 0.036,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 2
+      },
+      "report": {
+        "incident_id": "unknown-01",
+        "status": "insufficient_evidence",
+        "conclusion": null,
+        "hypotheses": [
+          {
+            "title": "database connection pool exhausted",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "open"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "logs",
+            "traces",
+            "deployments"
+          ],
+          "reason": "symptom metrics alone do not distinguish the candidate causes"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "insufficient_evidence",
+            "conclusion": null
+          },
+          "no_refutation": {
+            "status": "insufficient_evidence",
+            "conclusion": null,
+            "supported_competitors": []
+          },
+          "multi_signal": {
+            "status": "insufficient_evidence",
+            "conclusion": null
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 2
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "unknown-01",
+              "start": "2026-10-25T09:00:00Z",
+              "end": "2026-10-25T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.22
+                },
+                "record_id": "unknown-01-m1",
+                "service": "gateway",
+                "timestamp": "2026-10-25T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "unknown-01",
+              "start": "2026-10-25T09:00:00Z",
+              "end": "2026-10-25T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "severity": "error"
+                },
+                "message": "request failed",
+                "record_id": "unknown-01-l1",
+                "service": "gateway",
+                "timestamp": "2026-10-25T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "unknown-01",
+              "start": "2026-10-25T09:00:00Z",
+              "end": "2026-10-25T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "unknown-01",
+              "start": "2026-10-25T09:00:00Z",
+              "end": "2026-10-25T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.036,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": null
+      },
+      "rerun_signature": "878c356dd9920598cdf7ef4783b814c84a19e90f2ecf1ca6c4204e2416f7b3cd"
+    },
+    {
+      "incident_id": "unknown-02",
+      "truth": {
+        "incident_id": "unknown-02",
+        "category": "insufficient_evidence",
+        "root_cause": null,
+        "decidable": false
+      },
+      "prediction": {
+        "status": "insufficient_evidence",
+        "conclusion": null
+      },
+      "logs_only_prediction": {
+        "status": "insufficient_evidence",
+        "conclusion": null
+      },
+      "recommendation": null,
+      "query_count": 4,
+      "duration_ms": 0.046,
+      "input_tokens": null,
+      "output_tokens": null,
+      "citation_validation": {
+        "all_references_exist": true,
+        "evidence_record_count": 5
+      },
+      "report": {
+        "incident_id": "unknown-02",
+        "status": "insufficient_evidence",
+        "conclusion": null,
+        "hypotheses": [
+          {
+            "title": "database connection pool exhausted",
+            "support": [
+              "unknown-02-m1"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 1,
+            "hypothesis_id": "pool_exhaustion",
+            "disposition": "open"
+          },
+          {
+            "title": "downstream service exceeded request timeout",
+            "support": [
+              "unknown-02-m2"
+            ],
+            "against": [],
+            "open_questions": [],
+            "score": 1,
+            "hypothesis_id": "downstream_timeout",
+            "disposition": "open"
+          },
+          {
+            "title": "deployment introduced invalid order service configuration",
+            "support": [],
+            "against": [],
+            "open_questions": [],
+            "score": 0,
+            "hypothesis_id": "config_error",
+            "disposition": "open"
+          }
+        ],
+        "query_strategy": {
+          "first": "metrics",
+          "followups": [
+            "traces",
+            "logs",
+            "deployments"
+          ],
+          "reason": "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+        },
+        "comparison": {
+          "logs_only": {
+            "status": "insufficient_evidence",
+            "conclusion": null
+          },
+          "no_refutation": {
+            "status": "insufficient_evidence",
+            "conclusion": null,
+            "supported_competitors": [
+              "pool_exhaustion",
+              "downstream_timeout"
+            ]
+          },
+          "multi_signal": {
+            "status": "insufficient_evidence",
+            "conclusion": null
+          }
+        },
+        "rejected_hypotheses": [],
+        "correlations": [],
+        "citation_validation": {
+          "all_references_exist": true,
+          "evidence_record_count": 5
+        },
+        "query_trace": [
+          {
+            "source": "metrics",
+            "params": {
+              "incident_id": "unknown-02",
+              "start": "2026-10-26T09:00:00Z",
+              "end": "2026-10-26T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 3,
+            "records": [
+              {
+                "attributes": {
+                  "limit": 40,
+                  "name": "db_pool_in_use",
+                  "unit": "connections",
+                  "value": 39
+                },
+                "record_id": "unknown-02-m1",
+                "service": "order",
+                "timestamp": "2026-10-26T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "request_duration_ms_p95",
+                  "unit": "ms",
+                  "value": 2800
+                },
+                "record_id": "unknown-02-m2",
+                "service": "downstream",
+                "timestamp": "2026-10-26T09:05:00Z"
+              },
+              {
+                "attributes": {
+                  "name": "http_5xx_rate",
+                  "unit": "ratio",
+                  "value": 0.25
+                },
+                "record_id": "unknown-02-m3",
+                "service": "gateway",
+                "timestamp": "2026-10-26T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.004,
+            "fresh": true
+          },
+          {
+            "source": "logs",
+            "params": {
+              "incident_id": "unknown-02",
+              "start": "2026-10-26T09:00:00Z",
+              "end": "2026-10-26T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "severity": "error"
+                },
+                "message": "request timeout",
+                "record_id": "unknown-02-l1",
+                "service": "order",
+                "timestamp": "2026-10-26T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          },
+          {
+            "source": "traces",
+            "params": {
+              "incident_id": "unknown-02",
+              "start": "2026-10-26T09:00:00Z",
+              "end": "2026-10-26T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 1,
+            "records": [
+              {
+                "attributes": {
+                  "duration_ms": null,
+                  "span": "order.request",
+                  "status": "missing_child_spans",
+                  "trace_id": "tr-unknown-02-a91c"
+                },
+                "record_id": "unknown-02-t1",
+                "service": "order",
+                "timestamp": "2026-10-26T09:05:00Z"
+              }
+            ],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.002,
+            "fresh": true
+          },
+          {
+            "source": "deployments",
+            "params": {
+              "incident_id": "unknown-02",
+              "start": "2026-10-26T09:00:00Z",
+              "end": "2026-10-26T09:15:00Z",
+              "limit": 100
+            },
+            "status": "ok",
+            "record_count": 0,
+            "records": [],
+            "fault_injected": null,
+            "duplicates_dropped": 0,
+            "source_was_out_of_order": false,
+            "duration_ms": 0.001,
+            "fresh": true
+          }
+        ],
+        "cost": {
+          "query_count": 4,
+          "reused_query_count": 0,
+          "query_budget": 8,
+          "duration_ms": 0.046,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "recommendation": null
+      },
+      "rerun_signature": "10ce6296c267e271008d0d4ca78b149e0966bcc446b87f2394dead94e430cfaf"
+    }
+  ]
+}
