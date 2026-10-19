@@ -29,10 +29,16 @@ def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def render_text(report: dict[str, Any]) -> str:
-    lines = [f"Incident: {report['incident_id']}", f"Status: {report['status']}", f"Conclusion: {report['conclusion'] or 'insufficient evidence'}", "", "Hypothesis ledger:"]
+    strategy = report["query_strategy"]
+    comparison = report["comparison"]
+    lines = [f"Incident: {report['incident_id']}", f"Status: {report['status']}", f"Conclusion: {report['conclusion'] or 'insufficient evidence'}", f"Query strategy: {strategy['first']} then {', '.join(strategy['followups'])} ({strategy['reason']})", f"Logs-only: {comparison['logs_only']['conclusion'] or 'insufficient evidence'}", "", "Hypothesis ledger:"]
     for hypothesis in report["hypotheses"]:
         lines.append(f"- {hypothesis['title']} (score={hypothesis['score']})")
         lines.append(f"  supports={','.join(hypothesis['support']) or 'none'}; against={','.join(hypothesis['against']) or 'none'}")
+    for rejected in report["rejected_hypotheses"]:
+        lines.append(f"Rejected: {rejected['title']}; counter-evidence={','.join(rejected['counter_evidence'])}")
+    lines.append(f"Cross-signal correlations: {json.dumps(report['correlations'], ensure_ascii=False)}")
+    lines.append(f"Citation validation: {report['citation_validation']['all_references_exist']}")
     lines.extend(["", "Queries:"])
     for query in report["query_trace"]:
         lines.append(f"- {query['source']} status={query['status']} params={json.dumps(query['params'], ensure_ascii=False)} records={query['record_count']}")
@@ -67,4 +73,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

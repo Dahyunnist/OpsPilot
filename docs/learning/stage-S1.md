@@ -71,4 +71,3 @@ python -m opspilot investigate pool-01 --missing-source logs
 ## 未覆盖边界
 
 规则基于本地合成信号，尚未验证真实遥测的字段差异。分类分数是透明启发式，不是校准概率。查询当前直接读文件；尚无超时恢复、预算限制、审计持久化、trace 跨源校验或 MCP。
-

@@ -60,10 +60,15 @@ def _record_text(row: dict[str, Any]) -> str:
     return (row.get("message", "") + " " + str(row.get("attributes", {}))).lower()
 
 
+def _query_map(queries: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {query["source"]: query for query in queries}
+
+
 def _ledger(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows = [record for query in queries for record in query["records"]]
     scores = {key: {"title": title, "support": [], "against": [], "open_questions": []} for key, title in HYPOTHESES}
-    source_status = {query["source"]: query["status"] for query in queries}
+    source_status = {source: query.get("status", "not_queried") for source, query in _query_map(queries).items()}
+    deployments = _query_map(queries).get("deployments", {}).get("records", [])
 
     for row in rows:
         record_id = row["record_id"]
@@ -75,23 +80,29 @@ def _ledger(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 scores["pool_exhaustion"]["support"].append(record_id)
             elif ratio <= 0.5:
                 scores["pool_exhaustion"]["against"].append(record_id)
+        if "database pool warning" in row.get("message", "").lower():
+            scores["pool_exhaustion"]["support"].append(record_id)
         if "db_pool_wait_ms" in str(attrs) or "waiting for database connection" in text or "db.connection.acquire" in text:
             scores["pool_exhaustion"]["support"].append(record_id)
         if "config" in text or "config_validation_errors" in str(attrs):
             scores["config_error"]["support"].append(record_id)
         if row.get("service") == "order" and row.get("attributes", {}).get("version"):
             version = row["attributes"]["version"]
-            if any(d.get("attributes", {}).get("version") == version for d in queries[3]["records"]):
+            if any(d.get("attributes", {}).get("version") == version for d in deployments):
                 scores["config_error"]["support"].append(record_id)
         if "downstream request" in row.get("message", "").lower() or attrs.get("peer_service") == "downstream":
             scores["downstream_timeout"]["support"].append(record_id)
+        if attrs.get("span") == "order.downstream.call":
+            scores["pool_exhaustion"]["against"].append(record_id)
         if attrs.get("name") == "request_duration_ms_p95" and attrs.get("value", 0) > 2000:
             scores["downstream_timeout"]["support"].append(record_id)
 
     for hypothesis in scores.values():
         for source in SOURCES:
-            if source_status[source] == "missing":
+            if source_status.get(source) == "missing":
                 hypothesis["open_questions"].append(f"{source} source unavailable")
+            elif source_status.get(source, "not_queried") == "not_queried":
+                hypothesis["open_questions"].append(f"{source} source not queried")
     result = []
     for key, definition in HYPOTHESES:
         item = scores[key]
@@ -101,24 +112,76 @@ def _ledger(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
         item["hypothesis_id"] = key
         item["title"] = definition
         result.append(item)
-    return sorted(result, key=lambda item: (-item["score"], item["hypothesis_id"]))
+    return sorted(result, key=lambda item: -item["score"])
+
+
+def _choose_followups(metrics: list[dict[str, Any]]) -> tuple[list[str], str]:
+    names = {row.get("attributes", {}).get("name") for row in metrics}
+    if "config_validation_errors" in names:
+        return ["deployments", "logs", "traces"], "configuration metric makes deployment/version and error records most discriminating"
+    if "db_pool_in_use" in names:
+        return ["traces", "logs", "deployments"], "pool utilization needs trace and log confirmation; deployment helps test a competing cause"
+    if "request_duration_ms_p95" in names or "downstream_timeout_rate" in names:
+        return ["traces", "logs", "deployments"], "downstream latency needs trace localization and matching timeout logs"
+    return ["logs", "traces", "deployments"], "symptom metrics alone do not distinguish the candidate causes"
+
+
+def _correlations(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[str]] = {}
+    for query in queries:
+        for row in query["records"]:
+            attrs = row.get("attributes", {})
+            for kind, value in (("trace_id", attrs.get("trace_id")), ("version", attrs.get("version"))):
+                if value:
+                    grouped.setdefault((kind, str(value)), []).append(row["record_id"])
+    return [
+        {"kind": kind, "key": value, "record_ids": sorted(set(ids)), "sources": sorted({query["source"] for query in queries for row in query["records"] if row["record_id"] in ids})}
+        for (kind, value), ids in sorted(grouped.items())
+        if len(set(ids)) > 1
+    ]
 
 
 def investigate(incident: dict[str, Any], missing_sources: set[str] | None = None, max_rows: int = 100) -> dict[str, Any]:
     missing_sources = missing_sources or set()
     started = perf_counter()
-    queries = [query_source(incident, source, max_rows=max_rows, missing=source in missing_sources) for source in SOURCES]
+    queries = [query_source(incident, "metrics", max_rows=max_rows, missing="metrics" in missing_sources)]
+    followups, strategy_reason = _choose_followups(queries[0]["records"])
+    for source in followups:
+        queries.append(query_source(incident, source, max_rows=max_rows, missing=source in missing_sources))
     hypotheses = _ledger(queries)
     top = hypotheses[0]
     second_score = hypotheses[1]["score"]
     decisive = len(top["support"]) >= 2 and top["score"] > second_score
     conclusion = top["title"] if decisive else None
     status = "determined" if decisive else "insufficient_evidence"
+    log_query = next(query for query in queries if query["source"] == "logs")
+    log_hypotheses = _ledger([log_query])
+    log_top = log_hypotheses[0]
+    log_conclusion = log_top["title"] if log_top["support"] else None
+    rejected = [
+        {"hypothesis_id": item["hypothesis_id"], "title": item["title"], "counter_evidence": item["against"]}
+        for item in hypotheses
+        if item["against"] and (item["hypothesis_id"] != top["hypothesis_id"] or item["score"] < 0)
+    ]
+    evidence_ids = {row["record_id"] for query in queries for row in query["records"]}
+    citations_valid = all(
+        evidence_id in evidence_ids
+        for item in hypotheses
+        for evidence_id in item["support"] + item["against"]
+    )
     return {
         "incident_id": incident["incident_id"],
         "status": status,
         "conclusion": conclusion,
         "hypotheses": hypotheses,
+        "query_strategy": {"first": "metrics", "followups": followups, "reason": strategy_reason},
+        "comparison": {
+            "logs_only": {"status": "tentative" if log_conclusion else "insufficient_evidence", "conclusion": log_conclusion},
+            "multi_signal": {"status": status, "conclusion": conclusion},
+        },
+        "rejected_hypotheses": rejected,
+        "correlations": _correlations(queries),
+        "citation_validation": {"all_references_exist": citations_valid, "evidence_record_count": len(evidence_ids)},
         "query_trace": queries,
         "cost": {
             "query_count": len(queries),
@@ -127,4 +190,3 @@ def investigate(incident: dict[str, Any], missing_sources: set[str] | None = Non
             "output_tokens": None,
         },
     }
-

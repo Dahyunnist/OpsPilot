@@ -42,6 +42,7 @@ python -m unittest discover -s tests -v
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
 - `docs/learning/stage-S0.md`：S0 技术讲解、生成验证结果、亲手实验和面试问题。
 - `docs/learning/stage-S1.md`：S1 技术讲解、调查实测、亲手实验和面试问题。
+- `docs/learning/stage-S2.md`：S2 跨信号调查、反证和实测记录。
 - `opspilot/`：只读查询、假设账本与 CLI。
 - `tests/`：S1 闭环与证据状态测试。
 - `docs/learning/stage-S1.md`：S1 技术讲解和实测记录。
