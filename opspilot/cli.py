@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .investigator import SOURCES, investigate
+from .safety import audit_investigation, simulate_action
 
 
 def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
@@ -39,6 +40,8 @@ def render_text(report: dict[str, Any]) -> str:
         lines.append(f"Rejected: {rejected['title']}; counter-evidence={','.join(rejected['counter_evidence'])}")
     lines.append(f"Cross-signal correlations: {json.dumps(report['correlations'], ensure_ascii=False)}")
     lines.append(f"Citation validation: {report['citation_validation']['all_references_exist']}")
+    if report.get("recommendation"):
+        lines.append(f"Approval card: {json.dumps(report['recommendation'], ensure_ascii=False)}")
     lines.extend(["", "Queries:"])
     for query in report["query_trace"]:
         lines.append(f"- {query['source']} status={query['status']} params={json.dumps(query['params'], ensure_ascii=False)} records={query['record_count']}")
@@ -56,13 +59,46 @@ def main(argv: list[str] | None = None) -> int:
     command.add_argument("--data", type=Path, default=Path("data/incidents.jsonl"))
     command.add_argument("--format", choices=("text", "json"), default="text")
     command.add_argument("--max-rows", type=int, default=100)
+    command.add_argument("--query-budget", type=int, default=8)
     command.add_argument("--missing-source", choices=SOURCES, action="append", default=[])
+    command.add_argument("--inject", action="append", default=[], metavar="FAULT:SOURCE")
+    command.add_argument("--state-file", type=Path)
+    command.add_argument("--no-state", action="store_true")
+    command.add_argument("--audit-file", type=Path, default=Path("var/audit.jsonl"))
+    command.add_argument("--no-audit", action="store_true")
+    action_command = subparsers.add_parser("simulate-action", help="record an approval decision; approved actions remain simulation-only")
+    action_command.add_argument("incident_id")
+    action_command.add_argument("--approval", choices=("approve", "reject"), required=True)
+    action_command.add_argument("--event-id", required=True)
+    action_command.add_argument("--data", type=Path, default=Path("data/incidents.jsonl"))
+    action_command.add_argument("--audit-file", type=Path, default=Path("var/audit.jsonl"))
     args = parser.parse_args(argv)
     try:
         incidents = load_incidents(args.data)
         if args.incident_id not in incidents:
             raise ValueError(f"incident not found: {args.incident_id}")
-        report = investigate(incidents[args.incident_id], set(args.missing_source), args.max_rows)
+        if args.command == "simulate-action":
+            report = investigate(incidents[args.incident_id])
+            audit_investigation(report, args.audit_file)
+            result = simulate_action(report, args.event_id, args.approval, args.audit_file)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
+        faults = {}
+        for injected in args.inject:
+            try:
+                kind, source = injected.split(":", 1)
+            except ValueError as exc:
+                raise ValueError("--inject must use FAULT:SOURCE") from exc
+            if kind not in {"timeout", "duplicate", "out_of_order"} or source not in SOURCES:
+                raise ValueError(f"unsupported fault injection: {injected}")
+            faults[source] = kind
+        state_path = None if args.no_state else (args.state_file or Path("var/state") / f"{args.incident_id}.json")
+        report = investigate(
+            incidents[args.incident_id], set(args.missing_source), args.max_rows,
+            query_budget=args.query_budget, fault_injections=faults, state_path=state_path,
+        )
+        if not args.no_audit:
+            audit_investigation(report, args.audit_file)
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

@@ -36,7 +36,7 @@ class InvestigationTests(unittest.TestCase):
         log_query = next(query for query in report["query_trace"] if query["source"] == "logs")
         self.assertEqual("missing", log_query["status"])
         self.assertEqual([], log_query["records"])
-        self.assertTrue(any("logs source unavailable" in question for hypothesis in report["hypotheses"] for question in hypothesis["open_questions"]))
+        self.assertTrue(any("logs source missing" in question for hypothesis in report["hypotheses"] for question in hypothesis["open_questions"]))
 
     def test_query_is_time_bounded_and_has_complete_parameters(self):
         query = query_source(self.incidents["pool-01"], "metrics", max_rows=2)
