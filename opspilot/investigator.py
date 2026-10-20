@@ -45,10 +45,13 @@ def query_source(incident: dict[str, Any], source: str, max_rows: int = 100, mis
     started = perf_counter()
     duplicate_count = 0
     out_of_order = False
-    if missing:
+    source_status = incident.get("source_status", {}).get(source, "ok")
+    if source_status not in {"ok", "missing", "timeout"}:
+        raise ValueError(f"unsupported declared source status: {source_status}")
+    if missing or source_status == "missing":
         rows: list[dict[str, Any]] = []
         status = "missing"
-    elif fault == "timeout":
+    elif fault == "timeout" or source_status == "timeout":
         rows = []
         status = "timeout"
     else:

@@ -1,0 +1,1074 @@
+{
+  "labels": [
+    {
+      "incident_id": "opx-0a3v3etarr",
+      "scenario_family": "downstream_root_with_pool_pressure",
+      "decidable": true,
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "primary_causes": [
+        "downstream_timeout"
+      ],
+      "active_causes": [
+        "downstream_timeout"
+      ],
+      "cause_evidence_ids": {
+        "downstream_timeout": [
+          "rec-099b8d2b66",
+          "rec-11b8b548c5",
+          "rec-1edf8e6c8d",
+          "rec-a89925306a"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-099b8d2b66",
+        "rec-11b8b548c5",
+        "rec-1edf8e6c8d",
+        "rec-a89925306a"
+      ],
+      "decoy_evidence_ids": [
+        "rec-05f757b105",
+        "rec-4f1345188c",
+        "rec-b04646ceaf",
+        "rec-c5b2216a3b",
+        "rec-f7b4aceee7"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-a89925306a",
+          "to": "rec-099b8d2b66",
+          "relation": "slow_span_confirms_latency"
+        },
+        {
+          "from": "rec-099b8d2b66",
+          "to": "rec-1edf8e6c8d",
+          "relation": "failed_call_logged"
+        },
+        {
+          "from": "rec-c9e55c3d4d",
+          "to": "rec-099b8d2b66",
+          "relation": "parent_child_span"
+        },
+        {
+          "from": "rec-1edf8e6c8d",
+          "to": "rec-11b8b548c5",
+          "relation": "timeout_rate_after_failures"
+        },
+        {
+          "from": "rec-099b8d2b66",
+          "to": "rec-233617bc65",
+          "relation": "precedes_pool_pressure"
+        },
+        {
+          "from": "rec-233617bc65",
+          "to": "rec-f315129da2",
+          "relation": "same_request_effect"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-19g9oebx0k",
+      "scenario_family": "independent_dual_fault",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-48c45f8c37",
+          "rec-524e66637d",
+          "rec-9400276732",
+          "rec-cca98357b9"
+        ],
+        "pool_exhaustion": [
+          "rec-08e35cb4fa",
+          "rec-48312b1c62",
+          "rec-5de891713e",
+          "rec-e9da8850b1"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-08e35cb4fa",
+        "rec-48312b1c62",
+        "rec-48c45f8c37",
+        "rec-524e66637d",
+        "rec-5de891713e",
+        "rec-9400276732",
+        "rec-cca98357b9",
+        "rec-e9da8850b1"
+      ],
+      "decoy_evidence_ids": [
+        "rec-35fea55ae7",
+        "rec-554726d9c3",
+        "rec-57dfbcbb37",
+        "rec-6495802861"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-524e66637d",
+          "to": "rec-cca98357b9",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-cca98357b9",
+          "to": "rec-9400276732",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-9400276732",
+          "to": "rec-48c45f8c37",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-e9da8850b1",
+          "to": "rec-5de891713e",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-5de891713e",
+          "to": "rec-08e35cb4fa",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-b7c7e8cb8b",
+          "to": "rec-48312b1c62",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-1c1ohhmg8e",
+      "scenario_family": "downstream_root_with_pool_pressure",
+      "decidable": true,
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "primary_causes": [
+        "downstream_timeout"
+      ],
+      "active_causes": [
+        "downstream_timeout"
+      ],
+      "cause_evidence_ids": {
+        "downstream_timeout": [
+          "rec-1ff0432aee",
+          "rec-26ba791c93",
+          "rec-aa144f5ae5",
+          "rec-c0497980ac"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-1ff0432aee",
+        "rec-26ba791c93",
+        "rec-aa144f5ae5",
+        "rec-c0497980ac"
+      ],
+      "decoy_evidence_ids": [
+        "rec-05264ac263",
+        "rec-500b69cf19",
+        "rec-9e324dca1b",
+        "rec-deebe35db0",
+        "rec-f664bd521d"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-aa144f5ae5",
+          "to": "rec-1ff0432aee",
+          "relation": "slow_span_confirms_latency"
+        },
+        {
+          "from": "rec-1ff0432aee",
+          "to": "rec-26ba791c93",
+          "relation": "failed_call_logged"
+        },
+        {
+          "from": "rec-7e68b686c1",
+          "to": "rec-1ff0432aee",
+          "relation": "parent_child_span"
+        },
+        {
+          "from": "rec-26ba791c93",
+          "to": "rec-c0497980ac",
+          "relation": "timeout_rate_after_failures"
+        },
+        {
+          "from": "rec-1ff0432aee",
+          "to": "rec-da67f2e6cd",
+          "relation": "precedes_pool_pressure"
+        },
+        {
+          "from": "rec-da67f2e6cd",
+          "to": "rec-71318e9e93",
+          "relation": "same_request_effect"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-1xus36f961",
+      "scenario_family": "independent_dual_fault",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-4347072a77",
+          "rec-4ad2a90840",
+          "rec-4e1a85a0d9",
+          "rec-dc29d8be58"
+        ],
+        "pool_exhaustion": [
+          "rec-0c8031e6a3",
+          "rec-860ec56d45",
+          "rec-da15bd28ea",
+          "rec-edfbb33f80"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-0c8031e6a3",
+        "rec-4347072a77",
+        "rec-4ad2a90840",
+        "rec-4e1a85a0d9",
+        "rec-860ec56d45",
+        "rec-da15bd28ea",
+        "rec-dc29d8be58",
+        "rec-edfbb33f80"
+      ],
+      "decoy_evidence_ids": [
+        "rec-29f9991c3b",
+        "rec-3d4b248b50",
+        "rec-7ab3516db4",
+        "rec-c2f72b1c9a"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-4347072a77",
+          "to": "rec-4ad2a90840",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-4ad2a90840",
+          "to": "rec-4e1a85a0d9",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-4e1a85a0d9",
+          "to": "rec-dc29d8be58",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-edfbb33f80",
+          "to": "rec-0c8031e6a3",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-0c8031e6a3",
+          "to": "rec-da15bd28ea",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-32fd81d467",
+          "to": "rec-860ec56d45",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-2hlp3bnp8t",
+      "scenario_family": "insufficient_or_conflicted",
+      "decidable": false,
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "primary_causes": [],
+      "active_causes": [],
+      "cause_evidence_ids": {},
+      "gold_evidence_ids": [],
+      "decoy_evidence_ids": [
+        "rec-074f778ecd",
+        "rec-6bd12b76a0",
+        "rec-a8727d5823",
+        "rec-ca576a63d4",
+        "rec-e0990180fa",
+        "rec-e93419daef"
+      ],
+      "causal_edges": []
+    },
+    {
+      "incident_id": "opx-713g441ay0",
+      "scenario_family": "independent_dual_fault",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-0c0fb08ec2",
+          "rec-b44a5911ff",
+          "rec-ecee7ec85a",
+          "rec-fcb50d761a"
+        ],
+        "pool_exhaustion": [
+          "rec-150da9dba0",
+          "rec-15b0a96c6f",
+          "rec-6c88741747",
+          "rec-d35d302566"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-0c0fb08ec2",
+        "rec-150da9dba0",
+        "rec-15b0a96c6f",
+        "rec-6c88741747",
+        "rec-b44a5911ff",
+        "rec-d35d302566",
+        "rec-ecee7ec85a",
+        "rec-fcb50d761a"
+      ],
+      "decoy_evidence_ids": [
+        "rec-2020d9355b",
+        "rec-8c454fad02",
+        "rec-bbd27f6d5f",
+        "rec-e2bc3c300d"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-b44a5911ff",
+          "to": "rec-0c0fb08ec2",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-0c0fb08ec2",
+          "to": "rec-fcb50d761a",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-fcb50d761a",
+          "to": "rec-ecee7ec85a",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-6c88741747",
+          "to": "rec-15b0a96c6f",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-15b0a96c6f",
+          "to": "rec-150da9dba0",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-fb43ab8eeb",
+          "to": "rec-d35d302566",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-9hqmf9x6hz",
+      "scenario_family": "downstream_root_with_pool_pressure",
+      "decidable": true,
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "primary_causes": [
+        "downstream_timeout"
+      ],
+      "active_causes": [
+        "downstream_timeout"
+      ],
+      "cause_evidence_ids": {
+        "downstream_timeout": [
+          "rec-13729fc144",
+          "rec-2137b1dc35",
+          "rec-778c63433a",
+          "rec-d834c5721e"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-13729fc144",
+        "rec-2137b1dc35",
+        "rec-778c63433a",
+        "rec-d834c5721e"
+      ],
+      "decoy_evidence_ids": [
+        "rec-1a2eec34d5",
+        "rec-996c40c6fc",
+        "rec-a0036c33e8",
+        "rec-a3d9779e86",
+        "rec-d21f9b7aee"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-778c63433a",
+          "to": "rec-2137b1dc35",
+          "relation": "slow_span_confirms_latency"
+        },
+        {
+          "from": "rec-2137b1dc35",
+          "to": "rec-d834c5721e",
+          "relation": "failed_call_logged"
+        },
+        {
+          "from": "rec-736f69a876",
+          "to": "rec-2137b1dc35",
+          "relation": "parent_child_span"
+        },
+        {
+          "from": "rec-d834c5721e",
+          "to": "rec-13729fc144",
+          "relation": "timeout_rate_after_failures"
+        },
+        {
+          "from": "rec-2137b1dc35",
+          "to": "rec-852a30d636",
+          "relation": "precedes_pool_pressure"
+        },
+        {
+          "from": "rec-852a30d636",
+          "to": "rec-8762b287cb",
+          "relation": "same_request_effect"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-aw2wpxwj02",
+      "scenario_family": "configuration_root_with_downstream_symptoms",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error"
+      ],
+      "active_causes": [
+        "config_error"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-5e42d83ade",
+          "rec-7e8fad53ff",
+          "rec-c63ec2f47c",
+          "rec-e0c012cac0"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-5e42d83ade",
+        "rec-7e8fad53ff",
+        "rec-c63ec2f47c",
+        "rec-e0c012cac0"
+      ],
+      "decoy_evidence_ids": [
+        "rec-20f73b3192",
+        "rec-4acddddcf4",
+        "rec-8e70809a48",
+        "rec-d7bea2f413"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-5e42d83ade",
+          "to": "rec-c63ec2f47c",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-c63ec2f47c",
+          "to": "rec-e0c012cac0",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-e0c012cac0",
+          "to": "rec-7e8fad53ff",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-5e42d83ade",
+          "to": "rec-c63ec2f47c",
+          "relation": "deployment_precedes_validation_failure"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-bkcmiiwrbi",
+      "scenario_family": "pool_root",
+      "decidable": true,
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "primary_causes": [
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "pool_exhaustion": [
+          "rec-1fbeca8e71",
+          "rec-45ccf29801",
+          "rec-bdf5055b16",
+          "rec-dbde9caa0d"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-1fbeca8e71",
+        "rec-45ccf29801",
+        "rec-bdf5055b16",
+        "rec-dbde9caa0d"
+      ],
+      "decoy_evidence_ids": [
+        "rec-2bab0dd480",
+        "rec-5031f51cab",
+        "rec-738df5fcf6"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-1fbeca8e71",
+          "to": "rec-dbde9caa0d",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-dbde9caa0d",
+          "to": "rec-45ccf29801",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-24a435c38d",
+          "to": "rec-bdf5055b16",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-dgjffhaxa3",
+      "scenario_family": "insufficient_or_conflicted",
+      "decidable": false,
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "primary_causes": [],
+      "active_causes": [],
+      "cause_evidence_ids": {},
+      "gold_evidence_ids": [],
+      "decoy_evidence_ids": [
+        "rec-10492ad549",
+        "rec-19bb6746cd",
+        "rec-534d42256c",
+        "rec-6c4761b551",
+        "rec-a3a11121a4",
+        "rec-b056990c0b",
+        "rec-c644fe2e91"
+      ],
+      "causal_edges": []
+    },
+    {
+      "incident_id": "opx-g6rinpkcej",
+      "scenario_family": "insufficient_or_conflicted",
+      "decidable": false,
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "primary_causes": [],
+      "active_causes": [],
+      "cause_evidence_ids": {},
+      "gold_evidence_ids": [],
+      "decoy_evidence_ids": [
+        "rec-1b4afdc50d",
+        "rec-32c49c92ff",
+        "rec-832109cd87",
+        "rec-8e11f45ac1",
+        "rec-a4be5e050a",
+        "rec-af5650cac1"
+      ],
+      "causal_edges": []
+    },
+    {
+      "incident_id": "opx-kwg6rnjkrq",
+      "scenario_family": "pool_root",
+      "decidable": true,
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "primary_causes": [
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "pool_exhaustion": [
+          "rec-412e55c5f9",
+          "rec-4283ac2170",
+          "rec-46d87de2aa",
+          "rec-f8dcc34c4e"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-412e55c5f9",
+        "rec-4283ac2170",
+        "rec-46d87de2aa",
+        "rec-f8dcc34c4e"
+      ],
+      "decoy_evidence_ids": [
+        "rec-3e2b97512b",
+        "rec-48da963bdf",
+        "rec-70286b8544"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-46d87de2aa",
+          "to": "rec-4283ac2170",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-4283ac2170",
+          "to": "rec-f8dcc34c4e",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-a38d7f6160",
+          "to": "rec-412e55c5f9",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-n36k3g6e5u",
+      "scenario_family": "downstream_root_with_pool_pressure",
+      "decidable": true,
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "primary_causes": [
+        "downstream_timeout"
+      ],
+      "active_causes": [
+        "downstream_timeout"
+      ],
+      "cause_evidence_ids": {
+        "downstream_timeout": [
+          "rec-859825a6d1",
+          "rec-ab1feefc7b",
+          "rec-d7917e8099",
+          "rec-e7fa40e8b1"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-859825a6d1",
+        "rec-ab1feefc7b",
+        "rec-d7917e8099",
+        "rec-e7fa40e8b1"
+      ],
+      "decoy_evidence_ids": [
+        "rec-a08f4f53a6",
+        "rec-b4f2916961",
+        "rec-ba9436f27a",
+        "rec-bff4f9231f",
+        "rec-c1142940a3"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-ab1feefc7b",
+          "to": "rec-e7fa40e8b1",
+          "relation": "slow_span_confirms_latency"
+        },
+        {
+          "from": "rec-e7fa40e8b1",
+          "to": "rec-859825a6d1",
+          "relation": "failed_call_logged"
+        },
+        {
+          "from": "rec-5fcab72847",
+          "to": "rec-e7fa40e8b1",
+          "relation": "parent_child_span"
+        },
+        {
+          "from": "rec-859825a6d1",
+          "to": "rec-d7917e8099",
+          "relation": "timeout_rate_after_failures"
+        },
+        {
+          "from": "rec-e7fa40e8b1",
+          "to": "rec-417d9153d3",
+          "relation": "precedes_pool_pressure"
+        },
+        {
+          "from": "rec-417d9153d3",
+          "to": "rec-9fe3f861bc",
+          "relation": "same_request_effect"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-o3uvgbuf68",
+      "scenario_family": "pool_root",
+      "decidable": true,
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "primary_causes": [
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "pool_exhaustion": [
+          "rec-4031ee0b99",
+          "rec-9436b1b5f7",
+          "rec-a9883c5551",
+          "rec-ad504d1b2b"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-4031ee0b99",
+        "rec-9436b1b5f7",
+        "rec-a9883c5551",
+        "rec-ad504d1b2b"
+      ],
+      "decoy_evidence_ids": [
+        "rec-1e2cddc6ca",
+        "rec-41d938a5c5",
+        "rec-d28c87439b"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-a9883c5551",
+          "to": "rec-ad504d1b2b",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-ad504d1b2b",
+          "to": "rec-9436b1b5f7",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-d25bc03566",
+          "to": "rec-4031ee0b99",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-pm7v7eiuoj",
+      "scenario_family": "insufficient_or_conflicted",
+      "decidable": false,
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "primary_causes": [],
+      "active_causes": [],
+      "cause_evidence_ids": {},
+      "gold_evidence_ids": [],
+      "decoy_evidence_ids": [
+        "rec-4c82a7cbf8",
+        "rec-73cfd96d7f",
+        "rec-7a045bba96",
+        "rec-83d24c6243",
+        "rec-cdaa6de347",
+        "rec-d3a9e61be2",
+        "rec-f929d6663c"
+      ],
+      "causal_edges": []
+    },
+    {
+      "incident_id": "opx-qlbvdu9r7k",
+      "scenario_family": "configuration_root_with_downstream_symptoms",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error"
+      ],
+      "active_causes": [
+        "config_error"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-1800d86bcc",
+          "rec-63309ebe76",
+          "rec-921417d829",
+          "rec-e472a97b1c"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-1800d86bcc",
+        "rec-63309ebe76",
+        "rec-921417d829",
+        "rec-e472a97b1c"
+      ],
+      "decoy_evidence_ids": [
+        "rec-047d40068d",
+        "rec-60164fda13",
+        "rec-61476512ac",
+        "rec-76e0363202"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-921417d829",
+          "to": "rec-63309ebe76",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-63309ebe76",
+          "to": "rec-e472a97b1c",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-e472a97b1c",
+          "to": "rec-1800d86bcc",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-921417d829",
+          "to": "rec-63309ebe76",
+          "relation": "deployment_precedes_validation_failure"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-wsnd8fj0g6",
+      "scenario_family": "configuration_root_with_downstream_symptoms",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error"
+      ],
+      "active_causes": [
+        "config_error"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-0e2b802bff",
+          "rec-71bf9bf0af",
+          "rec-af732c8993",
+          "rec-dc1a445feb"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-0e2b802bff",
+        "rec-71bf9bf0af",
+        "rec-af732c8993",
+        "rec-dc1a445feb"
+      ],
+      "decoy_evidence_ids": [
+        "rec-1b7aef2cdf",
+        "rec-4f32f68f9d",
+        "rec-8ea51d4500",
+        "rec-b107e058e5"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-0e2b802bff",
+          "to": "rec-dc1a445feb",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-dc1a445feb",
+          "to": "rec-71bf9bf0af",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-71bf9bf0af",
+          "to": "rec-af732c8993",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-0e2b802bff",
+          "to": "rec-dc1a445feb",
+          "relation": "deployment_precedes_validation_failure"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-xc5egf9k55",
+      "scenario_family": "independent_dual_fault",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-3a67322ba9",
+          "rec-56db9bd1ce",
+          "rec-82e2d00420",
+          "rec-8b14222fa4"
+        ],
+        "pool_exhaustion": [
+          "rec-0d48aa5afc",
+          "rec-7c27700301",
+          "rec-a04be8e341",
+          "rec-a2a33a08a7"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-0d48aa5afc",
+        "rec-3a67322ba9",
+        "rec-56db9bd1ce",
+        "rec-7c27700301",
+        "rec-82e2d00420",
+        "rec-8b14222fa4",
+        "rec-a04be8e341",
+        "rec-a2a33a08a7"
+      ],
+      "decoy_evidence_ids": [
+        "rec-3113560192",
+        "rec-85c66977b3",
+        "rec-a5ce8ac74f",
+        "rec-c10f658272"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-8b14222fa4",
+          "to": "rec-56db9bd1ce",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-56db9bd1ce",
+          "to": "rec-3a67322ba9",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-3a67322ba9",
+          "to": "rec-82e2d00420",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-a04be8e341",
+          "to": "rec-a2a33a08a7",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-a2a33a08a7",
+          "to": "rec-7c27700301",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-72efe1f9e1",
+          "to": "rec-0d48aa5afc",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-ylrxa5ki8c",
+      "scenario_family": "pool_root",
+      "decidable": true,
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "primary_causes": [
+        "pool_exhaustion"
+      ],
+      "active_causes": [
+        "pool_exhaustion"
+      ],
+      "cause_evidence_ids": {
+        "pool_exhaustion": [
+          "rec-646217dc73",
+          "rec-66a3b6f7a0",
+          "rec-7357ca3b8b",
+          "rec-8ecadb469c"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-646217dc73",
+        "rec-66a3b6f7a0",
+        "rec-7357ca3b8b",
+        "rec-8ecadb469c"
+      ],
+      "decoy_evidence_ids": [
+        "rec-0572d76928",
+        "rec-7424dd5fed",
+        "rec-d11c885da6"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-66a3b6f7a0",
+          "to": "rec-646217dc73",
+          "relation": "pool_pressure_precedes_wait"
+        },
+        {
+          "from": "rec-646217dc73",
+          "to": "rec-7357ca3b8b",
+          "relation": "same_request_timeout"
+        },
+        {
+          "from": "rec-454376803c",
+          "to": "rec-8ecadb469c",
+          "relation": "parent_child_span"
+        }
+      ]
+    },
+    {
+      "incident_id": "opx-zma7t9u7ti",
+      "scenario_family": "configuration_root_with_downstream_symptoms",
+      "decidable": true,
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "primary_causes": [
+        "config_error"
+      ],
+      "active_causes": [
+        "config_error"
+      ],
+      "cause_evidence_ids": {
+        "config_error": [
+          "rec-58d15c32df",
+          "rec-5bed743ec5",
+          "rec-c456ae42ec",
+          "rec-e7f741aadb"
+        ]
+      },
+      "gold_evidence_ids": [
+        "rec-58d15c32df",
+        "rec-5bed743ec5",
+        "rec-c456ae42ec",
+        "rec-e7f741aadb"
+      ],
+      "decoy_evidence_ids": [
+        "rec-746c38723a",
+        "rec-b8478249e2",
+        "rec-b85558d72b",
+        "rec-cc1682154f"
+      ],
+      "causal_edges": [
+        {
+          "from": "rec-c456ae42ec",
+          "to": "rec-5bed743ec5",
+          "relation": "deployment_precedes_validation_failure"
+        },
+        {
+          "from": "rec-5bed743ec5",
+          "to": "rec-e7f741aadb",
+          "relation": "same_version_validation_error"
+        },
+        {
+          "from": "rec-e7f741aadb",
+          "to": "rec-58d15c32df",
+          "relation": "same_trace_validation_failure"
+        },
+        {
+          "from": "rec-c456ae42ec",
+          "to": "rec-5bed743ec5",
+          "relation": "deployment_precedes_validation_failure"
+        }
+      ]
+    }
+  ]
+}

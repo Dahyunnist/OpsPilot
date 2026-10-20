@@ -75,6 +75,7 @@ python -m venv .venv
 - `data/labels.json`：根因真值及证据充分性标签。
 - `data/benchmark/`：48 个冻结合成事故及分开的 train/validation/test 标签；test 标签不进入 Agent 上下文。
 - `data/complex-benchmark/`：独立的 64 例跨服务冲突集；与旧 benchmark 分开冻结，含噪声、缺证与不可判定样本。
+- `data/causal-benchmark/`：独立的 100 例因果链与多根因集，含 30 例冻结盲测；训练/验证/测试标签分开保存。数据全为新写合成样本，外部公开集的许可状态见 `docs/learning/stage-S13.md`。
 - `opspilot/memory.py`：仅从 train 案例检索历史提示，实时遥测始终优先。
 - `scripts/evaluate_agents.py`、`reports/agent-evaluation.json`、`reports/agent-evaluation.md`：规则、单 Agent、多 Agent 盲测、引用、安全、延迟、token、费用和故障恢复报告。
 - `scripts/evaluate_agents.py --benchmark-dir data/complex-benchmark`：独立复杂集规则/单/多 Agent 对照；`scripts/evaluate_complex_routing.py`：仅用 validation 结果回放 auto 路由。
@@ -94,6 +95,7 @@ python -m venv .venv
 - `docs/learning/stage-S10.md`：复杂冲突集来源、合成边界、冻结哈希与盲测设计。
 - `docs/learning/stage-S11.md`：复杂集盲测字段、官方 A2A SDK 互通和安全边界。
 - `docs/learning/stage-S12.md`：复杂集结果、成本感知自动路由与简历边界。
+- `docs/learning/stage-S13.md`：独立多根因盲测集、许可审计和复现方式。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。
