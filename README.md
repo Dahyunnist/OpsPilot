@@ -1,6 +1,6 @@
 # OpsPilot：证据驱动的本地故障调查原型
 
-当前包含 S0 故障数据和 S1 本地只读调查闭环。原型不调用模型、不连接生产系统，也不执行修复操作。
+当前保留 S0–S4 确定性只读调查基线，并新增 S5 多 Agent 模式。`rules` 不调用模型；`multi-agent` 通过 `.env` 中的 OpenAI-compatible endpoint 调用独立模型专家。两者都不连接生产系统，也不执行修复操作。
 
 ## 生成数据
 
@@ -27,11 +27,14 @@ python -m opspilot investigate pool-01
 python -m opspilot investigate unknown-01 --format json
 python -m opspilot investigate pool-01 --missing-source logs
 python -m opspilot investigate downstream-01 --inject timeout:logs --no-state
+python -m opspilot investigate pool-01 --mode multi-agent --token-budget 12000
 ```
 
 调查器先查指标，再依指标选择 logs、traces、deployments。报告含假设账本、跨信号关联、支持/反证引用、查询参数、原始记录和成本。`--missing-source` 模拟来源缺失；`--inject timeout:logs`、`duplicate:traces` 或 `out_of_order:logs` 模拟故障。异常演练加 `--no-state`，避免复用之前的成功查询。单次行数上限为 1–1000，总查询预算为 1–12。
 
 默认检查点写入 `var/state/<incident_id>.json`，查询与审批审计写入 `var/audit.jsonl`。这些运行文件已加入 Git 忽略规则。
+
+多 Agent 模式需要 `.env` 设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。专家按来源隔离证据上下文，进行独立推断；交叉质询与裁决由额外模型调用完成。规则模式仍是离线基线。详见 `docs/learning/stage-S5.md`。
 
 ## 审批模拟
 
