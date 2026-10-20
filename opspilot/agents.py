@@ -8,6 +8,7 @@ import re
 import uuid
 from typing import Any
 
+from .a2a import A2AClient, A2AServer
 from .agent_protocol import AgentMessage, AgentTrace, EvidenceRef
 from .model_client import ChatModel, ModelError, redact
 
@@ -46,7 +47,7 @@ def _call_expert(model: ChatModel, task_id: str, incident: dict[str, Any], query
     data = result["data"]
     allowed = {row["record_id"] for row in rows}
     refs = tuple(EvidenceRef(source, rid) for finding in data.get("hypotheses", []) for rid in finding.get("evidence_ids", []) if rid in allowed)
-    message = AgentMessage(task_id, str(uuid.uuid4()), name, "cross_examiner", "handoff", data, refs, budget)
+    message = AgentMessage(task_id, str(uuid.uuid4()), name, "cross_examiner", "handoff", data, refs, tuple(TOOLS[source]), budget)
     result["input_chars"] = chars
     return message, result
 
@@ -97,12 +98,19 @@ def investigate_multi_agent(incident: dict[str, Any], deterministic_report: dict
             "handoff": payload.get("handoff", ""),
         })
     all_records = {row["record_id"] for query in available for row in query.get("records", [])}
-    cross_user = json.dumps({"task_id": task_id, "independent_findings": findings}, ensure_ascii=False)
-    cross = model.complete(
-        "You are an adversarial cross-examiner. Find conflicts and alternative causes; do not resolve by majority. Return concise JSON under 100 words: challenges [{agent, claim, counter_claim, evidence_ids, question}] (max 3), conflict_summary, handoff.",
-        cross_user, agent_budget,
-    )
-    trace.spent_tokens += cross["usage"].get("total_tokens", 0)
+    def cross_examiner(payload: dict[str, Any]) -> dict[str, Any]:
+        result = model.complete(
+            "You are an adversarial cross-examiner. Find conflicts and alternative causes; do not resolve by majority. Return concise JSON under 100 words: challenges [{agent, claim, counter_claim, evidence_ids, question}] (max 3), conflict_summary, handoff.",
+            json.dumps(payload, ensure_ascii=False), agent_budget,
+        )
+        return {"data": result["data"], "usage": result["usage"], "duration_ms": result["duration_ms"]}
+
+    with A2AServer(cross_examiner) as server:
+        cross, a2a_trace = A2AClient(server.card_url, timeout=model.timeout).send_and_wait(
+            task_id, {"independent_findings": findings}, message_id=f"{task_id}:cross-examination",
+        )
+    trace.events.extend({"event": "a2a_protocol", **event} for event in a2a_trace)
+    trace.spent_tokens += cross.get("usage", {}).get("total_tokens", 0)
     trace.add("cross_examination_complete", challenges=len(cross["data"].get("challenges", [])))
     judge_input = {"baseline": deterministic_report["hypotheses"], "specialist_findings": findings, "cross_examination": cross["data"], "valid_evidence_ids": sorted(all_records)}
     final = model.complete(

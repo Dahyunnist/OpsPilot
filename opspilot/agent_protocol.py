@@ -21,12 +21,16 @@ class AgentMessage:
     kind: Literal["assignment", "finding", "challenge", "handoff", "final"]
     payload: dict[str, Any]
     evidence: tuple[EvidenceRef, ...] = ()
+    allowed_tools: tuple[str, ...] = ()
     budget_tokens: int = 0
     attempt: int = 1
     deadline_ms: int = 30_000
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        value = asdict(self)
+        value["evidence"] = [asdict(ref) for ref in self.evidence]
+        value["allowed_tools"] = list(self.allowed_tools)
+        return value
 
 
 @dataclass
