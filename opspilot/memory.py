@@ -22,7 +22,7 @@ def _words(value: Any) -> set[str]:
     return set(re.findall(r"[a-z][a-z0-9_]{2,}", json.dumps(value, ensure_ascii=False).lower()))
 
 
-def retrieve_memories(incident: dict[str, Any], top_k: int = 3, data_dir: Path = Path("data/benchmark")) -> list[dict[str, Any]]:
+def retrieve_memories(incident: dict[str, Any], top_k: int = 3, data_dir: Path = Path("data/benchmark"), exclude_ids: set[str] | None = None) -> list[dict[str, Any]]:
     train_path = data_dir / "train.jsonl"
     labels_path = data_dir / "labels" / "train.json"
     if not train_path.exists() or not labels_path.exists():
@@ -30,9 +30,12 @@ def retrieve_memories(incident: dict[str, Any], top_k: int = 3, data_dir: Path =
     history = _load_incidents(train_path)
     labels = json.loads(labels_path.read_text(encoding="utf-8"))["labels"]
     label_by_id = {item["incident_id"]: item for item in labels}
+    exclude_ids = exclude_ids or set()
     query = _words({"alert": incident.get("alert"), "timeline": incident.get("timeline"), "signals": incident.get("signals")})
     ranked = []
     for memory_id, prior in history.items():
+        if memory_id in exclude_ids:
+            continue
         common = query & _words({"alert": prior.get("alert"), "timeline": prior.get("timeline"), "signals": prior.get("signals")})
         score = len(common) / max(1, len(query | _words(prior)))
         if score >= 0.01:

@@ -135,6 +135,50 @@ def _ledger(queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(result, key=lambda item: -item["score"])
 
 
+def _strong_support(queries: list[dict[str, Any]]) -> dict[str, list[str]]:
+    records = [(query["source"], row) for query in queries for row in query.get("records", [])]
+    strong = {key: set() for key, _ in HYPOTHESES}
+    config_versions = set()
+    for source, row in records:
+        attrs = row.get("attributes", {})
+        text = row.get("message", "").lower()
+        if source == "metrics" and attrs.get("name") == "db_pool_in_use" and attrs.get("limit") and attrs.get("value", 0) / attrs["limit"] >= 0.9:
+            strong["pool_exhaustion"].add(row["record_id"])
+        if source == "metrics" and attrs.get("name") == "db_pool_wait_ms" and attrs.get("value", 0) >= 100:
+            strong["pool_exhaustion"].add(row["record_id"])
+        if source == "logs" and "waiting for database connection" in text:
+            strong["pool_exhaustion"].add(row["record_id"])
+        if source == "traces" and attrs.get("span") == "db.connection.acquire" and attrs.get("status") == "error":
+            strong["pool_exhaustion"].add(row["record_id"])
+
+        if source == "metrics" and attrs.get("name") == "config_validation_errors" and attrs.get("value", 0) > 0:
+            strong["config_error"].add(row["record_id"])
+            if attrs.get("version"):
+                config_versions.add(attrs["version"])
+        if source == "logs" and ("required downstream endpoint missing" in text or attrs.get("error") == "CONFIG_ENDPOINT_MISSING"):
+            strong["config_error"].add(row["record_id"])
+            if attrs.get("version"):
+                config_versions.add(attrs["version"])
+        if source == "traces" and attrs.get("span") == "config.validate" and attrs.get("status") == "error":
+            strong["config_error"].add(row["record_id"])
+            if attrs.get("version"):
+                config_versions.add(attrs["version"])
+        if source == "deployments" and attrs.get("version") in config_versions:
+            strong["config_error"].add(row["record_id"])
+
+        if source == "metrics" and attrs.get("name") in {"request_duration_ms_p95", "downstream_timeout_rate"} and attrs.get("value", 0) > 0:
+            strong["downstream_timeout"].add(row["record_id"])
+        if source == "logs" and "downstream request exceeded" in text:
+            strong["downstream_timeout"].add(row["record_id"])
+        if source == "traces" and attrs.get("span") == "order.downstream.call" and attrs.get("status") == "error":
+            strong["downstream_timeout"].add(row["record_id"])
+    # Link deployments found before their associated validation metric in record order.
+    for _source, row in records:
+        if _source == "deployments" and row.get("attributes", {}).get("version") in config_versions:
+            strong["config_error"].add(row["record_id"])
+    return {key: sorted(ids) for key, ids in strong.items()}
+
+
 def _choose_followups(metrics: list[dict[str, Any]]) -> tuple[list[str], str]:
     names = {row.get("attributes", {}).get("name") for row in metrics}
     if "config_validation_errors" in names:
@@ -228,17 +272,17 @@ def investigate(
         run_source(source)
     queries.sort(key=lambda query: (SOURCES.index(query["source"]), query["params"]["start"]))
     hypotheses = _ledger(queries)
+    strong_ids = _strong_support(queries)
+    for hypothesis in hypotheses:
+        hypothesis["strong_support"] = strong_ids[hypothesis["hypothesis_id"]]
     queried_sources = {query["source"] for query in queries}
     top = hypotheses[0]
     second_score = hypotheses[1]["score"]
-    independent_sources = {
-        query["source"] for query in queries
-        if any(row["record_id"] in top["support"] for row in query["records"])
-    }
+    strong_sources = {query["source"] for query in queries if any(row["record_id"] in top["strong_support"] for row in query["records"])}
     decisive = (
         all(source in queried_sources for source in planned_followups)
-        and len(top["support"]) >= 2
-        and len(independent_sources) >= 2
+        and len(top["strong_support"]) >= 2
+        and len(strong_sources) >= 2
         and top["score"] > second_score
     )
     conclusion = top["title"] if decisive else None

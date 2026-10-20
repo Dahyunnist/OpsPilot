@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 
 from opspilot.cli import load_incidents
 from opspilot.memory import retrieve_memories
+from opspilot.investigator import investigate
 from scripts.generate_benchmark import generate
 from scripts.evaluate_agents import normalize_cause, summarize
 
@@ -62,6 +63,16 @@ class BenchmarkTests(unittest.TestCase):
         self.assertLessEqual(len(memories), 3)
         self.assertTrue(all(item["memory_id"].startswith(tuple(f"{category}-" for category in ("pool-exhaustion", "config-error", "downstream-timeout", "unknown"))) for item in memories))
         self.assertTrue(all("not proof" in item["lesson"] for item in memories))
+
+    def test_memory_excludes_the_current_training_case(self):
+        incident = next(iter(load_incidents(Path("data/benchmark/train.jsonl")).values()))
+        memories = retrieve_memories(incident, exclude_ids={incident["incident_id"]})
+        self.assertNotIn(incident["incident_id"], {item["memory_id"] for item in memories})
+
+    def test_weak_warning_cannot_break_a_live_signal_tie(self):
+        incident = load_incidents(Path("data/benchmark/validation.jsonl"))["unknown-02"]
+        report = investigate(incident)
+        self.assertEqual("insufficient_evidence", report["status"])
 
 
 if __name__ == "__main__":

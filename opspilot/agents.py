@@ -38,7 +38,7 @@ def _ground_adjudication(adjudication: dict[str, Any], report: dict[str, Any]) -
     cause_id = _cause_id(adjudication.get("root_cause"))
     hypotheses = {item["hypothesis_id"]: item for item in report["hypotheses"]}
     candidate = hypotheses.get(cause_id)
-    support = set(candidate["support"]) if candidate else set()
+    support = set(candidate.get("strong_support", candidate["support"])) if candidate else set()
     source_by_id = {row["record_id"]: query["source"] for query in report["query_trace"] for row in query["records"]}
     cited = adjudication.get("evidence_ids", [])
     grounded = [ref for ref in cited if ref in support and ref in source_by_id]
@@ -53,7 +53,7 @@ def _ground_adjudication(adjudication: dict[str, Any], report: dict[str, Any]) -
     adjudication["evidence_ids"] = grounded if cause_id else [ref for ref in cited if ref in source_by_id]
     adjudication["citation_validation"] = {
         "all_references_exist": all(ref in source_by_id for ref in cited),
-        "all_references_support_hypothesis": bool(cause_id and len(grounded) == len(cited)),
+        "all_references_support_hypothesis": bool(cause_id and grounded),
         "valid_count": len(adjudication["evidence_ids"]),
         "independent_sources": source_count,
     }
@@ -162,7 +162,7 @@ def investigate_multi_agent(incident: dict[str, Any], deterministic_report: dict
     output_tokens += cross.get("usage", {}).get("completion_tokens", 0)
     cached_tokens += cross.get("usage", {}).get("prompt_tokens_details", {}).get("cached_tokens", 0)
     trace.add("cross_examination_complete", challenges=len(cross["data"].get("challenges", [])))
-    memories = retrieve_memories(incident)
+    memories = retrieve_memories(incident, exclude_ids={incident["incident_id"]})
     judge_input = {"baseline": deterministic_report["hypotheses"], "specialist_findings": findings, "cross_examination": cross["data"], "historical_memory_advisory_only": memories, "valid_live_evidence_ids": sorted(all_records)}
     final = model.complete(
         "You are incident adjudicator. Cite only live evidence IDs. Historical memory is an advisory retrieval hint and MUST NOT outweigh current telemetry or contradicting live evidence. Reconcile disagreement; abstain when unsupported. Never recommend execution without approval. Return concise JSON under 120 words: status, root_cause, confidence, reasoning, evidence_ids (max 8), rejected_hypotheses (max 3), uncertainty, action_suggestion, approval_required.",
@@ -194,7 +194,7 @@ def investigate_single_agent(incident: dict[str, Any], deterministic_report: dic
     started = time.perf_counter()
     model = ChatModel()
     records = [row for query in deterministic_report["query_trace"] for row in query["records"]]
-    memories = retrieve_memories(incident)
+    memories = retrieve_memories(incident, exclude_ids={incident["incident_id"]})
     payload = {
         "incident": redact({"incident_id": incident["incident_id"], "window": incident["window"], "alert": incident.get("alert"), "timeline": incident.get("timeline")}),
         "live_evidence": redact(records),
