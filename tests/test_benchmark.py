@@ -3,12 +3,13 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 
 from opspilot.cli import load_incidents
 from opspilot.memory import retrieve_memories
 from opspilot.investigator import investigate
 from scripts.generate_benchmark import generate
-from scripts.evaluate_agents import normalize_cause, summarize
+from scripts.evaluate_agents import BudgetLimitExceeded, RunBudget, normalize_cause, summarize
 
 
 class BenchmarkTests(unittest.TestCase):
@@ -40,6 +41,38 @@ class BenchmarkTests(unittest.TestCase):
                               "prediction": {"root_cause": None, "evidence_ids": []}, "success": True,
                               "duration_ms": 1, "trace": {}, "model": {"calls": 0}}])
         self.assertEqual(0.0, summary["estimated_cost_usd"])
+
+    def test_summary_scores_top3_and_multiple_active_causes(self):
+        case = {"truth": {"decidable": True, "category": "config_error", "primary_causes": ["config_error"],
+                           "active_causes": ["config_error", "pool_exhaustion"], "gold_evidence_ids": ["c1", "p1"]},
+                "prediction": {"root_cause": "config_error", "ranked_causes": ["config_error", "pool_exhaustion"],
+                               "evidence_ids": ["c1", "p1"], "citation_validation": {"all_references_support_hypothesis": True}},
+                "available_evidence_ids": ["c1", "p1"], "success": True, "duration_ms": 1, "trace": {}, "model": {"calls": 0}}
+        summary = summarize([case])
+        self.assertEqual(1.0, summary["primary_cause_top3_accuracy"]["rate"])
+        self.assertEqual(1.0, summary["active_cause_recall_at_3"]["rate"])
+        self.assertEqual(1.0, summary["active_cause_exact_set"]["rate"])
+
+    def test_run_budget_logs_peak_cost_and_blocks_before_overrun(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost.jsonl"
+            budget = RunBudget(0.01, ledger, "deepseek-v4-flash")
+            instance = SimpleNamespace(max_tokens=512)
+            result = budget.call(lambda *_args: {"usage": {"prompt_tokens": 1000, "completion_tokens": 100}},
+                                 instance, "system", "user", 512)
+            self.assertEqual(1000, result["usage"]["prompt_tokens"])
+            self.assertGreater(budget.spent_usd, 0)
+            self.assertIn("completed_request", ledger.read_text(encoding="utf-8"))
+
+            blocked = RunBudget(0.00001, ledger, "deepseek-v4-flash")
+            called = False
+            def operation(*_args):
+                nonlocal called
+                called = True
+                return {"usage": {}}
+            with self.assertRaises(BudgetLimitExceeded):
+                blocked.call(operation, instance, "long system " * 100, "long user " * 100, 512)
+            self.assertFalse(called)
 
     def test_frozen_stratified_splits_and_regeneration(self):
         root = Path("data/benchmark")

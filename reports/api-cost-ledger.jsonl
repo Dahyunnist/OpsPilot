@@ -1,0 +1,7 @@
+{"kind":"historical_report_estimate","source":"reports/agent-evaluation.json","model":"deepseek-v4-flash","estimated_usd":0.05084208,"scope":"saved comparison report; not account billing data"}
+{"kind":"historical_report_estimate","source":"reports/complex-agent-evaluation.json","model":"deepseek-v4-flash","estimated_usd":0.03337545,"scope":"saved comparison report; not account billing data"}
+{"kind":"historical_report_estimate","source":"reports/complex-validation-evaluation.json","model":"deepseek-v4-flash","estimated_usd":0.0343671,"scope":"saved comparison report; not account billing data"}
+{"kind":"historical_report_estimate","source":"reports/reward-training.json","model":"deepseek-v4-flash","estimated_usd":0.01081382,"scope":"saved training report; not account billing data"}
+{"kind":"historical_documented_estimate","source":"docs/learning/stage-S8.md","model":"deepseek-v4-flash","estimated_usd":0.0453,"scope":"rounded documented estimate; not account billing data"}
+{"kind":"historical_documented_estimate","source":"docs/learning/stage-S12.md","model":"deepseek-v4-flash","estimated_usd":0.03056345,"scope":"clean-environment rerun estimate; not account billing data"}
+{"kind":"scope_note","scope":"Repository has no provider billing export. Historical estimates can overlap. Shared-account balance is unavailable here. New run capped at USD 0.50 using peak-rate request reservations."}

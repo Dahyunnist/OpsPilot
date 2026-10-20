@@ -10,6 +10,7 @@ import os
 import re
 import statistics
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,59 @@ CAUSES = {
     "config_error": "deployment introduced invalid order service configuration",
     "downstream_timeout": "downstream service exceeded request timeout",
 }
+
+
+class BudgetLimitExceeded(RuntimeError):
+    pass
+
+
+class RunBudget:
+    """Track request charges and stop before a request can exceed the run cap."""
+
+    def __init__(self, limit_usd: float, ledger_path: Path, model: str) -> None:
+        self.limit_usd = limit_usd
+        self.ledger_path = ledger_path
+        self.model = model
+        self.spent_usd = 0.0
+        self.reserved_usd = 0.0
+        self.lock = threading.Lock()
+        self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _append(self, record: dict[str, Any]) -> None:
+        with self.ledger_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+
+    def call(self, operation: Any, instance: Any, system: str, user: str, token_budget: int) -> dict[str, Any]:
+        max_output = min(instance.max_tokens, max(64, token_budget))
+        input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
+        reserve = (input_reserve * 0.30 + max_output * 1.20) / 1_000_000
+        with self.lock:
+            if self.spent_usd + self.reserved_usd + reserve > self.limit_usd:
+                raise BudgetLimitExceeded(f"峰值费率预留将超过本轮上限 ${self.limit_usd:.2f}")
+            self.reserved_usd += reserve
+        try:
+            result = operation(instance, system, user, token_budget)
+        except Exception as exc:
+            with self.lock:
+                self.reserved_usd -= reserve
+                self.spent_usd += reserve
+                self._append({"kind": "failed_request_worst_case", "model": self.model, "reserve_usd": round(reserve, 8),
+                              "run_peak_estimate_usd": round(self.spent_usd, 8), "limit_usd": self.limit_usd,
+                              "error_type": type(exc).__name__})
+            raise
+        usage = result.get("usage", {})
+        actual = estimate_cost(self.model, usage.get("prompt_tokens", 0),
+            usage.get("prompt_tokens_details", {}).get("cached_tokens", 0), usage.get("completion_tokens", 0),
+            {"input_cache_hit_per_million": 0.006, "input_cache_miss_per_million": 0.30, "output_per_million": 1.20}) or 0.0
+        with self.lock:
+            self.reserved_usd -= reserve
+            self.spent_usd += actual
+            self._append({"kind": "completed_request", "model": self.model,
+                "input_tokens": usage.get("prompt_tokens", 0), "cached_input_tokens": usage.get("prompt_tokens_details", {}).get("cached_tokens", 0),
+                "output_tokens": usage.get("completion_tokens", 0), "reserve_usd": round(reserve, 8),
+                "peak_rate_estimate_usd": round(actual, 8), "run_peak_estimate_usd": round(self.spent_usd, 8),
+                "limit_usd": self.limit_usd})
+        return result
 
 
 def normalize_cause(value: Any) -> str | None:
@@ -71,11 +125,23 @@ def estimate_cost(model: str | None, input_tokens: int, cached_tokens: int, outp
 
 
 def _extract(adjudication: dict[str, Any]) -> dict[str, Any]:
+    root_cause = normalize_cause(adjudication.get("root_cause"))
+    ranked = []
+    ranked_evidence = []
+    for item in adjudication.get("ranked_causes", []) if isinstance(adjudication.get("ranked_causes", []), list) else []:
+        value = normalize_cause(item.get("id", item.get("cause")) if isinstance(item, dict) else item)
+        if value and value not in ranked:
+            ranked.append(value)
+        if isinstance(item, dict) and isinstance(item.get("evidence_ids"), list):
+            ranked_evidence.extend(ref for ref in item["evidence_ids"] if isinstance(ref, str) and ref not in ranked_evidence)
+    if root_cause and root_cause not in ranked:
+        ranked.insert(0, root_cause)
     return {
         "status": adjudication.get("status"),
-        "root_cause": normalize_cause(adjudication.get("root_cause")),
+        "root_cause": root_cause,
+        "ranked_causes": ranked[:3],
         "raw_root_cause": adjudication.get("root_cause"),
-        "evidence_ids": adjudication.get("evidence_ids", []),
+        "evidence_ids": ranked_evidence or adjudication.get("evidence_ids", []),
         "citation_validation": adjudication.get("citation_validation", {}),
         "action_suggestion": adjudication.get("action_suggestion"),
         "approval_required": adjudication.get("approval_required"),
@@ -126,13 +192,17 @@ def run_rules(incident: dict[str, Any], report: dict[str, Any]) -> dict[str, Any
 
 
 def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "single-agent", "multi-agent"),
-             benchmark_dir: Path | None = None, split: str = "test") -> dict[str, Any]:
+             benchmark_dir: Path | None = None, split: str = "test", max_cost_usd: float | None = None,
+             cost_ledger: Path | None = None) -> dict[str, Any]:
     if limit is not None and limit < 1:
         raise ValueError("--limit must be at least 1")
     if split not in {"validation", "test"}:
         raise ValueError("--split must be validation or test")
     load_project_env()
     configured_model = os.getenv("LLM_MODEL")
+    if max_cost_usd is not None and (max_cost_usd <= 0 or not configured_model or "deepseek" not in configured_model.lower()):
+        raise ValueError("a positive --max-cost-usd requires a configured DeepSeek model")
+    run_budget = RunBudget(max_cost_usd, cost_ledger or ROOT / "reports" / "api-cost-ledger.jsonl", configured_model) if max_cost_usd is not None else None
     rates = active_deepseek_rates() if configured_model and "deepseek" in configured_model.lower() else None
     data_dir = benchmark_dir or ROOT / "data" / "benchmark"
     incidents = load_incidents(data_dir / f"{split}.jsonl")
@@ -148,6 +218,7 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         raise ValueError("blind test case IDs and labels do not match")
     ids = sorted(incidents)[:limit] if limit else sorted(incidents)
     cases: dict[str, list[dict[str, Any]]] = {strategy: [] for strategy in strategies}
+    budget_stop_reason = None
     for incident_id in ids:
         incident = incidents[incident_id]
         baseline = investigate(incident, query_budget=8)
@@ -159,7 +230,7 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
             def tracked_complete(instance: Any, system: str, user: str, token_budget: int) -> dict[str, Any]:
                 measured["calls"] += 1
                 try:
-                    result = original_complete(instance, system, user, token_budget)
+                    result = run_budget.call(original_complete, instance, system, user, token_budget) if run_budget else original_complete(instance, system, user, token_budget)
                 except Exception:
                     measured["failures"] += 1
                     raise
@@ -196,6 +267,11 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
                                                   "output_tokens": measured["output_tokens"], "spent_tokens": measured["input_tokens"] + measured["output_tokens"],
                                                   "duration_ms": round((time.perf_counter() - started) * 1000, 1), "failures": max(1, measured["failures"])},
                                         "model": {"name": configured_model, "calls": measured["calls"]}})
+                if isinstance(exc, BudgetLimitExceeded):
+                    budget_stop_reason = str(exc)
+                    break
+        if budget_stop_reason:
+            break
     summaries = {strategy: summarize(items, rates) for strategy, items in cases.items()}
     result = {
         "evaluation": manifest.get("benchmark_id", "frozen_synthetic_blind_test_v1"),
@@ -205,6 +281,10 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         "strategies": list(strategies), "configured_model": configured_model if any(item != "rules" for item in strategies) else None,
         "rates": rates,
         "summaries": summaries, "cases": cases,
+        "run_budget": {"limit_usd": max_cost_usd,
+                       "peak_rate_estimate_usd": round(run_budget.spent_usd, 8) if run_budget else None,
+                       "stopped_before_overrun": bool(budget_stop_reason), "stop_reason": budget_stop_reason,
+                       "ledger": str(run_budget.ledger_path) if run_budget else None},
         "protocol_fault_probes": protocol_fault_probes(),
         "notes": ["All data are synthetic and template-derived.", "No model result is used to train or tune on this run.", "Estimated costs use published DeepSeek peak/off-peak rates; other providers return null."],
     }
@@ -215,6 +295,22 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
     decided = [case for case in cases if case["truth"]["decidable"]]
     unknown = [case for case in cases if not case["truth"]["decidable"]]
     correct = sum(case.get("prediction", {}).get("root_cause") == case["truth"]["category"] for case in decided)
+    top_k_hits = 0
+    active_recalled = 0
+    active_total = 0
+    active_exact = 0
+    for case in decided:
+        truth = case["truth"]
+        primary = set(truth.get("primary_causes", [truth["category"]]))
+        active = set(truth.get("active_causes", truth.get("primary_causes", [truth["category"]])))
+        ranked = case.get("prediction", {}).get("ranked_causes", [])
+        if not ranked and case.get("prediction", {}).get("root_cause"):
+            ranked = [case["prediction"]["root_cause"]]
+        top = ranked[:3]
+        top_k_hits += bool(primary.intersection(top))
+        active_recalled += len(active.intersection(top))
+        active_total += len(active)
+        active_exact += set(top[:len(active)]) == active
     abstained = sum(case.get("prediction", {}).get("root_cause") is None for case in unknown)
     gold = {item for case in decided for item in case["truth"].get("gold_evidence_ids", [])}
     cited = {item for case in decided for item in case.get("prediction", {}).get("evidence_ids", [])}
@@ -236,6 +332,9 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
     p95 = ordered[min(len(ordered) - 1, math.ceil(len(ordered) * 0.95) - 1)] if ordered else None
     return {
         "root_cause_accuracy": {"correct": correct, "total_decidable": len(decided), "rate": correct / len(decided) if decided else None},
+        "primary_cause_top3_accuracy": {"correct": top_k_hits, "total_decidable": len(decided), "rate": top_k_hits / len(decided) if decided else None},
+        "active_cause_recall_at_3": {"recalled": active_recalled, "total_active_causes": active_total, "rate": active_recalled / active_total if active_total else None},
+        "active_cause_exact_set": {"correct": active_exact, "total_decidable": len(decided), "rate": active_exact / len(decided) if decided else None},
         "insufficient_evidence_recall": {"correct_abstentions": abstained, "total_insufficient": len(unknown), "rate": abstained / len(unknown) if unknown else None},
         "false_certainty": sum(case.get("prediction", {}).get("root_cause") is not None for case in unknown),
         "citation_existence_cases": {"valid": valid, "total_decidable": len(decided)},
@@ -263,8 +362,8 @@ def markdown_report(result: dict[str, Any]) -> str:
     lines = [
         "# OpsPilot 冻结集策略盲测评估", "",
         f"数据集 `{result['evaluation']}`；冻结测试集 {result['cases_evaluated']}/{result['test_cases_total']} 例；合成数据={result['manifest'].get('synthetic', True)}。运行时间：{result['created_at_utc']}。", "",
-        "| 方法 | 根因准确率 | 弃答召回 | 错误确定 | 金证据 P/R | 引用存在 | 平均延迟 | P95 | 输入/输出 tokens | 估算费用 USD |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 方法 | 根因准确率 | Top-3 | 多根因召回 | 弃答召回 | 错误确定 | 金证据 P/R | 引用存在 | 平均延迟 | P95 | 输入/输出 tokens | 估算费用 USD |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for strategy, item in result["summaries"].items():
         accuracy = item["root_cause_accuracy"]
@@ -273,7 +372,9 @@ def markdown_report(result: dict[str, Any]) -> str:
         latency, tokens = item["latency_ms"], item["token_usage"]
         precision_text = f"{precision:.1%}" if precision is not None else "N/A"
         recall_text = f"{recall:.1%}" if recall is not None else "N/A"
-        lines.append(f"| {strategy} | {accuracy['correct']}/{accuracy['total_decidable']} ({accuracy['rate']:.1%}) | {abstain['correct_abstentions']}/{abstain['total_insufficient']} ({abstain['rate']:.1%}) | {item['false_certainty']} | {precision_text}/{recall_text} | {item['citation_existence_cases']['valid']}/{item['citation_existence_cases']['total_decidable']} | {latency['mean']} ms | {latency['p95']} ms | {tokens['input']}/{tokens['output']} | {item['estimated_cost_usd']} |")
+        top3 = item["primary_cause_top3_accuracy"]
+        active = item["active_cause_recall_at_3"]
+        lines.append(f"| {strategy} | {accuracy['correct']}/{accuracy['total_decidable']} ({accuracy['rate']:.1%}) | {top3['correct']}/{top3['total_decidable']} ({top3['rate']:.1%}) | {active['recalled']}/{active['total_active_causes']} ({active['rate']:.1%}) | {abstain['correct_abstentions']}/{abstain['total_insufficient']} ({abstain['rate']:.1%}) | {item['false_certainty']} | {precision_text}/{recall_text} | {item['citation_existence_cases']['valid']}/{item['citation_existence_cases']['total_decidable']} | {latency['mean']} ms | {latency['p95']} ms | {tokens['input']}/{tokens['output']} | {item['estimated_cost_usd']} |")
     probe = result["protocol_fault_probes"]
     safety = {name: item["action_safety"] for name, item in result["summaries"].items()}
     lines.extend(["", f"A2A 故障探针：重试恢复 `{probe['transient_retry_recovered']}`；重复消息幂等 `{probe['duplicate_message_idempotent']}`；截止后取消 `{probe['deadline_cancellation']}`。", "",
@@ -291,8 +392,11 @@ def main() -> int:
     parser.add_argument("--benchmark-dir", type=Path, default=ROOT / "data" / "benchmark")
     parser.add_argument("--split", choices=("validation", "test"), default="test")
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "agent-evaluation.json")
+    parser.add_argument("--max-cost-usd", type=float)
+    parser.add_argument("--cost-ledger", type=Path, default=ROOT / "reports" / "api-cost-ledger.jsonl")
     args = parser.parse_args()
-    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")), args.benchmark_dir, args.split)
+    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")), args.benchmark_dir, args.split,
+                      args.max_cost_usd, args.cost_ledger)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.output.with_suffix(".md").write_text(markdown_report(result), encoding="utf-8")
