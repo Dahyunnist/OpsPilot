@@ -73,11 +73,13 @@ python -m venv .venv
 - `data/incidents.jsonl`：调查输入与合成原始观测。
 - `data/labels.json`：根因真值及证据充分性标签。
 - `data/benchmark/`：48 个冻结合成事故及分开的 train/validation/test 标签；test 标签不进入 Agent 上下文。
+- `data/complex-benchmark/`：独立的 64 例跨服务冲突集；与旧 benchmark 分开冻结，含噪声、缺证与不可判定样本。
 - `opspilot/memory.py`：仅从 train 案例检索历史提示，实时遥测始终优先。
 - `scripts/evaluate_agents.py`、`reports/agent-evaluation.json`、`reports/agent-evaluation.md`：规则、单 Agent、多 Agent 盲测、引用、安全、延迟、token、费用和故障恢复报告。
 - `scripts/train_routing_policy.py`、`scripts/evaluate_routing_policy.py`：从轨迹奖励学习上下文路由策略并做独立评估。
 - `reports/reward-training.json`、`reports/reward-evaluation.json`、`reports/reward-evaluation.md`：路由 policy 的训练轨迹和未更新留出评估。
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
+- `scripts/generate_complex_benchmark.py`：复杂事故集独立生成器，不覆盖旧真值。
 - `docs/learning/stage-S0.md`：S0 技术讲解、生成验证结果、亲手实验和面试问题。
 - `docs/learning/stage-S1.md`：S1 技术讲解、调查实测、亲手实验和面试问题。
 - `docs/learning/stage-S2.md`：S2 跨信号调查、反证和实测记录。
@@ -86,6 +88,7 @@ python -m venv .venv
 - `docs/learning/stage-S5.md`、`docs/learning/stage-S6.md`、`docs/learning/stage-S7.md`：多 Agent、A2A 生命周期、盲测与历史记忆阶段说明。
 - `docs/learning/stage-S8.md`：冻结盲测对比、模型成本与结果边界。
 - `docs/learning/stage-S9.md`：trajectory reward 与 contextual-bandit policy 学习边界。
+- `docs/learning/stage-S10.md`：复杂冲突集来源、合成边界、冻结哈希与盲测设计。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

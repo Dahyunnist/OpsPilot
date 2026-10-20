@@ -1,0 +1,24 @@
+{
+  "benchmark_id": "opspilot_complex_conflicts_v1",
+  "seed": 20261029,
+  "synthetic": true,
+  "total_cases": 64,
+  "splits": {
+    "train": {
+      "cases": 32,
+      "data_sha256": "778b53c0123071ac883b04922656727be6f919293aba7bfb7577d944314c305e",
+      "labels_sha256": "ca0b977da8c5f092c400994e6856f8052a4076e378f93f0bc83bc498761a8a28"
+    },
+    "validation": {
+      "cases": 16,
+      "data_sha256": "b0268b362537f0102c2ecc6e2302837431ac74d3c396a71cd3685e5bfad08d2c",
+      "labels_sha256": "87a022c8c0c5d8ad2fc84dc60f4825d7aebdc3debd2654910d32b891572c2ef0"
+    },
+    "test": {
+      "cases": 16,
+      "data_sha256": "7c6b74e0016fca92005e72c78fb531adfb53901e96de6952fbad60b22e0e2017",
+      "labels_sha256": "067010ecfbbd4108fdd5e41faeac8f2d156b6f52dd494e2e619c2a51d769ec9c"
+    }
+  },
+  "generation_policy": "Freeze incidents and labels before any model run; labels stored outside incident inputs."
+}

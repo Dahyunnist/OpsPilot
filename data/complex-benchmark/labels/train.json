@@ -1,0 +1,407 @@
+{
+  "labels": [
+    {
+      "incident_id": "cx-config-error-01",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-02",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-02-d1",
+        "cx-config-error-02-l1",
+        "cx-config-error-02-m2",
+        "cx-config-error-02-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-02-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-03",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-03-d1",
+        "cx-config-error-03-l1",
+        "cx-config-error-03-m2",
+        "cx-config-error-03-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-03-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-04",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-05",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-05-d1",
+        "cx-config-error-05-l1",
+        "cx-config-error-05-m2",
+        "cx-config-error-05-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-05-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-06",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-06-d1",
+        "cx-config-error-06-l1",
+        "cx-config-error-06-m2",
+        "cx-config-error-06-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-06-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-07",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-08",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-08-d1",
+        "cx-config-error-08-l1",
+        "cx-config-error-08-m2",
+        "cx-config-error-08-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-08-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-01",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-02",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-02-l1",
+        "cx-downstream-timeout-02-m1",
+        "cx-downstream-timeout-02-m2",
+        "cx-downstream-timeout-02-t-parent",
+        "cx-downstream-timeout-02-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-02-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-03",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-03-l1",
+        "cx-downstream-timeout-03-m1",
+        "cx-downstream-timeout-03-m2",
+        "cx-downstream-timeout-03-t-parent",
+        "cx-downstream-timeout-03-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-03-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-04",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-05",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-05-l1",
+        "cx-downstream-timeout-05-m1",
+        "cx-downstream-timeout-05-m2",
+        "cx-downstream-timeout-05-t-parent",
+        "cx-downstream-timeout-05-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-05-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-06",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-06-l1",
+        "cx-downstream-timeout-06-m1",
+        "cx-downstream-timeout-06-m2",
+        "cx-downstream-timeout-06-t-parent",
+        "cx-downstream-timeout-06-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-06-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-07",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-08",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-08-l1",
+        "cx-downstream-timeout-08-m1",
+        "cx-downstream-timeout-08-m2",
+        "cx-downstream-timeout-08-t-parent",
+        "cx-downstream-timeout-08-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-08-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-01",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-02",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-03",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-04",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-05",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-06",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-07",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-08",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-01",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-02",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-02-l1",
+        "cx-pool-exhaustion-02-m1",
+        "cx-pool-exhaustion-02-m2",
+        "cx-pool-exhaustion-02-t-parent",
+        "cx-pool-exhaustion-02-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-02-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-03",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-03-l1",
+        "cx-pool-exhaustion-03-m1",
+        "cx-pool-exhaustion-03-m2",
+        "cx-pool-exhaustion-03-t-parent",
+        "cx-pool-exhaustion-03-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-03-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-04",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-05",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-05-l1",
+        "cx-pool-exhaustion-05-m1",
+        "cx-pool-exhaustion-05-m2",
+        "cx-pool-exhaustion-05-t-parent",
+        "cx-pool-exhaustion-05-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-05-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-06",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-06-l1",
+        "cx-pool-exhaustion-06-m1",
+        "cx-pool-exhaustion-06-m2",
+        "cx-pool-exhaustion-06-t-parent",
+        "cx-pool-exhaustion-06-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-06-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-07",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-08",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-08-l1",
+        "cx-pool-exhaustion-08-m1",
+        "cx-pool-exhaustion-08-m2",
+        "cx-pool-exhaustion-08-t-parent",
+        "cx-pool-exhaustion-08-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-08-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    }
+  ]
+}

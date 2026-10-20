@@ -1,0 +1,194 @@
+{
+  "labels": [
+    {
+      "incident_id": "cx-config-error-13",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-14",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-14-d1",
+        "cx-config-error-14-l1",
+        "cx-config-error-14-m2",
+        "cx-config-error-14-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-14-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-15",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-config-error-15-d1",
+        "cx-config-error-15-l1",
+        "cx-config-error-15-m2",
+        "cx-config-error-15-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-config-error-15-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-config-error-16",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-13",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-14",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-14-l1",
+        "cx-downstream-timeout-14-m1",
+        "cx-downstream-timeout-14-m2",
+        "cx-downstream-timeout-14-t-parent",
+        "cx-downstream-timeout-14-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-14-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-15",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-downstream-timeout-15-l1",
+        "cx-downstream-timeout-15-m1",
+        "cx-downstream-timeout-15-m2",
+        "cx-downstream-timeout-15-t-parent",
+        "cx-downstream-timeout-15-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-downstream-timeout-15-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-16",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-13",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-14",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-15",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-16",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-13",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-14",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-14-l1",
+        "cx-pool-exhaustion-14-m1",
+        "cx-pool-exhaustion-14-m2",
+        "cx-pool-exhaustion-14-t-parent",
+        "cx-pool-exhaustion-14-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-14-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-15",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "gold_evidence_ids": [
+        "cx-pool-exhaustion-15-l1",
+        "cx-pool-exhaustion-15-m1",
+        "cx-pool-exhaustion-15-m2",
+        "cx-pool-exhaustion-15-t-parent",
+        "cx-pool-exhaustion-15-t1"
+      ],
+      "causal_trace_ids": [
+        "trace-cx-pool-exhaustion-15-causal"
+      ],
+      "challenge": "cross_source_conflict_async_handoff"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-16",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "gold_evidence_ids": [],
+      "causal_trace_ids": [],
+      "challenge": "cross_source_conflict_async_handoff"
+    }
+  ]
+}
