@@ -63,9 +63,9 @@ python -m venv .venv
 ## 测试
 
 ```powershell
-\.\scripts\setup.ps1
-\.venv\Scripts\python.exe -m unittest discover -s tests -v
-\.venv\Scripts\python.exe scripts/evaluate.py
+.\scripts\setup.ps1
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe scripts/evaluate.py
 ```
 
 ## 目录
@@ -105,6 +105,6 @@ python -m venv .venv
 复杂集互通测试需额外安装官方 A2A SDK：
 
 ```powershell
-python -m pip install -r requirements-a2a-interop.txt
-python -m unittest tests.test_a2a_sdk_interop -v
+.\.venv\Scripts\python.exe -m pip install -r requirements-a2a-interop.txt
+.\.venv\Scripts\python.exe -m unittest tests.test_a2a_sdk_interop -v
 ```
