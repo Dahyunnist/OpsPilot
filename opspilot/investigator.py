@@ -212,15 +212,24 @@ def _load_state(path: Path, incident: dict[str, Any]) -> dict[str, Any]:
     if not path.exists():
         return {"queries": []}
     state = json.loads(path.read_text(encoding="utf-8"))
-    if state.get("incident_id") != incident["incident_id"] or state.get("window") != incident["window"]:
-        raise ValueError("state file belongs to a different incident or time window")
+    if (state.get("incident_id") != incident["incident_id"] or state.get("window") != incident["window"]
+            or state.get("snapshot_fingerprint") != _snapshot_fingerprint(incident)):
+        raise ValueError("state file belongs to a different incident, time window, or telemetry snapshot")
     return state
+
+
+def _snapshot_fingerprint(incident: dict[str, Any]) -> str:
+    source = {key: incident.get(key) for key in ("incident_id", "window", "source_status", "signals")}
+    payload = json.dumps(source, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _save_state(path: Path, incident: dict[str, Any], queries: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps({"incident_id": incident["incident_id"], "window": incident["window"], "queries": queries}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.write_text(json.dumps({"incident_id": incident["incident_id"], "window": incident["window"],
+                                     "snapshot_fingerprint": _snapshot_fingerprint(incident),
+                                     "queries": queries}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
 
 

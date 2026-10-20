@@ -33,6 +33,15 @@ class ReliabilityTests(unittest.TestCase):
             self.assertEqual(4, len(second["query_trace"]))
             self.assertEqual("determined", second["status"])
 
+    def test_resume_rejects_changed_telemetry_snapshot(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state_path = Path(temporary) / "incident.json"
+            incident = json.loads(json.dumps(self.incidents["pool-01"]))
+            investigate(incident, query_budget=1, state_path=state_path)
+            incident["signals"]["metrics"][0]["attributes"]["value"] += 1
+            with self.assertRaisesRegex(ValueError, "telemetry snapshot"):
+                investigate(incident, query_budget=8, state_path=state_path)
+
     def test_timeout_duplicate_and_out_of_order_are_handled(self):
         incident = self.incidents["downstream-01"]
         timeout_report = investigate(incident, fault_injections={"logs": "timeout"})
