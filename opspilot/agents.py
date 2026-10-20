@@ -11,6 +11,7 @@ from typing import Any
 from .a2a import A2AClient, A2AServer
 from .agent_protocol import AgentMessage, AgentTrace, EvidenceRef
 from .model_client import ChatModel, ModelError, redact
+from .memory import retrieve_memories
 
 SOURCE_AGENTS = {
     "metrics": ("metrics_expert", "metrics"),
@@ -112,9 +113,10 @@ def investigate_multi_agent(incident: dict[str, Any], deterministic_report: dict
     trace.events.extend({"event": "a2a_protocol", **event} for event in a2a_trace)
     trace.spent_tokens += cross.get("usage", {}).get("total_tokens", 0)
     trace.add("cross_examination_complete", challenges=len(cross["data"].get("challenges", [])))
-    judge_input = {"baseline": deterministic_report["hypotheses"], "specialist_findings": findings, "cross_examination": cross["data"], "valid_evidence_ids": sorted(all_records)}
+    memories = retrieve_memories(incident)
+    judge_input = {"baseline": deterministic_report["hypotheses"], "specialist_findings": findings, "cross_examination": cross["data"], "historical_memory_advisory_only": memories, "valid_live_evidence_ids": sorted(all_records)}
     final = model.complete(
-        "You are incident adjudicator. Use only cited IDs. Reconcile disagreement; abstain when unsupported. Never recommend execution without approval. Return concise JSON under 120 words: status, root_cause, confidence, reasoning, evidence_ids (max 8), rejected_hypotheses (max 3), uncertainty, action_suggestion, approval_required.",
+        "You are incident adjudicator. Cite only live evidence IDs. Historical memory is an advisory retrieval hint and MUST NOT outweigh current telemetry or contradicting live evidence. Reconcile disagreement; abstain when unsupported. Never recommend execution without approval. Return concise JSON under 120 words: status, root_cause, confidence, reasoning, evidence_ids (max 8), rejected_hypotheses (max 3), uncertainty, action_suggestion, approval_required.",
         json.dumps(judge_input, ensure_ascii=False), agent_budget,
     )
     trace.spent_tokens += final["usage"].get("total_tokens", 0)
@@ -130,6 +132,7 @@ def investigate_multi_agent(incident: dict[str, Any], deterministic_report: dict
         "baseline": deterministic_report,
         "messages": [message.to_dict() for message, _ in results],
         "cross_examination": cross["data"],
+        "historical_memories": memories,
         "adjudication": adjudication,
         "trace": {"events": trace.events, "spent_tokens": trace.spent_tokens, "budget_tokens": token_budget, "failures": trace.retries},
         "model": {"name": model.model, "calls": len(results) + 2},

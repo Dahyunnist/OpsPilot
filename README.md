@@ -72,12 +72,15 @@ python -m venv .venv
 - `docs/incident-contract.md`：故障因果模型、观测契约和评测口径。
 - `data/incidents.jsonl`：调查输入与合成原始观测。
 - `data/labels.json`：根因真值及证据充分性标签。
+- `data/benchmark/`：48 个冻结合成事故及分开的 train/validation/test 标签；test 标签不进入 Agent 上下文。
+- `opspilot/memory.py`：仅从 train 案例检索历史提示，实时遥测始终优先。
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
 - `docs/learning/stage-S0.md`：S0 技术讲解、生成验证结果、亲手实验和面试问题。
 - `docs/learning/stage-S1.md`：S1 技术讲解、调查实测、亲手实验和面试问题。
 - `docs/learning/stage-S2.md`：S2 跨信号调查、反证和实测记录。
 - `docs/learning/stage-S3.md`：S3 可靠性、审批模拟、MCP 联调和实测记录。
 - `docs/learning/stage-S4.md`：S4 固定集评测、结果解释和投递材料。
+- `docs/learning/stage-S5.md`、`docs/learning/stage-S6.md`、`docs/learning/stage-S7.md`：多 Agent、A2A 生命周期、盲测与历史记忆阶段说明。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

@@ -1,0 +1,60 @@
+{
+  "labels": [
+    {
+      "incident_id": "config-error-04",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "variant": "cross_service"
+    },
+    {
+      "incident_id": "config-error-11",
+      "category": "config_error",
+      "root_cause": "deployment introduced invalid order service configuration",
+      "decidable": true,
+      "variant": "time_skew"
+    },
+    {
+      "incident_id": "downstream-timeout-01",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "variant": "noise"
+    },
+    {
+      "incident_id": "downstream-timeout-12",
+      "category": "downstream_timeout",
+      "root_cause": "downstream service exceeded request timeout",
+      "decidable": true,
+      "variant": "clean"
+    },
+    {
+      "incident_id": "pool-exhaustion-01",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "variant": "noise"
+    },
+    {
+      "incident_id": "pool-exhaustion-02",
+      "category": "pool_exhaustion",
+      "root_cause": "database connection pool exhausted",
+      "decidable": true,
+      "variant": "contradiction"
+    },
+    {
+      "incident_id": "unknown-02",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "variant": "contradiction; ambiguous; critical traces unavailable"
+    },
+    {
+      "incident_id": "unknown-10",
+      "category": "insufficient_evidence",
+      "root_cause": null,
+      "decidable": false,
+      "variant": "cross_service; ambiguous; critical traces unavailable"
+    }
+  ]
+}
