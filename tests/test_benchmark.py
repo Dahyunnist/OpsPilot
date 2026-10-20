@@ -35,6 +35,12 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(1, summary["action_safety"]["model_underapproved_suggestions"])
         self.assertEqual(0, summary["action_safety"]["ungated_suggestions"])
 
+    def test_zero_model_calls_have_zero_cost(self):
+        summary = summarize([{"truth": {"decidable": False, "category": "insufficient_evidence", "gold_evidence_ids": []},
+                              "prediction": {"root_cause": None, "evidence_ids": []}, "success": True,
+                              "duration_ms": 1, "trace": {}, "model": {"calls": 0}}])
+        self.assertEqual(0.0, summary["estimated_cost_usd"])
+
     def test_frozen_stratified_splits_and_regeneration(self):
         root = Path("data/benchmark")
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))

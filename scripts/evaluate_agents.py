@@ -126,20 +126,22 @@ def run_rules(incident: dict[str, Any], report: dict[str, Any]) -> dict[str, Any
 
 
 def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "single-agent", "multi-agent"),
-             benchmark_dir: Path | None = None) -> dict[str, Any]:
+             benchmark_dir: Path | None = None, split: str = "test") -> dict[str, Any]:
     if limit is not None and limit < 1:
         raise ValueError("--limit must be at least 1")
+    if split not in {"validation", "test"}:
+        raise ValueError("--split must be validation or test")
     load_project_env()
     configured_model = os.getenv("LLM_MODEL")
     rates = active_deepseek_rates() if configured_model and "deepseek" in configured_model.lower() else None
     data_dir = benchmark_dir or ROOT / "data" / "benchmark"
-    incidents = load_incidents(data_dir / "test.jsonl")
-    labels = json.loads((data_dir / "labels" / "test.json").read_text(encoding="utf-8"))["labels"]
+    incidents = load_incidents(data_dir / f"{split}.jsonl")
+    labels = json.loads((data_dir / "labels" / f"{split}.json").read_text(encoding="utf-8"))["labels"]
     label_by_id = {item["incident_id"]: item for item in labels}
     manifest = json.loads((data_dir / "manifest.json").read_text(encoding="utf-8"))
-    data_bytes = (data_dir / "test.jsonl").read_bytes()
-    label_bytes = (data_dir / "labels" / "test.json").read_bytes()
-    split_manifest = manifest["splits"]["test"]
+    data_bytes = (data_dir / f"{split}.jsonl").read_bytes()
+    label_bytes = (data_dir / "labels" / f"{split}.json").read_bytes()
+    split_manifest = manifest["splits"][split]
     if hashlib.sha256(data_bytes).hexdigest() != split_manifest["data_sha256"] or hashlib.sha256(label_bytes).hexdigest() != split_manifest["labels_sha256"]:
         raise ValueError("frozen test split hash mismatch")
     if set(incidents) != set(label_by_id):
@@ -199,7 +201,7 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         "evaluation": manifest.get("benchmark_id", "frozen_synthetic_blind_test_v1"),
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "manifest": manifest,
-        "evaluated_split": "test", "test_cases_total": len(incidents), "cases_evaluated": len(ids),
+        "evaluated_split": split, "test_cases_total": len(incidents), "cases_evaluated": len(ids),
         "strategies": list(strategies), "configured_model": configured_model if any(item != "rules" for item in strategies) else None,
         "rates": rates,
         "summaries": summaries, "cases": cases,
@@ -228,7 +230,8 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
     outputs = sum(case.get("trace", {}).get("output_tokens", 0) for case in cases)
     models = {case.get("model", {}).get("name") for case in cases if case.get("model", {}).get("name")}
     model = next(iter(models)) if len(models) == 1 else None
-    cost = estimate_cost(model, inputs, cached, outputs, rates)
+    model_calls = sum(case.get("model", {}).get("calls", 0) for case in cases)
+    cost = 0.0 if model_calls == 0 else estimate_cost(model, inputs, cached, outputs, rates)
     ordered = sorted(durations)
     p95 = ordered[min(len(ordered) - 1, math.ceil(len(ordered) * 0.95) - 1)] if ordered else None
     return {
@@ -252,7 +255,7 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
         "latency_ms": {"mean": round(statistics.mean(durations), 1) if durations else None, "p95": round(p95, 1) if p95 is not None else None},
         "token_usage": {"input": inputs, "cached_input": cached, "output": outputs, "total": inputs + outputs},
         "estimated_cost_usd": cost,
-        "model_calls": sum(case.get("model", {}).get("calls", 0) for case in cases),
+        "model_calls": model_calls,
     }
 
 
@@ -286,9 +289,10 @@ def main() -> int:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--strategy", choices=("rules", "single-agent", "multi-agent"), action="append")
     parser.add_argument("--benchmark-dir", type=Path, default=ROOT / "data" / "benchmark")
+    parser.add_argument("--split", choices=("validation", "test"), default="test")
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "agent-evaluation.json")
     args = parser.parse_args()
-    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")), args.benchmark_dir)
+    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")), args.benchmark_dir, args.split)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.output.with_suffix(".md").write_text(markdown_report(result), encoding="utf-8")

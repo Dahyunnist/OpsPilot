@@ -112,6 +112,8 @@ class AgentTests(unittest.TestCase):
             client = A2AClient(server.card_url, timeout=2, poll_interval=0.02)
             with self.assertRaisesRegex(Exception, "Invalid params"):
                 client._rpc("tasks/get", [])
+            with self.assertRaisesRegex(Exception, "Invalid params"):
+                client._rpc("message/send", {"message": []})
 
     def test_a2a_deadline_cancels_late_result(self):
         with A2AServer(lambda _payload: (time.sleep(0.35) or {"late": True})) as server:

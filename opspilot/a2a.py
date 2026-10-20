@@ -123,7 +123,7 @@ class A2AServer:
                     self._send(_error(None, -32600, "Invalid Request"))
                     return
                 request_id = request.get("id")
-                if request.get("jsonrpc") != "2.0" or not isinstance(request_id, (str, int)):
+                if request.get("jsonrpc") != "2.0" or not isinstance(request_id, (str, int)) or isinstance(request_id, bool):
                     self._send(_error(request_id, -32600, "Invalid Request"))
                     return
                 method, params = request.get("method"), request.get("params", {})
@@ -132,8 +132,11 @@ class A2AServer:
                     return
                 if method == "message/send":
                     message = params.get("message", {})
+                    if not isinstance(message, dict) or not isinstance(message.get("parts", []), list):
+                        self._send(_error(request_id, -32602, "Invalid params"))
+                        return
                     parts = message.get("parts", [])
-                    data = next((part.get("data") for part in parts if part.get("kind") == "data"), None)
+                    data = next((part.get("data") for part in parts if isinstance(part, dict) and part.get("kind") == "data"), None)
                     message_id = message.get("messageId")
                     if (message.get("role") != "user" or not isinstance(message_id, str)
                             or not 1 <= len(message_id) <= 256 or not isinstance(data, dict)):

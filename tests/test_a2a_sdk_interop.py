@@ -3,15 +3,20 @@ from __future__ import annotations
 import asyncio
 import unittest
 
-from a2a.client import ClientFactory
-from a2a.client.card_resolver import A2ACardResolver
-from a2a.client.client import ClientConfig
-from a2a.types import DataPart, Message, Part, Role, Task, TaskQueryParams, TransportProtocol
-import httpx
+try:
+    from a2a.client import ClientFactory
+    from a2a.client.card_resolver import A2ACardResolver
+    from a2a.client.client import ClientConfig
+    from a2a.types import DataPart, Message, Part, Role, Task, TaskQueryParams, TransportProtocol
+    import httpx
+    A2A_SDK_AVAILABLE = True
+except ImportError:
+    A2A_SDK_AVAILABLE = False
 
 from opspilot.a2a import A2AServer
 
 
+@unittest.skipUnless(A2A_SDK_AVAILABLE, "install requirements-a2a-interop.txt")
 class OfficialSdkInteropTests(unittest.IsolatedAsyncioTestCase):
     async def test_official_sdk_client_discovers_and_uses_local_agent(self):
         def delayed_handler(payload):

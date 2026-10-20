@@ -10,9 +10,10 @@ from typing import Any
 
 from .investigator import SOURCES, investigate
 from .safety import audit_investigation, simulate_action
-from .agents import investigate_multi_agent
+from .agents import investigate_multi_agent, investigate_single_agent
 from .model_client import ModelError
 from .a2a import A2AError
+from .routing import select_route
 
 
 def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
@@ -70,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     command.add_argument("--no-state", action="store_true")
     command.add_argument("--audit-file", type=Path, default=Path("var/audit.jsonl"))
     command.add_argument("--no-audit", action="store_true")
-    command.add_argument("--mode", choices=("rules", "multi-agent"), default="rules")
+    command.add_argument("--mode", choices=("rules", "single-agent", "multi-agent", "auto"), default="rules")
     command.add_argument("--token-budget", type=int, default=12000)
     action_command = subparsers.add_parser("simulate-action", help="record an approval decision; approved actions remain simulation-only")
     action_command.add_argument("incident_id")
@@ -105,14 +106,22 @@ def main(argv: list[str] | None = None) -> int:
         )
         if not args.no_audit:
             audit_investigation(report, args.audit_file)
-        if args.mode == "multi-agent":
+        selected_mode = args.mode
+        route_reason = None
+        if args.mode == "auto":
+            selected_mode, route_reason = select_route(report)
+        if selected_mode == "single-agent":
+            report = investigate_single_agent(incidents[args.incident_id], report, token_budget=min(args.token_budget, 1200))
+        elif selected_mode == "multi-agent":
             if args.token_budget < 7200:
                 raise ValueError("--token-budget must be at least 7200")
             report = investigate_multi_agent(incidents[args.incident_id], report, args.token_budget)
+        if args.mode == "auto":
+            report["routing"] = {"requested_mode": "auto", "selected_mode": selected_mode, "reason": route_reason}
     except (OSError, ValueError, ModelError, A2AError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    output = json.dumps(report, ensure_ascii=False, indent=2) if args.format == "json" or args.mode == "multi-agent" else render_text(report)
+    output = json.dumps(report, ensure_ascii=False, indent=2) if args.format == "json" or args.mode in {"single-agent", "multi-agent", "auto"} else render_text(report)
     print(output)
     return 0
 

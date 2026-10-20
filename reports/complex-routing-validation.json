@@ -1,0 +1,331 @@
+{
+  "evaluation": "complex_validation_route_replay_v1",
+  "source_evaluation": "reports\\complex-validation-evaluation.json",
+  "split": "validation",
+  "case_count": 16,
+  "route_counts": {
+    "single-agent": 6,
+    "rules": 10
+  },
+  "routed_summary": {
+    "root_cause_accuracy": {
+      "correct": 9,
+      "total_decidable": 9,
+      "rate": 1.0
+    },
+    "insufficient_evidence_recall": {
+      "correct_abstentions": 7,
+      "total_insufficient": 7,
+      "rate": 1.0
+    },
+    "false_certainty": 0,
+    "citation_existence_cases": {
+      "valid": 9,
+      "total_decidable": 9
+    },
+    "citation_support_cases": {
+      "valid": 9,
+      "total_decidable": 9
+    },
+    "gold_evidence_precision": 0.8571428571428571,
+    "gold_evidence_recall": 0.8571428571428571,
+    "action_safety": {
+      "ungated_suggestions": 0,
+      "ungated_high_risk_actions": 0,
+      "model_underapproved_suggestions": 0,
+      "gate_overrides": 0
+    },
+    "communication": {
+      "failed_cases": 0,
+      "retries": 0,
+      "expert_handoffs": 0,
+      "a2a_sends": 0,
+      "a2a_polls": 0,
+      "completed_handoffs": 0,
+      "a2a_retries": 0,
+      "cancellations": 0
+    },
+    "latency_ms": {
+      "mean": 565.9,
+      "p95": 1832.3
+    },
+    "token_usage": {
+      "input": 9006,
+      "cached_input": 0,
+      "output": 1231,
+      "total": 10237
+    },
+    "estimated_cost_usd": 0.0020895,
+    "model_calls": 6
+  },
+  "fixed_strategy_validation_summaries": {
+    "rules": {
+      "root_cause_accuracy": {
+        "correct": 9,
+        "total_decidable": 9,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 7,
+        "total_insufficient": 7,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "citation_support_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "gold_evidence_precision": 0.6470588235294118,
+      "gold_evidence_recall": 0.7857142857142857,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 0,
+        "gate_overrides": 0
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "expert_handoffs": 0,
+        "a2a_sends": 0,
+        "a2a_polls": 0,
+        "completed_handoffs": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 0.6,
+        "p95": 1.0
+      },
+      "token_usage": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "total": 0
+      },
+      "estimated_cost_usd": 0.0,
+      "model_calls": 0
+    },
+    "single-agent": {
+      "root_cause_accuracy": {
+        "correct": 9,
+        "total_decidable": 9,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 7,
+        "total_insufficient": 7,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "citation_support_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "gold_evidence_precision": 1.0,
+      "gold_evidence_recall": 0.8571428571428571,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 7,
+        "gate_overrides": 7
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "expert_handoffs": 0,
+        "a2a_sends": 0,
+        "a2a_polls": 0,
+        "completed_handoffs": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 1545.0,
+        "p95": 1865.9
+      },
+      "token_usage": {
+        "input": 19530,
+        "cached_input": 0,
+        "output": 3321,
+        "total": 22851
+      },
+      "estimated_cost_usd": 0.0049221,
+      "model_calls": 16
+    },
+    "multi-agent": {
+      "root_cause_accuracy": {
+        "correct": 9,
+        "total_decidable": 9,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 7,
+        "total_insufficient": 7,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "citation_support_cases": {
+        "valid": 9,
+        "total_decidable": 9
+      },
+      "gold_evidence_precision": 1.0,
+      "gold_evidence_recall": 0.8571428571428571,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 4,
+        "gate_overrides": 4
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "expert_handoffs": 64,
+        "a2a_sends": 16,
+        "a2a_polls": 376,
+        "completed_handoffs": 16,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 6673.4,
+        "p95": 7744.2
+      },
+      "token_usage": {
+        "input": 102836,
+        "cached_input": 0,
+        "output": 23366,
+        "total": 126202
+      },
+      "estimated_cost_usd": 0.029445,
+      "model_calls": 96
+    }
+  },
+  "cases": [
+    {
+      "incident_id": "cx-config-error-09",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "config_error"
+    },
+    {
+      "incident_id": "cx-config-error-10",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-config-error-11",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "config_error"
+    },
+    {
+      "incident_id": "cx-config-error-12",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "config_error"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-09",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "downstream_timeout"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-10",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-downstream-timeout-11",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "downstream_timeout"
+    },
+    {
+      "incident_id": "cx-downstream-timeout-12",
+      "selected_strategy": "single-agent",
+      "reason": "多个根因各有跨源强证据；单 Agent 复核以提升引用精度",
+      "success": true,
+      "root_cause": "downstream_timeout"
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-09",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-10",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-11",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-insufficient-evidence-12",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-09",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": "pool_exhaustion"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-10",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": null
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-11",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": "pool_exhaustion"
+    },
+    {
+      "incident_id": "cx-pool-exhaustion-12",
+      "selected_strategy": "rules",
+      "reason": "没有可判定的跨源强证据冲突；保留规则结论或弃答，避免无收益模型调用",
+      "success": true,
+      "root_cause": "pool_exhaustion"
+    }
+  ],
+  "interpretation": "The route is selected from live evidence features. Replay reuses validation predictions; it makes no new model calls and does not evaluate test-time routing."
+}

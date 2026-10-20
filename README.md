@@ -1,6 +1,6 @@
 # OpsPilot：证据驱动的本地故障调查原型
 
-当前保留 S0–S4 确定性只读调查基线，并新增 S5 多 Agent 模式。`rules` 不调用模型；`multi-agent` 通过 `.env` 中的 OpenAI-compatible endpoint 调用独立模型专家。两者都不连接生产系统，也不执行修复操作。
+当前保留 S0–S4 确定性只读调查基线，并提供单 Agent、多 Agent 和成本感知自动路由。`rules` 不调用模型；`auto` 只在跨源强证据冲突时调用单 Agent；`multi-agent` 需显式指定，通过 `.env` 中的 OpenAI-compatible endpoint 调用独立模型专家。模式都不连接生产系统，也不执行修复操作。
 
 ## 生成数据
 
@@ -28,6 +28,7 @@ python -m opspilot investigate unknown-01 --format json
 python -m opspilot investigate pool-01 --missing-source logs
 python -m opspilot investigate downstream-01 --inject timeout:logs --no-state
 python -m opspilot investigate pool-01 --mode multi-agent --token-budget 12000
+python -m opspilot investigate pool-01 --mode auto
 ```
 
 调查器先查指标，再依指标选择 logs、traces、deployments。报告含假设账本、跨信号关联、支持/反证引用、查询参数、原始记录和成本。`--missing-source` 模拟来源缺失；`--inject timeout:logs`、`duplicate:traces` 或 `out_of_order:logs` 模拟故障。异常演练加 `--no-state`，避免复用之前的成功查询。单次行数上限为 1–1000，总查询预算为 1–12。
@@ -76,6 +77,8 @@ python -m venv .venv
 - `data/complex-benchmark/`：独立的 64 例跨服务冲突集；与旧 benchmark 分开冻结，含噪声、缺证与不可判定样本。
 - `opspilot/memory.py`：仅从 train 案例检索历史提示，实时遥测始终优先。
 - `scripts/evaluate_agents.py`、`reports/agent-evaluation.json`、`reports/agent-evaluation.md`：规则、单 Agent、多 Agent 盲测、引用、安全、延迟、token、费用和故障恢复报告。
+- `scripts/evaluate_agents.py --benchmark-dir data/complex-benchmark`：独立复杂集规则/单/多 Agent 对照；`scripts/evaluate_complex_routing.py`：仅用 validation 结果回放 auto 路由。
+- `reports/complex-agent-evaluation.json`、`reports/complex-validation-evaluation.json`：复杂集逐例模型输出、A2A 交接、调用数、tokens、费用与分策略统计；`reports/complex-routing-validation.json`：validation 路由回放。
 - `scripts/train_routing_policy.py`、`scripts/evaluate_routing_policy.py`：从轨迹奖励学习上下文路由策略并做独立评估。
 - `reports/reward-training.json`、`reports/reward-evaluation.json`、`reports/reward-evaluation.md`：路由 policy 的训练轨迹和未更新留出评估。
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
@@ -89,6 +92,8 @@ python -m venv .venv
 - `docs/learning/stage-S8.md`：冻结盲测对比、模型成本与结果边界。
 - `docs/learning/stage-S9.md`：trajectory reward 与 contextual-bandit policy 学习边界。
 - `docs/learning/stage-S10.md`：复杂冲突集来源、合成边界、冻结哈希与盲测设计。
+- `docs/learning/stage-S11.md`：复杂集盲测字段、官方 A2A SDK 互通和安全边界。
+- `docs/learning/stage-S12.md`：复杂集结果、成本感知自动路由与简历边界。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。
