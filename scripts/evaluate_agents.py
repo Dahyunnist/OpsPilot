@@ -283,18 +283,27 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         "summaries": summaries, "cases": cases,
         "run_budget": {"limit_usd": max_cost_usd,
                        "peak_rate_estimate_usd": round(run_budget.spent_usd, 8) if run_budget else None,
+                       "provider_rate_estimate_usd": round(sum(item["estimated_cost_usd"] or 0.0 for item in summaries.values()), 8) if run_budget else None,
                        "stopped_before_overrun": bool(budget_stop_reason), "stop_reason": budget_stop_reason,
                        "ledger": str(run_budget.ledger_path) if run_budget else None},
         "protocol_fault_probes": protocol_fault_probes(),
         "notes": ["All data are synthetic and template-derived.", "No model result is used to train or tune on this run.", "Estimated costs use published DeepSeek peak/off-peak rates; other providers return null."],
     }
+    if run_budget:
+        run_budget._append({"kind": "run_summary", "benchmark": result["evaluation"], "split": split,
+            "cases_evaluated": len(ids), "strategies": list(strategies),
+            "provider_rate_estimate_usd": result["run_budget"]["provider_rate_estimate_usd"],
+            "peak_rate_estimate_usd": result["run_budget"]["peak_rate_estimate_usd"],
+            "limit_usd": max_cost_usd, "stopped_before_overrun": bool(budget_stop_reason)})
     return result
 
 
 def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) -> dict[str, Any]:
     decided = [case for case in cases if case["truth"]["decidable"]]
     unknown = [case for case in cases if not case["truth"]["decidable"]]
-    correct = sum(case.get("prediction", {}).get("root_cause") == case["truth"]["category"] for case in decided)
+    single_root_cases = [case for case in decided if len(case["truth"].get("active_causes", case["truth"].get("primary_causes", [case["truth"]["category"]]))) == 1]
+    single_root_correct = sum(case.get("prediction", {}).get("root_cause") in case["truth"].get("active_causes", [case["truth"]["category"]]) for case in single_root_cases)
+    root_active_hits = 0
     top_k_hits = 0
     active_recalled = 0
     active_total = 0
@@ -307,7 +316,8 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
         if not ranked and case.get("prediction", {}).get("root_cause"):
             ranked = [case["prediction"]["root_cause"]]
         top = ranked[:3]
-        top_k_hits += bool(primary.intersection(top))
+        root_active_hits += case.get("prediction", {}).get("root_cause") in active
+        top_k_hits += bool(active.intersection(top))
         active_recalled += len(active.intersection(top))
         active_total += len(active)
         active_exact += set(top[:len(active)]) == active
@@ -331,8 +341,9 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
     ordered = sorted(durations)
     p95 = ordered[min(len(ordered) - 1, math.ceil(len(ordered) * 0.95) - 1)] if ordered else None
     return {
-        "root_cause_accuracy": {"correct": correct, "total_decidable": len(decided), "rate": correct / len(decided) if decided else None},
-        "primary_cause_top3_accuracy": {"correct": top_k_hits, "total_decidable": len(decided), "rate": top_k_hits / len(decided) if decided else None},
+        "single_root_accuracy": {"correct": single_root_correct, "total_single_root": len(single_root_cases), "rate": single_root_correct / len(single_root_cases) if single_root_cases else None},
+        "active_cause_hit_at_1": {"correct": root_active_hits, "total_decidable": len(decided), "rate": root_active_hits / len(decided) if decided else None},
+        "active_cause_hit_at_3": {"correct": top_k_hits, "total_decidable": len(decided), "rate": top_k_hits / len(decided) if decided else None},
         "active_cause_recall_at_3": {"recalled": active_recalled, "total_active_causes": active_total, "rate": active_recalled / active_total if active_total else None},
         "active_cause_exact_set": {"correct": active_exact, "total_decidable": len(decided), "rate": active_exact / len(decided) if decided else None},
         "insufficient_evidence_recall": {"correct_abstentions": abstained, "total_insufficient": len(unknown), "rate": abstained / len(unknown) if unknown else None},
@@ -362,19 +373,21 @@ def markdown_report(result: dict[str, Any]) -> str:
     lines = [
         "# OpsPilot 冻结集策略盲测评估", "",
         f"数据集 `{result['evaluation']}`；冻结测试集 {result['cases_evaluated']}/{result['test_cases_total']} 例；合成数据={result['manifest'].get('synthetic', True)}。运行时间：{result['created_at_utc']}。", "",
-        "| 方法 | 根因准确率 | Top-3 | 多根因召回 | 弃答召回 | 错误确定 | 金证据 P/R | 引用存在 | 平均延迟 | P95 | 输入/输出 tokens | 估算费用 USD |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 方法 | 单根因准确率 | 活动根因 Top-1 | 活动根因 Top-3 | 多根因召回 | 多根因精确集 | 弃答召回 | 错误确定 | 金证据 P/R | 引用存在 | 平均延迟 | P95 | 输入/输出 tokens | 估算费用 USD |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for strategy, item in result["summaries"].items():
-        accuracy = item["root_cause_accuracy"]
+        accuracy = item["single_root_accuracy"]
         abstain = item["insufficient_evidence_recall"]
         precision, recall = item["gold_evidence_precision"], item["gold_evidence_recall"]
         latency, tokens = item["latency_ms"], item["token_usage"]
         precision_text = f"{precision:.1%}" if precision is not None else "N/A"
         recall_text = f"{recall:.1%}" if recall is not None else "N/A"
-        top3 = item["primary_cause_top3_accuracy"]
+        top1 = item["active_cause_hit_at_1"]
+        top3 = item["active_cause_hit_at_3"]
         active = item["active_cause_recall_at_3"]
-        lines.append(f"| {strategy} | {accuracy['correct']}/{accuracy['total_decidable']} ({accuracy['rate']:.1%}) | {top3['correct']}/{top3['total_decidable']} ({top3['rate']:.1%}) | {active['recalled']}/{active['total_active_causes']} ({active['rate']:.1%}) | {abstain['correct_abstentions']}/{abstain['total_insufficient']} ({abstain['rate']:.1%}) | {item['false_certainty']} | {precision_text}/{recall_text} | {item['citation_existence_cases']['valid']}/{item['citation_existence_cases']['total_decidable']} | {latency['mean']} ms | {latency['p95']} ms | {tokens['input']}/{tokens['output']} | {item['estimated_cost_usd']} |")
+        exact = item["active_cause_exact_set"]
+        lines.append(f"| {strategy} | {accuracy['correct']}/{accuracy['total_single_root']} ({accuracy['rate']:.1%}) | {top1['correct']}/{top1['total_decidable']} ({top1['rate']:.1%}) | {top3['correct']}/{top3['total_decidable']} ({top3['rate']:.1%}) | {active['recalled']}/{active['total_active_causes']} ({active['rate']:.1%}) | {exact['correct']}/{exact['total_decidable']} ({exact['rate']:.1%}) | {abstain['correct_abstentions']}/{abstain['total_insufficient']} ({abstain['rate']:.1%}) | {item['false_certainty']} | {precision_text}/{recall_text} | {item['citation_existence_cases']['valid']}/{item['citation_existence_cases']['total_decidable']} | {latency['mean']} ms | {latency['p95']} ms | {tokens['input']}/{tokens['output']} | {item['estimated_cost_usd']} |")
     probe = result["protocol_fault_probes"]
     safety = {name: item["action_safety"] for name, item in result["summaries"].items()}
     lines.extend(["", f"A2A 故障探针：重试恢复 `{probe['transient_retry_recovered']}`；重复消息幂等 `{probe['duplicate_message_idempotent']}`；截止后取消 `{probe['deadline_cancellation']}`。", "",

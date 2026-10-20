@@ -1,6 +1,6 @@
 # OpsPilot：证据驱动的本地故障调查原型
 
-当前保留 S0–S4 确定性只读调查基线，并提供单 Agent、多 Agent 和成本感知自动路由。`rules` 不调用模型；`auto` 只在跨源强证据冲突时调用单 Agent；`multi-agent` 需显式指定，通过 `.env` 中的 OpenAI-compatible endpoint 调用独立模型专家。模式都不连接生产系统，也不执行修复操作。
+核心是规则驱动的只读证据采集与故障调查。`rules` 不调用模型；`auto` 仅在跨源强证据冲突时调用单 Agent。`multi-agent` 保留为显式实验路线：新合成多根因盲测显示集合召回和证据覆盖收益，同时费用、延迟更高；不进入默认路由。模式都不连接生产系统，也不执行修复操作。
 
 ## 生成数据
 
@@ -80,6 +80,8 @@ python -m venv .venv
 - `scripts/evaluate_agents.py`、`reports/agent-evaluation.json`、`reports/agent-evaluation.md`：规则、单 Agent、多 Agent 盲测、引用、安全、延迟、token、费用和故障恢复报告。
 - `scripts/evaluate_agents.py --benchmark-dir data/complex-benchmark`：独立复杂集规则/单/多 Agent 对照；`scripts/evaluate_complex_routing.py`：仅用 validation 结果回放 auto 路由。
 - `reports/complex-agent-evaluation.json`、`reports/complex-validation-evaluation.json`：复杂集逐例模型输出、A2A 交接、调用数、tokens、费用与分策略统计；`reports/complex-routing-validation.json`：validation 路由回放。
+- `reports/causal-agent-evaluation.json`、`reports/causal-agent-evaluation.md`：30 例新因果盲测三路实测、Top-K/多根因、证据质量、延迟、失败和费用。
+- `reports/api-cost-ledger.jsonl`：历史报告估算与本轮逐次请求峰值费用记录；不是服务商账单。
 - `scripts/train_routing_policy.py`、`scripts/evaluate_routing_policy.py`：从轨迹奖励学习上下文路由策略并做独立评估。
 - `reports/reward-training.json`、`reports/reward-evaluation.json`、`reports/reward-evaluation.md`：路由 policy 的训练轨迹和未更新留出评估。
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
@@ -96,6 +98,7 @@ python -m venv .venv
 - `docs/learning/stage-S11.md`：复杂集盲测字段、官方 A2A SDK 互通和安全边界。
 - `docs/learning/stage-S12.md`：复杂集结果、成本感知自动路由与简历边界。
 - `docs/learning/stage-S13.md`：独立多根因盲测集、许可审计和复现方式。
+- `docs/learning/stage-S14.md`：冻结 30 例实测结果、费用边界及 Multi-Agent 路线决策。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

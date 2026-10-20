@@ -31,7 +31,7 @@ class BenchmarkTests(unittest.TestCase):
              "trace": {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0}, "model": {"calls": 0}},
         ]
         summary = summarize(cases, {"input_cache_hit_per_million": 0.006, "input_cache_miss_per_million": 0.3, "output_per_million": 1.2})
-        self.assertEqual((1, 1), (summary["root_cause_accuracy"]["correct"], summary["insufficient_evidence_recall"]["correct_abstentions"]))
+        self.assertEqual((1, 1), (summary["single_root_accuracy"]["correct"], summary["insufficient_evidence_recall"]["correct_abstentions"]))
         self.assertEqual(1, summary["citation_existence_cases"]["valid"])
         self.assertEqual(1, summary["action_safety"]["model_underapproved_suggestions"])
         self.assertEqual(0, summary["action_safety"]["ungated_suggestions"])
@@ -49,8 +49,19 @@ class BenchmarkTests(unittest.TestCase):
                                "evidence_ids": ["c1", "p1"], "citation_validation": {"all_references_support_hypothesis": True}},
                 "available_evidence_ids": ["c1", "p1"], "success": True, "duration_ms": 1, "trace": {}, "model": {"calls": 0}}
         summary = summarize([case])
-        self.assertEqual(1.0, summary["primary_cause_top3_accuracy"]["rate"])
+        self.assertEqual(1.0, summary["active_cause_hit_at_3"]["rate"])
         self.assertEqual(1.0, summary["active_cause_recall_at_3"]["rate"])
+        self.assertEqual(1.0, summary["active_cause_exact_set"]["rate"])
+        self.assertIsNone(summary["single_root_accuracy"]["rate"])
+        self.assertEqual(1.0, summary["active_cause_hit_at_1"]["rate"])
+
+    def test_multi_root_order_does_not_change_root_hit(self):
+        case = {"truth": {"decidable": True, "category": "config_error", "active_causes": ["config_error", "pool_exhaustion"], "gold_evidence_ids": []},
+                "prediction": {"root_cause": "pool_exhaustion", "ranked_causes": ["pool_exhaustion", "config_error"], "evidence_ids": []},
+                "available_evidence_ids": [], "success": True, "duration_ms": 1, "trace": {}, "model": {"calls": 0}}
+        summary = summarize([case])
+        self.assertEqual(0, summary["single_root_accuracy"]["total_single_root"])
+        self.assertEqual(1.0, summary["active_cause_hit_at_1"]["rate"])
         self.assertEqual(1.0, summary["active_cause_exact_set"]["rate"])
 
     def test_run_budget_logs_peak_cost_and_blocks_before_overrun(self):
