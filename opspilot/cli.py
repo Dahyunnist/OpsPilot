@@ -11,6 +11,8 @@ from typing import Any
 from .investigator import SOURCES, investigate
 from .safety import audit_investigation, simulate_action
 from .agents import investigate_multi_agent
+from .model_client import ModelError
+from .a2a import A2AError
 
 
 def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
@@ -107,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.token_budget < 7200:
                 raise ValueError("--token-budget must be at least 7200")
             report = investigate_multi_agent(incidents[args.incident_id], report, args.token_budget)
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, ModelError, A2AError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     output = json.dumps(report, ensure_ascii=False, indent=2) if args.format == "json" or args.mode == "multi-agent" else render_text(report)

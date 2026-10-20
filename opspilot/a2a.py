@@ -183,7 +183,7 @@ class A2AServer:
 class A2AClient:
     def __init__(self, card_url: str, timeout: float = 30.0, poll_interval: float = 0.1) -> None:
         self.card_url = card_url
-        self.timeout = min(120.0, max(1.0, timeout))
+        self.timeout = min(120.0, max(0.05, timeout))
         self.poll_interval = min(1.0, max(0.02, poll_interval))
         self.counter = 0
         self.retry_count = 0

@@ -5,168 +5,281 @@
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "time_skew"
+      "variant": "time_skew",
+      "gold_evidence_ids": [
+        "config-error-05-d1",
+        "config-error-05-l1",
+        "config-error-05-m2",
+        "config-error-05-t1"
+      ]
     },
     {
       "incident_id": "config-error-07",
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "noise"
+      "variant": "noise",
+      "gold_evidence_ids": [
+        "config-error-07-d1",
+        "config-error-07-l1",
+        "config-error-07-m2",
+        "config-error-07-t1"
+      ]
     },
     {
       "incident_id": "config-error-08",
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "contradiction"
+      "variant": "contradiction",
+      "gold_evidence_ids": [
+        "config-error-08-d1",
+        "config-error-08-l1",
+        "config-error-08-m2",
+        "config-error-08-t1"
+      ]
     },
     {
       "incident_id": "config-error-09",
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "missing_source"
+      "variant": "missing_source",
+      "gold_evidence_ids": [
+        "config-error-09-l1",
+        "config-error-09-m2",
+        "config-error-09-t1"
+      ]
     },
     {
       "incident_id": "config-error-10",
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "cross_service"
+      "variant": "cross_service",
+      "gold_evidence_ids": [
+        "config-error-10-d1",
+        "config-error-10-l1",
+        "config-error-10-m2",
+        "config-error-10-t1"
+      ]
     },
     {
       "incident_id": "config-error-12",
       "category": "config_error",
       "root_cause": "deployment introduced invalid order service configuration",
       "decidable": true,
-      "variant": "clean"
+      "variant": "clean",
+      "gold_evidence_ids": [
+        "config-error-12-d1",
+        "config-error-12-l1",
+        "config-error-12-m2",
+        "config-error-12-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-02",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "contradiction"
+      "variant": "contradiction",
+      "gold_evidence_ids": [
+        "downstream-timeout-02-l1",
+        "downstream-timeout-02-m1",
+        "downstream-timeout-02-m2",
+        "downstream-timeout-02-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-03",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "missing_source"
+      "variant": "missing_source",
+      "gold_evidence_ids": [
+        "downstream-timeout-03-l1",
+        "downstream-timeout-03-m1",
+        "downstream-timeout-03-m2",
+        "downstream-timeout-03-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-05",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "time_skew"
+      "variant": "time_skew",
+      "gold_evidence_ids": [
+        "downstream-timeout-05-l1",
+        "downstream-timeout-05-m1",
+        "downstream-timeout-05-m2",
+        "downstream-timeout-05-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-06",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "clean"
+      "variant": "clean",
+      "gold_evidence_ids": [
+        "downstream-timeout-06-l1",
+        "downstream-timeout-06-m1",
+        "downstream-timeout-06-m2",
+        "downstream-timeout-06-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-09",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "missing_source"
+      "variant": "missing_source",
+      "gold_evidence_ids": [
+        "downstream-timeout-09-l1",
+        "downstream-timeout-09-m1",
+        "downstream-timeout-09-m2",
+        "downstream-timeout-09-t1"
+      ]
     },
     {
       "incident_id": "downstream-timeout-10",
       "category": "downstream_timeout",
       "root_cause": "downstream service exceeded request timeout",
       "decidable": true,
-      "variant": "cross_service"
+      "variant": "cross_service",
+      "gold_evidence_ids": [
+        "downstream-timeout-10-l1",
+        "downstream-timeout-10-m1",
+        "downstream-timeout-10-m2",
+        "downstream-timeout-10-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-04",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "cross_service"
+      "variant": "cross_service",
+      "gold_evidence_ids": [
+        "pool-exhaustion-04-l1",
+        "pool-exhaustion-04-m1",
+        "pool-exhaustion-04-m2",
+        "pool-exhaustion-04-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-06",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "clean"
+      "variant": "clean",
+      "gold_evidence_ids": [
+        "pool-exhaustion-06-l1",
+        "pool-exhaustion-06-m1",
+        "pool-exhaustion-06-m2",
+        "pool-exhaustion-06-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-07",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "noise"
+      "variant": "noise",
+      "gold_evidence_ids": [
+        "pool-exhaustion-07-l1",
+        "pool-exhaustion-07-m1",
+        "pool-exhaustion-07-m2",
+        "pool-exhaustion-07-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-08",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "contradiction"
+      "variant": "contradiction",
+      "gold_evidence_ids": [
+        "pool-exhaustion-08-l1",
+        "pool-exhaustion-08-m1",
+        "pool-exhaustion-08-m2",
+        "pool-exhaustion-08-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-09",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "missing_source"
+      "variant": "missing_source",
+      "gold_evidence_ids": [
+        "pool-exhaustion-09-l1",
+        "pool-exhaustion-09-m1",
+        "pool-exhaustion-09-m2",
+        "pool-exhaustion-09-t1"
+      ]
     },
     {
       "incident_id": "pool-exhaustion-12",
       "category": "pool_exhaustion",
       "root_cause": "database connection pool exhausted",
       "decidable": true,
-      "variant": "clean"
+      "variant": "clean",
+      "gold_evidence_ids": [
+        "pool-exhaustion-12-l1",
+        "pool-exhaustion-12-m1",
+        "pool-exhaustion-12-m2",
+        "pool-exhaustion-12-t1"
+      ]
     },
     {
       "incident_id": "unknown-03",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "missing_source; ambiguous; critical traces unavailable"
+      "variant": "missing_source",
+      "gold_evidence_ids": []
     },
     {
       "incident_id": "unknown-04",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "cross_service; ambiguous; critical traces unavailable"
+      "variant": "cross_service",
+      "gold_evidence_ids": []
     },
     {
       "incident_id": "unknown-05",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "time_skew; ambiguous; critical traces unavailable"
+      "variant": "time_skew",
+      "gold_evidence_ids": []
     },
     {
       "incident_id": "unknown-07",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "noise; ambiguous; critical traces unavailable"
+      "variant": "noise",
+      "gold_evidence_ids": []
     },
     {
       "incident_id": "unknown-08",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "contradiction; ambiguous; critical traces unavailable"
+      "variant": "contradiction",
+      "gold_evidence_ids": []
     },
     {
       "incident_id": "unknown-12",
       "category": "insufficient_evidence",
       "root_cause": null,
       "decidable": false,
-      "variant": "clean; ambiguous; critical traces unavailable"
+      "variant": "clean",
+      "gold_evidence_ids": []
     }
   ]
 }

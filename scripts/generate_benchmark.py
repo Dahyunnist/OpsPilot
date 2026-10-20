@@ -24,6 +24,34 @@ TEMPLATES = {
 VARIANTS = ("noise", "contradiction", "missing_source", "cross_service", "time_skew", "clean")
 
 
+def _gold_evidence(case: dict, category: str) -> list[str]:
+    valid = []
+    for source, rows in case["signals"].items():
+        for row in rows:
+            attrs = row.get("attributes", {})
+            text = row.get("message", "").lower()
+            if category == "pool_exhaustion" and (
+                attrs.get("name") in {"db_pool_in_use", "db_pool_wait_ms"}
+                or "waiting for database connection" in text
+                or attrs.get("span") == "db.connection.acquire"
+            ):
+                valid.append(row["record_id"])
+            elif category == "config_error" and (
+                attrs.get("name") == "config_validation_errors"
+                or "configuration" in text
+                or attrs.get("span") == "config.validate"
+                or source == "deployments"
+            ):
+                valid.append(row["record_id"])
+            elif category == "downstream_timeout" and (
+                attrs.get("name") in {"request_duration_ms_p95", "downstream_timeout_rate"}
+                or "downstream request" in text
+                or attrs.get("span") == "order.downstream.call"
+            ):
+                valid.append(row["record_id"])
+    return sorted(set(valid))
+
+
 def _retime(record: dict, timestamp: str) -> None:
     record["timestamp"] = timestamp
 
@@ -93,7 +121,7 @@ def generate(output: Path = ROOT / "data" / "benchmark") -> dict:
         for index, (_old_split, case, _) in enumerate(entries):
             split = "train" if index < SPLITS["train"] else ("validation" if index < SPLITS["train"] + SPLITS["validation"] else "test")
             generated[split].append(case)
-            labels[split].append({"incident_id": case["incident_id"], "category": category, "root_cause": root_cause, "decidable": root_cause is not None, "variant": case["timeline"][0]["event"].split(": ", 1)[1]})
+            labels[split].append({"incident_id": case["incident_id"], "category": category, "root_cause": root_cause, "decidable": root_cause is not None, "variant": case["timeline"][0]["event"].split(": ", 1)[1].split(";", 1)[0], "gold_evidence_ids": _gold_evidence(case, category)})
     manifest = {"seed": SEED, "cases": sum(len(rows) for rows in generated.values()), "splits": {}}
     output.mkdir(parents=True, exist_ok=True)
     for split, rows in generated.items():

@@ -1,7 +1,10 @@
 import unittest
+import time
 from unittest.mock import patch
+from urllib.error import URLError
+from urllib.request import urlopen as actual_urlopen
 
-from opspilot.agents import investigate_multi_agent
+from opspilot.agents import _ground_adjudication, investigate_multi_agent
 from opspilot.a2a import A2AClient, A2AServer, TaskStore
 from opspilot.agent_protocol import AgentMessage, EvidenceRef
 from opspilot.cli import load_incidents
@@ -15,7 +18,7 @@ class FakeModel:
     def complete(self, system, user, token_budget):
         if "adjudicator" in system:
             data = {"status": "determined", "root_cause": "database pool", "confidence": 0.7,
-                    "reasoning": "evidence supports this", "evidence_ids": ["pool-01-m1"],
+                    "reasoning": "evidence supports this", "evidence_ids": ["pool-01-m1", "pool-01-t1"],
                     "rejected_hypotheses": [], "uncertainty": "limited sample",
                     "action_suggestion": "restart_order", "approval_required": False}
         elif "cross-examiner" in system:
@@ -41,6 +44,7 @@ class AgentTests(unittest.TestCase):
         self.assertEqual({"metrics_expert": ["query_metrics"], "logs_expert": ["query_logs"], "trace_deployment_expert": ["query_traces"], "deployment_expert": ["query_deployments"]}, {item["sender"]: item["allowed_tools"] for item in report["messages"]})
         self.assertEqual(6, report["model"]["calls"])
         self.assertTrue(report["adjudication"]["citation_validation"]["all_references_exist"])
+        self.assertTrue(report["adjudication"]["citation_validation"]["all_references_support_hypothesis"])
         self.assertTrue(report["adjudication"]["approval_required"])
         self.assertEqual(0, report["trace"]["failures"])
         self.assertTrue(any(event["event"] == "a2a_protocol" for event in report["trace"]["events"]))
@@ -72,6 +76,43 @@ class AgentTests(unittest.TestCase):
         duplicate, created_again = store.create("m", {"task_id": "parent"})
         self.assertFalse(created_again)
         self.assertEqual(task["id"], duplicate["id"])
+
+    def test_a2a_transport_retry_reuses_idempotent_message(self):
+        with A2AServer(lambda _payload: {"conflict_summary": "recovered"}) as server:
+            client = A2AClient(server.card_url, timeout=2, poll_interval=0.02)
+            original = actual_urlopen
+            calls = 0
+
+            def transient_failure(*args, **kwargs):
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    raise URLError("injected connection reset")
+                return original(*args, **kwargs)
+
+            with patch("opspilot.a2a.urlopen", side_effect=transient_failure):
+                result, _trace = client.send_and_wait("parent", {}, "retry-once")
+            duplicate, _trace = client.send_and_wait("parent", {}, "retry-once")
+        self.assertEqual("recovered", result["conflict_summary"])
+        self.assertEqual(result, duplicate)
+        self.assertEqual(1, client.retry_count)
+
+    def test_a2a_deadline_cancels_late_result(self):
+        with A2AServer(lambda _payload: (time.sleep(0.35) or {"late": True})) as server:
+            client = A2AClient(server.card_url, timeout=0.12, poll_interval=0.02)
+            with self.assertRaisesRegex(Exception, "deadline exceeded"):
+                client.send_and_wait("parent", {}, "cancel-me")
+            task_id = next(iter(server.store.tasks))
+            self.assertEqual("canceled", server.store.get(task_id)["status"]["state"])
+
+    def test_live_evidence_gate_withholds_single_source_guess(self):
+        incidents = load_incidents(__import__("pathlib").Path("data/incidents.jsonl"))
+        baseline = investigate(incidents["unknown-02"])
+        result = _ground_adjudication({"status": "probable", "root_cause": "database connection pool exhausted",
+                                       "evidence_ids": ["unknown-02-m1"], "uncertainty": "ambiguous"}, baseline)
+        self.assertIsNone(result["root_cause"])
+        self.assertEqual("database connection pool exhausted", result["proposed_root_cause"])
+        self.assertEqual("insufficient_evidence", result["status"])
 
 
 if __name__ == "__main__":
