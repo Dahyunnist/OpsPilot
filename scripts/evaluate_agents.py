@@ -11,6 +11,7 @@ import re
 import statistics
 import sys
 import threading
+import uuid
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +28,7 @@ from opspilot.agents import investigate_multi_agent, investigate_single_agent  #
 from opspilot.cli import load_incidents  # noqa: E402
 from opspilot.investigator import investigate  # noqa: E402
 from opspilot.model_client import load_project_env  # noqa: E402
+from opspilot.routing import select_route  # noqa: E402
 
 CAUSES = {
     "pool_exhaustion": "database connection pool exhausted",
@@ -47,9 +49,30 @@ class RunBudget:
         self.ledger_path = ledger_path
         self.model = model
         self.spent_usd = 0.0
+        self.prior_spent_usd = self._prior_spend()
         self.reserved_usd = 0.0
         self.lock = threading.Lock()
+        self.run_id = str(uuid.uuid4())
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _prior_spend(self) -> float:
+        if not self.ledger_path.exists():
+            return 0.0
+        try:
+            records = [json.loads(line) for line in self.ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        except (OSError, json.JSONDecodeError):
+            raise ValueError("cost ledger is unreadable; refusing paid requests")
+        summaries = [row for row in records if row.get("kind") == "run_summary"]
+        summarized_ids = {row.get("run_id") for row in summaries if row.get("run_id")}
+        total = sum(float(row.get("peak_rate_estimate_usd", 0)) for row in summaries)
+        incomplete: dict[str, float] = {}
+        for row in records:
+            run_id = row.get("run_id")
+            if not run_id or run_id in summarized_ids:
+                continue
+            if row.get("kind") in {"completed_request", "failed_request_worst_case"}:
+                incomplete[run_id] = max(incomplete.get(run_id, 0.0), float(row.get("run_peak_estimate_usd", 0)))
+        return total + sum(incomplete.values())
 
     def _append(self, record: dict[str, Any]) -> None:
         with self.ledger_path.open("a", encoding="utf-8") as handle:
@@ -60,8 +83,8 @@ class RunBudget:
         input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
         reserve = (input_reserve * 0.30 + max_output * 1.20) / 1_000_000
         with self.lock:
-            if self.spent_usd + self.reserved_usd + reserve > self.limit_usd:
-                raise BudgetLimitExceeded(f"峰值费率预留将超过本轮上限 ${self.limit_usd:.2f}")
+            if self.prior_spent_usd + self.spent_usd + self.reserved_usd + reserve > self.limit_usd:
+                raise BudgetLimitExceeded(f"累计峰值费率预留将超过账本上限 ${self.limit_usd:.2f}")
             self.reserved_usd += reserve
         try:
             result = operation(instance, system, user, token_budget)
@@ -69,8 +92,8 @@ class RunBudget:
             with self.lock:
                 self.reserved_usd -= reserve
                 self.spent_usd += reserve
-                self._append({"kind": "failed_request_worst_case", "model": self.model, "reserve_usd": round(reserve, 8),
-                              "run_peak_estimate_usd": round(self.spent_usd, 8), "limit_usd": self.limit_usd,
+                self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model, "reserve_usd": round(reserve, 8),
+                              "run_peak_estimate_usd": round(self.spent_usd, 8), "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8), "limit_usd": self.limit_usd,
                               "error_type": type(exc).__name__})
             raise
         usage = result.get("usage", {})
@@ -80,10 +103,11 @@ class RunBudget:
         with self.lock:
             self.reserved_usd -= reserve
             self.spent_usd += actual
-            self._append({"kind": "completed_request", "model": self.model,
+            self._append({"kind": "completed_request", "run_id": self.run_id, "model": self.model,
                 "input_tokens": usage.get("prompt_tokens", 0), "cached_input_tokens": usage.get("prompt_tokens_details", {}).get("cached_tokens", 0),
                 "output_tokens": usage.get("completion_tokens", 0), "reserve_usd": round(reserve, 8),
                 "peak_rate_estimate_usd": round(actual, 8), "run_peak_estimate_usd": round(self.spent_usd, 8),
+                "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8),
                 "limit_usd": self.limit_usd})
         return result
 
@@ -223,6 +247,7 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         incident = incidents[incident_id]
         baseline = investigate(incident, query_budget=8)
         for strategy in strategies:
+            selected_strategy, route_reason = select_route(baseline) if strategy == "auto" else (strategy, None)
             started = time.perf_counter()
             measured = {"calls": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "failures": 0}
             original_complete = __import__("opspilot.model_client", fromlist=["ChatModel"]).ChatModel.complete
@@ -243,12 +268,16 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
                 with patch("opspilot.model_client.ChatModel.complete", tracked_complete):
                     if strategy == "rules":
                         result = run_rules(incident, baseline)
-                    elif strategy == "single-agent":
+                    elif selected_strategy == "rules":
+                        result = run_rules(incident, baseline)
+                    elif selected_strategy == "single-agent":
                         result = investigate_single_agent(incident, baseline, token_budget=1200)
-                    elif strategy == "multi-agent":
+                    elif selected_strategy == "multi-agent":
                         result = investigate_multi_agent(incident, baseline, token_budget=12000)
                     else:
                         raise ValueError(f"unknown strategy: {strategy}")
+                if strategy == "auto":
+                    result["routing"] = {"selected_mode": selected_strategy, "reason": route_reason}
                 adjudication = _extract(result["adjudication"])
                 trace = result.get("trace", {})
                 model = result.get("model", {})
@@ -256,7 +285,7 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
                     "incident_id": incident_id, "truth": label_by_id[incident_id], "prediction": adjudication,
                     "available_evidence_ids": sorted({row["record_id"] for rows in incident["signals"].values() for row in rows}),
                     "success": True, "duration_ms": trace.get("duration_ms", round((time.perf_counter() - started) * 1000, 1)),
-                    "trace": trace, "model": model, "raw_result": result,
+                    "trace": trace, "model": model, "route": result.get("routing"), "raw_result": result,
                 })
             except Exception as exc:
                 cases[strategy].append({"incident_id": incident_id, "truth": label_by_id[incident_id], "success": False,
@@ -273,6 +302,10 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         if budget_stop_reason:
             break
     summaries = {strategy: summarize(items, rates) for strategy, items in cases.items()}
+    auto_routes: dict[str, int] = {}
+    for item in cases.get("auto", []):
+        route = item.get("route", {}).get("selected_mode", "failed")
+        auto_routes[route] = auto_routes.get(route, 0) + 1
     result = {
         "evaluation": manifest.get("benchmark_id", "frozen_synthetic_blind_test_v1"),
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -281,8 +314,11 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         "strategies": list(strategies), "configured_model": configured_model if any(item != "rules" for item in strategies) else None,
         "rates": rates,
         "summaries": summaries, "cases": cases,
+        "auto_route_distribution": auto_routes,
         "run_budget": {"limit_usd": max_cost_usd,
                        "peak_rate_estimate_usd": round(run_budget.spent_usd, 8) if run_budget else None,
+                       "prior_peak_estimate_usd": round(run_budget.prior_spent_usd, 8) if run_budget else None,
+                       "cumulative_peak_estimate_usd": round(run_budget.prior_spent_usd + run_budget.spent_usd, 8) if run_budget else None,
                        "provider_rate_estimate_usd": round(sum(item["estimated_cost_usd"] or 0.0 for item in summaries.values()), 8) if run_budget else None,
                        "stopped_before_overrun": bool(budget_stop_reason), "stop_reason": budget_stop_reason,
                        "ledger": str(run_budget.ledger_path) if run_budget else None},
@@ -290,10 +326,11 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         "notes": ["All data are synthetic and template-derived.", "No model result is used to train or tune on this run.", "Estimated costs use published DeepSeek peak/off-peak rates; other providers return null."],
     }
     if run_budget:
-        run_budget._append({"kind": "run_summary", "benchmark": result["evaluation"], "split": split,
+        run_budget._append({"kind": "run_summary", "run_id": run_budget.run_id, "benchmark": result["evaluation"], "split": split,
             "cases_evaluated": len(ids), "strategies": list(strategies),
             "provider_rate_estimate_usd": result["run_budget"]["provider_rate_estimate_usd"],
             "peak_rate_estimate_usd": result["run_budget"]["peak_rate_estimate_usd"],
+            "cumulative_peak_estimate_usd": result["run_budget"]["cumulative_peak_estimate_usd"],
             "limit_usd": max_cost_usd, "stopped_before_overrun": bool(budget_stop_reason)})
     return result
 
@@ -395,13 +432,15 @@ def markdown_report(result: dict[str, Any]) -> str:
                   f"审批标记：模型曾漏标建议（规则/单 Agent/多 Agent）={safety.get('rules', {}).get('model_underapproved_suggestions', 0)}/{safety.get('single-agent', {}).get('model_underapproved_suggestions', 0)}/{safety.get('multi-agent', {}).get('model_underapproved_suggestions', 0)}；应用闸门均补为需审批。", "",
                   "费用采用 DeepSeek 官方价格快照和实际时段、缓存 token 估算。样本量小，不能代表生产表现。", "",
                   "逐例轨迹与原始响应见同名 JSON 文件。"])
+    if result.get("auto_route_distribution"):
+        lines.extend(["", "Auto 路由：" + "；".join(f"{route} {count} 例" for route, count in sorted(result["auto_route_distribution"].items())) + "。"])
     return "\n".join(lines) + "\n"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compare rules, single-agent and multi-agent on frozen blind test data")
     parser.add_argument("--limit", type=int)
-    parser.add_argument("--strategy", choices=("rules", "single-agent", "multi-agent"), action="append")
+    parser.add_argument("--strategy", choices=("rules", "single-agent", "multi-agent", "auto"), action="append")
     parser.add_argument("--benchmark-dir", type=Path, default=ROOT / "data" / "benchmark")
     parser.add_argument("--split", choices=("validation", "test"), default="test")
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "agent-evaluation.json")

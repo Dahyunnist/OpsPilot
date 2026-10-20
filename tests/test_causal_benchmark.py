@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from opspilot.cli import load_incidents
-from scripts.generate_causal_benchmark import FAMILIES, SPLITS, generate
+from scripts.generate_causal_benchmark import FAMILIES, SEED, SPLITS, generate
 
 
 class CausalBenchmarkTests(unittest.TestCase):
@@ -28,6 +28,19 @@ class CausalBenchmarkTests(unittest.TestCase):
                 self.assertEqual(meta["labels_sha256"], hashlib.sha256(label_bytes).hexdigest())
                 self.assertEqual(data, (second / f"{split}.jsonl").read_bytes())
                 self.assertEqual(label_bytes, (second / "labels" / f"{split}.json").read_bytes())
+
+    def test_alternate_seed_generates_independent_reproducible_ids(self):
+        with tempfile.TemporaryDirectory() as temp:
+            first = Path(temp) / "replica-a"
+            second = Path(temp) / "replica-b"
+            manifest = generate(first, seed=SEED + 1)
+            self.assertEqual(manifest, generate(second, seed=SEED + 1))
+            original = Path(temp) / "original"
+            original_manifest = generate(original)
+            self.assertNotEqual(manifest["seed"], original_manifest["seed"])
+            first_ids = {row["incident_id"] for row in load_incidents(first / "test.jsonl").values()}
+            original_ids = {row["incident_id"] for row in load_incidents(original / "test.jsonl").values()}
+            self.assertFalse(first_ids & original_ids)
 
     def test_neutral_ids_labels_isolated_and_references_valid(self):
         with tempfile.TemporaryDirectory() as temp:

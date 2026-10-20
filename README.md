@@ -1,6 +1,6 @@
 # OpsPilot：证据驱动的本地故障调查原型
 
-核心是规则驱动的只读证据采集与故障调查。`rules` 不调用模型；`auto` 仅在跨源强证据冲突时调用单 Agent。`multi-agent` 保留为显式实验路线：新合成多根因盲测显示集合召回和证据覆盖收益，同时费用、延迟更高；不进入默认路由。模式都不连接生产系统，也不执行修复操作。
+核心是规则驱动的只读证据采集与故障调查。`rules` 不调用模型。`auto` 在多个根因各有跨源强证据时调用多 Agent；单个强候选仍被规则弃答时调用单 Agent；其余保留规则结果。新合成复测中，这种选择性升级保住多根因召回，调用次数与费用明显低于全量多 Agent。默认仍是 `rules`；`multi-agent` 可显式调用。模式都不连接生产系统，也不执行修复操作。
 
 ## 生成数据
 
@@ -76,11 +76,13 @@ python -m venv .venv
 - `data/benchmark/`：48 个冻结合成事故及分开的 train/validation/test 标签；test 标签不进入 Agent 上下文。
 - `data/complex-benchmark/`：独立的 64 例跨服务冲突集；与旧 benchmark 分开冻结，含噪声、缺证与不可判定样本。
 - `data/causal-benchmark/`：独立的 100 例因果链与多根因集，含 30 例冻结盲测；训练/验证/测试标签分开保存。数据全为新写合成样本，外部公开集的许可状态见 `docs/learning/stage-S13.md`。
+- `data/causal-benchmark-replication/`：新随机种子生成的独立 100 例复测集；用于冻结 auto 路由复测，仍属同模板合成数据。
 - `opspilot/memory.py`：仅从 train 案例检索历史提示，实时遥测始终优先。
 - `scripts/evaluate_agents.py`、`reports/agent-evaluation.json`、`reports/agent-evaluation.md`：规则、单 Agent、多 Agent 盲测、引用、安全、延迟、token、费用和故障恢复报告。
 - `scripts/evaluate_agents.py --benchmark-dir data/complex-benchmark`：独立复杂集规则/单/多 Agent 对照；`scripts/evaluate_complex_routing.py`：仅用 validation 结果回放 auto 路由。
 - `reports/complex-agent-evaluation.json`、`reports/complex-validation-evaluation.json`：复杂集逐例模型输出、A2A 交接、调用数、tokens、费用与分策略统计；`reports/complex-routing-validation.json`：validation 路由回放。
 - `reports/causal-agent-evaluation.json`、`reports/causal-agent-evaluation.md`：30 例新因果盲测三路实测、Top-K/多根因、证据质量、延迟、失败和费用。
+- `reports/causal-routing-validation.json`、`reports/causal-routing-replication.json`：成本感知 auto 路由验证集实测与新 seed 复测。
 - `reports/api-cost-ledger.jsonl`：历史报告估算与本轮逐次请求峰值费用记录；不是服务商账单。
 - `scripts/train_routing_policy.py`、`scripts/evaluate_routing_policy.py`：从轨迹奖励学习上下文路由策略并做独立评估。
 - `reports/reward-training.json`、`reports/reward-evaluation.json`、`reports/reward-evaluation.md`：路由 policy 的训练轨迹和未更新留出评估。
@@ -99,6 +101,7 @@ python -m venv .venv
 - `docs/learning/stage-S12.md`：复杂集结果、成本感知自动路由与简历边界。
 - `docs/learning/stage-S13.md`：独立多根因盲测集、许可审计和复现方式。
 - `docs/learning/stage-S14.md`：冻结 30 例实测结果、费用边界及 Multi-Agent 路线决策。
+- `docs/learning/stage-S15.md`：根据根因证据强度进行选择性升级，并在新 seed 测试集复测。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

@@ -85,6 +85,16 @@ class BenchmarkTests(unittest.TestCase):
                 blocked.call(operation, instance, "long system " * 100, "long user " * 100, 512)
             self.assertFalse(called)
 
+    def test_run_budget_includes_completed_ledger_runs(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost.jsonl"
+            ledger.write_text(json.dumps({"kind": "run_summary", "peak_rate_estimate_usd": 0.0098}) + "\n", encoding="utf-8")
+            budget = RunBudget(0.01, ledger, "deepseek-v4-flash")
+            self.assertEqual(0.0098, budget.prior_spent_usd)
+            instance = SimpleNamespace(max_tokens=512)
+            with self.assertRaises(BudgetLimitExceeded):
+                budget.call(lambda *_args: self.fail("must stop before sending"), instance, "s", "u", 512)
+
     def test_frozen_stratified_splits_and_regeneration(self):
         root = Path("data/benchmark")
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))

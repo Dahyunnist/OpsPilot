@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import random
 import string
@@ -256,8 +257,8 @@ def _make_case(rng: random.Random, incident_id: str, family: str, index: int) ->
     return incident, label
 
 
-def generate(output: Path = ROOT / "data" / "causal-benchmark") -> dict:
-    rng = random.Random(SEED)
+def generate(output: Path = ROOT / "data" / "causal-benchmark", seed: int = SEED) -> dict:
+    rng = random.Random(seed)
     rows: dict[str, list[dict]] = {split: [] for split in SPLITS}
     labels: dict[str, list[dict]] = {split: [] for split in SPLITS}
     alphabet = string.ascii_lowercase + string.digits
@@ -271,7 +272,8 @@ def generate(output: Path = ROOT / "data" / "causal-benchmark") -> dict:
             rows[split].append(incident)
             labels[split].append(label)
 
-    manifest = {"benchmark_id": "opspilot_causal_chains_v1", "seed": SEED, "synthetic": True,
+    benchmark_id = "opspilot_causal_chains_v1" if seed == SEED else f"opspilot_causal_chains_seed_{seed}"
+    manifest = {"benchmark_id": benchmark_id, "seed": seed, "synthetic": True,
         "cases": sum(len(split_rows) for split_rows in rows.values()),
         "family_counts": {family: sum(item["scenario_family"] == family for split_labels in labels.values() for item in split_labels) for family in FAMILIES},
         "split_policy": "Every family has 10 train, 4 validation, and 6 test cases; labels remain outside incident inputs.",
@@ -295,4 +297,8 @@ def generate(output: Path = ROOT / "data" / "causal-benchmark") -> dict:
 
 
 if __name__ == "__main__":
-    print(json.dumps(generate(), ensure_ascii=False, indent=2))
+    parser = argparse.ArgumentParser(description="Generate a stratified synthetic causal RCA benchmark")
+    parser.add_argument("--output", type=Path, default=ROOT / "data" / "causal-benchmark")
+    parser.add_argument("--seed", type=int, default=SEED)
+    args = parser.parse_args()
+    print(json.dumps(generate(args.output, args.seed), ensure_ascii=False, indent=2))

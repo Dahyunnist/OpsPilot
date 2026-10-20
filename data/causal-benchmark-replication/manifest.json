@@ -1,0 +1,32 @@
+{
+  "benchmark_id": "opspilot_causal_chains_seed_20261031",
+  "seed": 20261031,
+  "synthetic": true,
+  "cases": 100,
+  "family_counts": {
+    "pool_root": 20,
+    "configuration_root_with_downstream_symptoms": 20,
+    "downstream_root_with_pool_pressure": 20,
+    "independent_dual_fault": 20,
+    "insufficient_or_conflicted": 20
+  },
+  "split_policy": "Every family has 10 train, 4 validation, and 6 test cases; labels remain outside incident inputs.",
+  "provenance": "Synthetic records authored from the OpsPilot incident contract and OpenTelemetry semantic field conventions; no production or copied incident data.",
+  "splits": {
+    "train": {
+      "cases": 50,
+      "data_sha256": "7e022d2b487b01192931e11b7a05dcb276c8e832fb067062df9cfa96b1a19c05",
+      "labels_sha256": "6b6f98ed9b969c97df0031673ce659a8cd21c98b0e78718cc192ebd6683efc0d"
+    },
+    "validation": {
+      "cases": 20,
+      "data_sha256": "a34a573bd853ec9221e366b836de8a7bc26e26e7df65b4a1a3011b5e878d57f1",
+      "labels_sha256": "cc0e131fee5837b0f9076cfedabd2334ecb2978775a04bcf42a84258e64b3674"
+    },
+    "test": {
+      "cases": 30,
+      "data_sha256": "fc392cc3f0218ceaf0c7b0aadc3f1f2452d92202efead7d78397c954645d7e50",
+      "labels_sha256": "04665623a6d00803abbfc0f77a553ca4cdaf4584b3ff5816a8306dddf3f09261"
+    }
+  }
+}
