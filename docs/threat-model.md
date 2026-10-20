@@ -26,3 +26,11 @@
 3. 明确拒绝审批后，审计状态必须为 `rejected_no_execution`，且 `executed=false`。
 4. 同一事件 ID 最多产生一个审批决策记录。
 5. 查询异常不得伪装成成功的空结果。
+
+## A2A 原型边界
+
+- 当前 JSON-RPC 仅绑定 `127.0.0.1`、临时端口，面向本地原型；未实现 HTTP 认证或 TLS。A2A v0.3 要求服务端认证每个请求并要求生产使用 HTTPS，因此本实现不可暴露到局域网或公网，也不能宣称生产合规。
+- 仅实现 `message/send`、`tasks/get`、`tasks/cancel` 与公开 Agent Card。未实现 streaming、push、认证、持久任务存储或跨进程恢复；任务表在进程内存中。
+- 请求体限制 1 MB；未知路径拒绝；消息 ID 限长；参数必须为对象。取消只冻结任务终态，不会中断正在执行的同步模型 HTTP 调用。
+- 本地回环只降低远程可达性，不防范本机其他进程。模型 API 凭证仍从 `.env` 读取；不放入 A2A Card 或任务。
+- 官方 `a2a-sdk==0.3.8` 作为独立客户端成功解析 Agent Card，并完成 `message/send`、`tasks/get` 与 DataPart artifact 往返。这证明一条官方 SDK 客户端到本地服务器的互通路径，不代表完整协议符合性。

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from urllib.error import URLError
 from urllib.request import urlopen as actual_urlopen
 
-from opspilot.agents import _ground_adjudication, investigate_multi_agent
+from opspilot.agents import _evidence_context, _ground_adjudication, investigate_multi_agent
 from opspilot.a2a import A2AClient, A2AServer, TaskStore
 from opspilot.agent_protocol import AgentMessage, EvidenceRef
 from opspilot.cli import load_incidents
@@ -34,6 +34,16 @@ class AgentTests(unittest.TestCase):
     def test_message_is_typed_and_serializable(self):
         message = AgentMessage("t", "m", "logs_expert", "cross_examiner", "handoff", {}, (EvidenceRef("logs", "l1"),), budget_tokens=100)
         self.assertEqual("l1", message.to_dict()["evidence"][0]["record_id"])
+
+    def test_cross_exam_context_preserves_trace_joins_without_log_body(self):
+        context = _evidence_context({"source": "traces", "records": [{
+            "record_id": "t1", "timestamp": "2027-02-01T09:05:00Z", "service": "gateway",
+            "message": "sensitive raw body", "attributes": {"trace_id": "trace-1", "service.version": "v3",
+                "span": "gateway.request", "peer.service": "order", "status": "error"},
+        }]}, {"t1"})
+        self.assertEqual("trace-1", context[0]["trace_id"])
+        self.assertEqual("order", context[0]["peer_service"])
+        self.assertNotIn("message", context[0])
 
     def test_independent_agents_handoff_and_adjudicate_with_validated_refs(self):
         incidents = load_incidents(__import__("pathlib").Path("data/incidents.jsonl"))
@@ -96,6 +106,12 @@ class AgentTests(unittest.TestCase):
         self.assertEqual("recovered", result["conflict_summary"])
         self.assertEqual(result, duplicate)
         self.assertEqual(1, client.retry_count)
+
+    def test_a2a_rejects_non_object_params(self):
+        with A2AServer(lambda _payload: {}) as server:
+            client = A2AClient(server.card_url, timeout=2, poll_interval=0.02)
+            with self.assertRaisesRegex(Exception, "Invalid params"):
+                client._rpc("tasks/get", [])
 
     def test_a2a_deadline_cancels_late_result(self):
         with A2AServer(lambda _payload: (time.sleep(0.35) or {"late": True})) as server:

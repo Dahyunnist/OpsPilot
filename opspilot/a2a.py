@@ -119,35 +119,42 @@ class A2AServer:
                 except (ValueError, json.JSONDecodeError):
                     self._send(_error(None, -32700, "Parse error"))
                     return
+                if not isinstance(request, dict):
+                    self._send(_error(None, -32600, "Invalid Request"))
+                    return
                 request_id = request.get("id")
                 if request.get("jsonrpc") != "2.0" or not isinstance(request_id, (str, int)):
                     self._send(_error(request_id, -32600, "Invalid Request"))
                     return
                 method, params = request.get("method"), request.get("params", {})
+                if not isinstance(params, dict):
+                    self._send(_error(request_id, -32602, "Invalid params"))
+                    return
                 if method == "message/send":
                     message = params.get("message", {})
                     parts = message.get("parts", [])
                     data = next((part.get("data") for part in parts if part.get("kind") == "data"), None)
                     message_id = message.get("messageId")
-                    if message.get("role") != "user" or not message_id or not isinstance(data, dict):
+                    if (message.get("role") != "user" or not isinstance(message_id, str)
+                            or not 1 <= len(message_id) <= 256 or not isinstance(data, dict)):
                         self._send(_error(request_id, -32602, "message/send requires user DataPart and messageId"))
                         return
                     task, created = store.create(message_id, data)
                     if created:
                         threading.Thread(target=self._work, args=(task["id"], data), daemon=True).start()
-                    self._send({"jsonrpc": "2.0", "id": request_id, "result": {"task": store.get(task["id"])}})
+                    self._send({"jsonrpc": "2.0", "id": request_id, "result": store.get(task["id"])})
                 elif method == "tasks/get":
                     task = store.get(params.get("id", ""))
                     if task is None:
                         self._send(_error(request_id, -32001, "Task not found"))
                     else:
-                        self._send({"jsonrpc": "2.0", "id": request_id, "result": {"task": task}})
+                        self._send({"jsonrpc": "2.0", "id": request_id, "result": task})
                 elif method == "tasks/cancel":
                     task = store.cancel(params.get("id", ""))
                     if task is None:
                         self._send(_error(request_id, -32001, "Task not found"))
                     else:
-                        self._send({"jsonrpc": "2.0", "id": request_id, "result": {"task": task}})
+                        self._send({"jsonrpc": "2.0", "id": request_id, "result": task})
                 else:
                     self._send(_error(request_id, -32601, "Method not found"))
 
@@ -217,7 +224,9 @@ class A2AClient:
             raise A2AError(f"A2A transport failed after retries: {type(last_error).__name__}") from last_error
         if result.get("error"):
             raise A2AError(f"A2A {method} failed: {result['error'].get('message', 'unknown error')}")
-        return result["result"]["task"]
+        if not isinstance(result.get("result"), dict):
+            raise A2AError(f"A2A {method} returned a non-object result")
+        return result["result"]
 
     def send_and_wait(self, task_id: str, payload: dict[str, Any], message_id: str | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         message_id = message_id or str(uuid.uuid4())

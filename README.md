@@ -96,3 +96,10 @@ python -m venv .venv
 - `scripts/setup.ps1`、`scripts/run_investigation.ps1`、`scripts/run_mcp.ps1`：Windows 本地安装与运行入口。
 - `opspilot/`：只读查询、假设账本与 CLI。
 - `tests/`：各阶段闭环、可靠性和 MCP 联调测试。
+
+复杂集互通测试需额外安装官方 A2A SDK：
+
+```powershell
+python -m pip install -r requirements-a2a-interop.txt
+python -m unittest tests.test_a2a_sdk_interop -v
+```

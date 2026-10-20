@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -124,17 +125,23 @@ def run_rules(incident: dict[str, Any], report: dict[str, Any]) -> dict[str, Any
             "model": {"name": None, "calls": 0}}
 
 
-def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "single-agent", "multi-agent")) -> dict[str, Any]:
+def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "single-agent", "multi-agent"),
+             benchmark_dir: Path | None = None) -> dict[str, Any]:
     if limit is not None and limit < 1:
         raise ValueError("--limit must be at least 1")
     load_project_env()
     configured_model = os.getenv("LLM_MODEL")
     rates = active_deepseek_rates() if configured_model and "deepseek" in configured_model.lower() else None
-    data_dir = ROOT / "data" / "benchmark"
+    data_dir = benchmark_dir or ROOT / "data" / "benchmark"
     incidents = load_incidents(data_dir / "test.jsonl")
     labels = json.loads((data_dir / "labels" / "test.json").read_text(encoding="utf-8"))["labels"]
     label_by_id = {item["incident_id"]: item for item in labels}
     manifest = json.loads((data_dir / "manifest.json").read_text(encoding="utf-8"))
+    data_bytes = (data_dir / "test.jsonl").read_bytes()
+    label_bytes = (data_dir / "labels" / "test.json").read_bytes()
+    split_manifest = manifest["splits"]["test"]
+    if hashlib.sha256(data_bytes).hexdigest() != split_manifest["data_sha256"] or hashlib.sha256(label_bytes).hexdigest() != split_manifest["labels_sha256"]:
+        raise ValueError("frozen test split hash mismatch")
     if set(incidents) != set(label_by_id):
         raise ValueError("blind test case IDs and labels do not match")
     ids = sorted(incidents)[:limit] if limit else sorted(incidents)
@@ -144,15 +151,31 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
         baseline = investigate(incident, query_budget=8)
         for strategy in strategies:
             started = time.perf_counter()
+            measured = {"calls": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "failures": 0}
+            original_complete = __import__("opspilot.model_client", fromlist=["ChatModel"]).ChatModel.complete
+
+            def tracked_complete(instance: Any, system: str, user: str, token_budget: int) -> dict[str, Any]:
+                measured["calls"] += 1
+                try:
+                    result = original_complete(instance, system, user, token_budget)
+                except Exception:
+                    measured["failures"] += 1
+                    raise
+                usage = result.get("usage", {})
+                measured["input_tokens"] += usage.get("prompt_tokens", 0)
+                measured["cached_input_tokens"] += usage.get("prompt_tokens_details", {}).get("cached_tokens", 0)
+                measured["output_tokens"] += usage.get("completion_tokens", 0)
+                return result
             try:
-                if strategy == "rules":
-                    result = run_rules(incident, baseline)
-                elif strategy == "single-agent":
-                    result = investigate_single_agent(incident, baseline, token_budget=1200)
-                elif strategy == "multi-agent":
-                    result = investigate_multi_agent(incident, baseline, token_budget=12000)
-                else:
-                    raise ValueError(f"unknown strategy: {strategy}")
+                with patch("opspilot.model_client.ChatModel.complete", tracked_complete):
+                    if strategy == "rules":
+                        result = run_rules(incident, baseline)
+                    elif strategy == "single-agent":
+                        result = investigate_single_agent(incident, baseline, token_budget=1200)
+                    elif strategy == "multi-agent":
+                        result = investigate_multi_agent(incident, baseline, token_budget=12000)
+                    else:
+                        raise ValueError(f"unknown strategy: {strategy}")
                 adjudication = _extract(result["adjudication"])
                 trace = result.get("trace", {})
                 model = result.get("model", {})
@@ -167,11 +190,13 @@ def evaluate(limit: int | None = None, strategies: tuple[str, ...] = ("rules", "
                                         "available_evidence_ids": sorted({row["record_id"] for rows in incident["signals"].values() for row in rows}),
                                         "error_type": type(exc).__name__, "error": str(exc)[:300],
                                         "duration_ms": round((time.perf_counter() - started) * 1000, 1),
-                                        "trace": {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "spent_tokens": 0,
-                                                  "duration_ms": round((time.perf_counter() - started) * 1000, 1), "failures": 1}, "model": {"name": None, "calls": 0}})
+                                        "trace": {"input_tokens": measured["input_tokens"], "cached_input_tokens": measured["cached_input_tokens"],
+                                                  "output_tokens": measured["output_tokens"], "spent_tokens": measured["input_tokens"] + measured["output_tokens"],
+                                                  "duration_ms": round((time.perf_counter() - started) * 1000, 1), "failures": max(1, measured["failures"])},
+                                        "model": {"name": configured_model, "calls": measured["calls"]}})
     summaries = {strategy: summarize(items, rates) for strategy, items in cases.items()}
     result = {
-        "evaluation": "frozen_synthetic_blind_test_v1",
+        "evaluation": manifest.get("benchmark_id", "frozen_synthetic_blind_test_v1"),
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "manifest": manifest,
         "evaluated_split": "test", "test_cases_total": len(incidents), "cases_evaluated": len(ids),
@@ -218,6 +243,10 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
                           "model_underapproved_suggestions": model_underapproved, "gate_overrides": model_underapproved - gated},
         "communication": {"failed_cases": sum(not case.get("success") for case in cases),
                           "retries": sum(case.get("trace", {}).get("retries", 0) for case in cases),
+                          "expert_handoffs": sum(sum(event.get("event") == "handoff_received" for event in case.get("raw_result", {}).get("trace", {}).get("events", [])) for case in cases),
+                          "a2a_sends": sum(sum(event.get("method") == "message/send" for event in case.get("raw_result", {}).get("trace", {}).get("events", []) if event.get("event") == "a2a_protocol") for case in cases),
+                          "a2a_polls": sum(sum(event.get("method") == "tasks/get" for event in case.get("raw_result", {}).get("trace", {}).get("events", []) if event.get("event") == "a2a_protocol") for case in cases),
+                          "completed_handoffs": sum(sum(event.get("state") == "completed" for event in case.get("raw_result", {}).get("trace", {}).get("events", []) if event.get("event") == "a2a_protocol") for case in cases),
                           "a2a_retries": sum(sum(event.get("count", 0) for event in case.get("raw_result", {}).get("trace", {}).get("events", []) if event.get("event") == "transport_retries") for case in cases),
                           "cancellations": sum(sum(event.get("method") == "tasks/cancel" for event in case.get("raw_result", {}).get("trace", {}).get("events", []) if event.get("event") == "a2a_protocol") for case in cases)},
         "latency_ms": {"mean": round(statistics.mean(durations), 1) if durations else None, "p95": round(p95, 1) if p95 is not None else None},
@@ -229,8 +258,8 @@ def summarize(cases: list[dict[str, Any]], rates: dict[str, Any] | None = None) 
 
 def markdown_report(result: dict[str, Any]) -> str:
     lines = [
-        "# OpsPilot 多 Agent 盲测评估", "",
-        f"冻结测试集：{result['cases_evaluated']}/{result['test_cases_total']} 例。数据为合成模板变体。运行时间：{result['created_at_utc']}。", "",
+        "# OpsPilot 冻结集策略盲测评估", "",
+        f"数据集 `{result['evaluation']}`；冻结测试集 {result['cases_evaluated']}/{result['test_cases_total']} 例；合成数据={result['manifest'].get('synthetic', True)}。运行时间：{result['created_at_utc']}。", "",
         "| 方法 | 根因准确率 | 弃答召回 | 错误确定 | 金证据 P/R | 引用存在 | 平均延迟 | P95 | 输入/输出 tokens | 估算费用 USD |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
@@ -245,8 +274,9 @@ def markdown_report(result: dict[str, Any]) -> str:
     probe = result["protocol_fault_probes"]
     safety = {name: item["action_safety"] for name, item in result["summaries"].items()}
     lines.extend(["", f"A2A 故障探针：重试恢复 `{probe['transient_retry_recovered']}`；重复消息幂等 `{probe['duplicate_message_idempotent']}`；截止后取消 `{probe['deadline_cancellation']}`。", "",
+                  "A2A 实际交接（按策略）：" + "；".join(f"{name}: 专家交接 {item['communication']['expert_handoffs']}、message/send {item['communication']['a2a_sends']}、tasks/get {item['communication']['a2a_polls']}、取消 {item['communication']['cancellations']}、失败 {item['communication']['failed_cases']}" for name, item in result["summaries"].items()) + ".", "",
                   f"审批标记：模型曾漏标建议（规则/单 Agent/多 Agent）={safety.get('rules', {}).get('model_underapproved_suggestions', 0)}/{safety.get('single-agent', {}).get('model_underapproved_suggestions', 0)}/{safety.get('multi-agent', {}).get('model_underapproved_suggestions', 0)}；应用闸门均补为需审批。", "",
-                  "费用采用 DeepSeek 官方价格快照和实际时段、缓存 token 估算。16 例样本较小，不能代表生产表现。", "",
+                  "费用采用 DeepSeek 官方价格快照和实际时段、缓存 token 估算。样本量小，不能代表生产表现。", "",
                   "逐例轨迹与原始响应见同名 JSON 文件。"])
     return "\n".join(lines) + "\n"
 
@@ -255,9 +285,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Compare rules, single-agent and multi-agent on frozen blind test data")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--strategy", choices=("rules", "single-agent", "multi-agent"), action="append")
+    parser.add_argument("--benchmark-dir", type=Path, default=ROOT / "data" / "benchmark")
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "agent-evaluation.json")
     args = parser.parse_args()
-    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")))
+    result = evaluate(args.limit, tuple(args.strategy or ("rules", "single-agent", "multi-agent")), args.benchmark_dir)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.output.with_suffix(".md").write_text(markdown_report(result), encoding="utf-8")
