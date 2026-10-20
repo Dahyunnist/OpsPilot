@@ -1,0 +1,1935 @@
+{
+  "experiment": "train_contextual_bandit_routing_v1",
+  "algorithm": "epsilon-greedy contextual bandit with sample-mean Q updates",
+  "split": "train",
+  "episodes": 24,
+  "policy": {
+    "algorithm": "epsilon_greedy_contextual_bandit_sample_mean",
+    "epsilon": 0.1,
+    "values": {
+      "decisive": {
+        "rules": 1.5159427272727273,
+        "single-agent": 1.477754,
+        "multi-agent": 1.412115
+      },
+      "ambiguous": {
+        "rules": 0.95,
+        "single-agent": 0.92157,
+        "multi-agent": 0.60928
+      }
+    },
+    "counts": {
+      "decisive": {
+        "rules": 11,
+        "single-agent": 5,
+        "multi-agent": 2
+      },
+      "ambiguous": {
+        "rules": 4,
+        "single-agent": 1,
+        "multi-agent": 1
+      }
+    },
+    "routes": [
+      "rules",
+      "single-agent",
+      "multi-agent"
+    ]
+  },
+  "route_counts": {
+    "rules": 15,
+    "single-agent": 6,
+    "multi-agent": 3
+  },
+  "mean_reward": 1.3424675,
+  "token_usage": {
+    "input": 17920,
+    "cached_input": 2304,
+    "output": 5096,
+    "total": 23016
+  },
+  "model": "deepseek-v4-flash",
+  "estimated_cost_usd": 0.01081382,
+  "episodes_log": [
+    {
+      "task_id": null,
+      "incident_id": "config-error-05",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "config_error",
+        "raw_root_cause": "config_error",
+        "evidence_ids": [
+          "config-error-05-d1",
+          "config-error-05-l1",
+          "config-error-05-m1",
+          "config-error-05-m2",
+          "config-error-05-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "rollback_order_config",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Redeploy the last known-good configuration after approval."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.139,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.50555,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.35556,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 5,
+          "precision": 0.8,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "a7e71128-8999-4f57-88b4-d21dd0cd2599",
+      "incident_id": "config-error-07",
+      "context": "decisive",
+      "route": "single-agent",
+      "prediction": {
+        "status": "root_cause_identified",
+        "root_cause": "config_error",
+        "raw_root_cause": "deployment introduced invalid order service configuration",
+        "evidence_ids": [
+          "config-error-07-m2",
+          "config-error-07-l1",
+          "config-error-07-t1",
+          "config-error-07-d1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 4
+        },
+        "action_suggestion": "Review and roll back the order-config-error-07 config bundle; restore the missing downstream endpoint.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1314.0,
+        "spent_tokens": 1170,
+        "input_tokens": 974,
+        "cached_input_tokens": 768,
+        "output_tokens": 196,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.52138,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.02628,
+          "token_penalty": 0.00234
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "422f3de7-0c86-4da3-810a-32ea8eddcd0c",
+      "incident_id": "config-error-08",
+      "context": "decisive",
+      "route": "multi-agent",
+      "prediction": {
+        "status": "probable",
+        "root_cause": "config_error",
+        "raw_root_cause": "deployment introduced invalid order service configuration",
+        "evidence_ids": [
+          "config-error-08-l1",
+          "config-error-08-m2",
+          "config-error-08-t1",
+          "config-error-08-d1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 4
+        },
+        "action_suggestion": "Obtain config diff for order-config-error-08 and validation error message; prepare rollback of config bundle pending review.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": [
+          {
+            "event": "coordinator_started",
+            "incident_id": "config-error-08",
+            "budget": 12000
+          },
+          {
+            "event": "handoff_received",
+            "sender": "trace_deployment_expert",
+            "message_id": "a104863f-0949-4a07-a110-8fbb69b444f6",
+            "evidence_count": 2
+          },
+          {
+            "event": "handoff_received",
+            "sender": "logs_expert",
+            "message_id": "051c8d9c-961a-4e77-957a-a14bd64182a7",
+            "evidence_count": 2
+          },
+          {
+            "event": "handoff_received",
+            "sender": "metrics_expert",
+            "message_id": "d2745196-7084-461d-9f2c-aaff24a37457",
+            "evidence_count": 3
+          },
+          {
+            "event": "handoff_received",
+            "sender": "deployment_expert",
+            "message_id": "daf3cf42-2769-409b-a137-6b7466cd0ab0",
+            "evidence_count": 2
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "message/send",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working",
+            "message_id": "422f3de7-0c86-4da3-810a-32ea8eddcd0c:cross-examination"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "c9a60d8a-3913-47dc-8eee-78ba01d4d3b0",
+            "state": "completed"
+          },
+          {
+            "event": "cross_examination_complete",
+            "challenges": 3
+          },
+          {
+            "event": "adjudication_complete",
+            "cited": 4,
+            "status": "probable"
+          }
+        ],
+        "duration_ms": 6296.7,
+        "spent_tokens": 5719,
+        "input_tokens": 4304,
+        "cached_input_tokens": 0,
+        "output_tokens": 1415,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.41263,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.12593,
+          "token_penalty": 0.01144
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "6ee70749-cf00-4f96-9059-ba1b41b48b97",
+      "incident_id": "config-error-09",
+      "context": "decisive",
+      "route": "single-agent",
+      "prediction": {
+        "status": "investigating",
+        "root_cause": "config_error",
+        "raw_root_cause": "deployment introduced invalid order service configuration",
+        "evidence_ids": [
+          "config-error-09-m2",
+          "config-error-09-l1",
+          "config-error-09-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 3,
+          "independent_sources": 3
+        },
+        "action_suggestion": "Review and roll back the order service configuration to restore the missing downstream endpoint.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1142.9,
+        "spent_tokens": 1015,
+        "input_tokens": 849,
+        "cached_input_tokens": 0,
+        "output_tokens": 166,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.52511,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.02286,
+          "token_penalty": 0.00203
+        },
+        "evidence": {
+          "gold_count": 3,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "0ef83a65-21d4-4bda-9996-e41f827a9384",
+      "incident_id": "config-error-10",
+      "context": "decisive",
+      "route": "single-agent",
+      "prediction": {
+        "status": "root_cause_identified",
+        "root_cause": "config_error",
+        "raw_root_cause": "deployment introduced invalid order service configuration",
+        "evidence_ids": [
+          "config-error-10-m2",
+          "config-error-10-l1",
+          "config-error-10-t1",
+          "config-error-10-d1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 4
+        },
+        "action_suggestion": "Review and roll back the order service config bundle version order-config-error-10; restore the missing downstream endpoint.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1667.6,
+        "spent_tokens": 1217,
+        "input_tokens": 1001,
+        "cached_input_tokens": 0,
+        "output_tokens": 216,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.51421,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.03335,
+          "token_penalty": 0.00243
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "713adc09-9e1b-41cd-ac58-ff02e998ea5c",
+      "incident_id": "config-error-12",
+      "context": "decisive",
+      "route": "single-agent",
+      "prediction": {
+        "status": "investigated",
+        "root_cause": "config_error",
+        "raw_root_cause": "deployment introduced invalid order service configuration",
+        "evidence_ids": [
+          "config-error-12-m2",
+          "config-error-12-l1",
+          "config-error-12-t1",
+          "config-error-12-d1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 4
+        },
+        "action_suggestion": "Review and roll back the order config bundle change; validate required downstream endpoint.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1488.4,
+        "spent_tokens": 1069,
+        "input_tokens": 914,
+        "cached_input_tokens": 0,
+        "output_tokens": 155,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.51809,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.02977,
+          "token_penalty": 0.00214
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "87c68a4a-10fc-4cfd-814b-fdfc30ac155c",
+      "incident_id": "downstream-timeout-02",
+      "context": "decisive",
+      "route": "single-agent",
+      "prediction": {
+        "status": "resolved",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream service exceeded request timeout",
+        "evidence_ids": [
+          "downstream-timeout-02-t1",
+          "downstream-timeout-02-l1",
+          "downstream-timeout-02-m1",
+          "downstream-timeout-02-m2"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 3
+        },
+        "action_suggestion": "Inspect downstream service latency and timeout budget; verify order client timeout config.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1854.9,
+        "spent_tokens": 1463,
+        "input_tokens": 1221,
+        "cached_input_tokens": 1024,
+        "output_tokens": 242,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.30998,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": -0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0371,
+          "token_penalty": 0.00293
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": true
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "downstream-timeout-03",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream_timeout",
+        "evidence_ids": [
+          "downstream-timeout-03-l1",
+          "downstream-timeout-03-m1",
+          "downstream-timeout-03-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.113,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.49285,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.34286,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 0.75
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "downstream-timeout-05",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream_timeout",
+        "evidence_ids": [
+          "downstream-timeout-05-l1",
+          "downstream-timeout-05-m1",
+          "downstream-timeout-05-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.08,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.49286,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.34286,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 0.75
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "downstream-timeout-06",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream_timeout",
+        "evidence_ids": [
+          "downstream-timeout-06-l1",
+          "downstream-timeout-06-m1",
+          "downstream-timeout-06-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.094,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.49286,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.34286,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 0.75
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "downstream-timeout-09",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream_timeout",
+        "evidence_ids": [
+          "downstream-timeout-09-l1",
+          "downstream-timeout-09-m1",
+          "downstream-timeout-09-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.077,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.49286,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.34286,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 0.75
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "downstream-timeout-10",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "downstream_timeout",
+        "raw_root_cause": "downstream_timeout",
+        "evidence_ids": [
+          "downstream-timeout-10-l1",
+          "downstream-timeout-10-m1",
+          "downstream-timeout-10-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_downstream",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore the downstream service and recheck dependent callers."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.076,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.49286,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.34286,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 3,
+          "precision": 1.0,
+          "recall": 0.75
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "7f90b4af-586a-48fb-8dc1-34d380b2b1ce",
+      "incident_id": "pool-exhaustion-04",
+      "context": "decisive",
+      "route": "multi-agent",
+      "prediction": {
+        "status": "probable",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "database connection pool exhausted",
+        "evidence_ids": [
+          "pool-exhaustion-04-m1",
+          "pool-exhaustion-04-m2",
+          "pool-exhaustion-04-l1",
+          "pool-exhaustion-04-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 4,
+          "independent_sources": 3
+        },
+        "action_suggestion": "Collect DB query latency/throughput, pool in_use history pre-09:05, timeout event counts, and full span tree before remediation.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": [
+          {
+            "event": "coordinator_started",
+            "incident_id": "pool-exhaustion-04",
+            "budget": 12000
+          },
+          {
+            "event": "handoff_received",
+            "sender": "deployment_expert",
+            "message_id": "8800c48d-7692-4202-8ba0-63541713aa11",
+            "evidence_count": 0
+          },
+          {
+            "event": "handoff_received",
+            "sender": "metrics_expert",
+            "message_id": "33b3fd86-7247-44b9-b7f9-964de9ad202d",
+            "evidence_count": 4
+          },
+          {
+            "event": "handoff_received",
+            "sender": "logs_expert",
+            "message_id": "4d58b2de-c7cf-44c4-a41e-85d174ba522f",
+            "evidence_count": 2
+          },
+          {
+            "event": "handoff_received",
+            "sender": "trace_deployment_expert",
+            "message_id": "d0370964-2415-4739-868a-1cced8961866",
+            "evidence_count": 3
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "message/send",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working",
+            "message_id": "7f90b4af-586a-48fb-8dc1-34d380b2b1ce:cross-examination"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "ea82de4f-ba6b-43c4-82b6-8b1f4b653ba9",
+            "state": "completed"
+          },
+          {
+            "event": "cross_examination_complete",
+            "challenges": 3
+          },
+          {
+            "event": "adjudication_complete",
+            "cited": 4,
+            "status": "probable"
+          }
+        ],
+        "duration_ms": 6355.4,
+        "spent_tokens": 5646,
+        "input_tokens": 4265,
+        "cached_input_tokens": 0,
+        "output_tokens": 1381,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.4116,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.12711,
+          "token_penalty": 0.01129
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "pool-exhaustion-06",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "pool_exhaustion",
+        "evidence_ids": [
+          "pool-exhaustion-06-l1",
+          "pool-exhaustion-06-m1",
+          "pool-exhaustion-06-m2",
+          "pool-exhaustion-06-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.315,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.54999,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 1e-05,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "pool-exhaustion-07",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "pool_exhaustion",
+        "evidence_ids": [
+          "pool-exhaustion-07-l1",
+          "pool-exhaustion-07-m1",
+          "pool-exhaustion-07-m2",
+          "pool-exhaustion-07-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.221,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.55,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "pool-exhaustion-08",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "pool_exhaustion",
+        "evidence_ids": [
+          "pool-exhaustion-08-conflict",
+          "pool-exhaustion-08-l1",
+          "pool-exhaustion-08-m1",
+          "pool-exhaustion-08-m2",
+          "pool-exhaustion-08-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.221,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.50555,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.35556,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 5,
+          "precision": 0.8,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "pool-exhaustion-09",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "pool_exhaustion",
+        "evidence_ids": [
+          "pool-exhaustion-09-l1",
+          "pool-exhaustion-09-m1",
+          "pool-exhaustion-09-m2",
+          "pool-exhaustion-09-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.185,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.55,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "pool-exhaustion-12",
+      "context": "decisive",
+      "route": "rules",
+      "prediction": {
+        "status": "determined",
+        "root_cause": "pool_exhaustion",
+        "raw_root_cause": "pool_exhaustion",
+        "evidence_ids": [
+          "pool-exhaustion-12-l1",
+          "pool-exhaustion-12-m1",
+          "pool-exhaustion-12-m2",
+          "pool-exhaustion-12-t1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": {
+          "action_id": "restart_order",
+          "risk": "high",
+          "requires_approval": true,
+          "execution": "simulation_only",
+          "rollback": "Restore service capacity and verify connections after restart."
+        },
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.297,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 1.54999,
+        "components": {
+          "outcome": 1.0,
+          "evidence_f1_reward": 0.4,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 1e-05,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 4,
+          "cited_count": 4,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "unknown-03",
+      "context": "ambiguous",
+      "route": "rules",
+      "prediction": {
+        "status": "insufficient_evidence",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-03-m1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": null,
+        "approval_required": false
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.116,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.95,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 1,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "1c2b3af1-724a-458f-a898-858f0f033545",
+      "incident_id": "unknown-04",
+      "context": "ambiguous",
+      "route": "single-agent",
+      "prediction": {
+        "status": "inconclusive",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-04-m1",
+          "unknown-04-m2",
+          "unknown-04-m3",
+          "unknown-04-l1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": false,
+          "valid_count": 4,
+          "independent_sources": 0
+        },
+        "action_suggestion": "Collect traces and pool wait metrics before remediation.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 1334.5,
+        "spent_tokens": 872,
+        "input_tokens": 728,
+        "cached_input_tokens": 512,
+        "output_tokens": 144,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.92157,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.02669,
+          "token_penalty": 0.00174
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 4,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": "3f7ad61a-c6e0-41e6-8772-d9cf669835f9",
+      "incident_id": "unknown-05",
+      "context": "ambiguous",
+      "route": "multi-agent",
+      "prediction": {
+        "status": "insufficient_evidence",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-05-m1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true,
+          "valid_count": 1,
+          "independent_sources": 1
+        },
+        "action_suggestion": "Collect traces spanning gateway→order→DB and downstream, plus pre-window pool wait and p95 baselines, to establish temporal ordering.",
+        "approval_required": true
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": [
+          {
+            "event": "coordinator_started",
+            "incident_id": "unknown-05",
+            "budget": 12000
+          },
+          {
+            "event": "handoff_received",
+            "sender": "trace_deployment_expert",
+            "message_id": "1851a432-2a05-4fb7-a5e4-234096d7912f",
+            "evidence_count": 0
+          },
+          {
+            "event": "handoff_received",
+            "sender": "deployment_expert",
+            "message_id": "4a5a0155-7c1d-45b8-91d8-b3cdbc68ade3",
+            "evidence_count": 0
+          },
+          {
+            "event": "handoff_received",
+            "sender": "logs_expert",
+            "message_id": "532f7d6c-0fb4-4df3-b612-04c0ab803a58",
+            "evidence_count": 3
+          },
+          {
+            "event": "handoff_received",
+            "sender": "metrics_expert",
+            "message_id": "60f49b94-d2df-49f3-b5f0-7b5e42832c76",
+            "evidence_count": 6
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "message/send",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working",
+            "message_id": "3f7ad61a-c6e0-41e6-8772-d9cf669835f9:cross-examination"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "working"
+          },
+          {
+            "event": "a2a_protocol",
+            "method": "tasks/get",
+            "task_id": "64b88e53-1d61-4be7-a475-04dd2a16bd41",
+            "state": "completed"
+          },
+          {
+            "event": "cross_examination_complete",
+            "challenges": 3
+          },
+          {
+            "event": "adjudication_complete",
+            "cited": 1,
+            "status": "insufficient_evidence"
+          }
+        ],
+        "duration_ms": 6551.3,
+        "spent_tokens": 4845,
+        "input_tokens": 3664,
+        "cached_input_tokens": 0,
+        "output_tokens": 1181,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.60928,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": -0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.13103,
+          "token_penalty": 0.00969
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 1,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": true
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "unknown-07",
+      "context": "ambiguous",
+      "route": "rules",
+      "prediction": {
+        "status": "insufficient_evidence",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-07-m1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": null,
+        "approval_required": false
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.111,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.95,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 1,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "unknown-08",
+      "context": "ambiguous",
+      "route": "rules",
+      "prediction": {
+        "status": "insufficient_evidence",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-08-conflict",
+          "unknown-08-m1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": null,
+        "approval_required": false
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.082,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.95,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 2,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": false
+      }
+    },
+    {
+      "task_id": null,
+      "incident_id": "unknown-12",
+      "context": "ambiguous",
+      "route": "rules",
+      "prediction": {
+        "status": "insufficient_evidence",
+        "root_cause": null,
+        "raw_root_cause": null,
+        "evidence_ids": [
+          "unknown-12-m1"
+        ],
+        "citation_validation": {
+          "all_references_exist": true,
+          "all_references_support_hypothesis": true
+        },
+        "action_suggestion": null,
+        "approval_required": false
+      },
+      "success": true,
+      "failure_type": null,
+      "trace": {
+        "events": null,
+        "duration_ms": 0.076,
+        "spent_tokens": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "retries": null,
+        "failures": 0
+      },
+      "reward": {
+        "total": 0.95,
+        "components": {
+          "outcome": 0.8,
+          "evidence_f1_reward": 0.0,
+          "action_safety": 0.1,
+          "communication": 0.05,
+          "latency_penalty": 0.0,
+          "token_penalty": 0.0
+        },
+        "evidence": {
+          "gold_count": 0,
+          "cited_count": 1,
+          "precision": null,
+          "recall": null
+        },
+        "model_missed_approval": false
+      }
+    }
+  ],
+  "notes": [
+    "Each episode selects one route and updates its state/action value from observed reward.",
+    "Training labels never enter model evidence context; the current case is excluded from historical-memory retrieval.",
+    "No neural model weights or prompts are updated."
+  ],
+  "created_at_utc": "2026-10-20T02:53:09.893999+00:00",
+  "split_manifest": {
+    "cases": 24,
+    "data_sha256": "4788c93901cf283db4c27f4f142ac71bdddafee31ef591bb3c3d4d4af4d00efc",
+    "labels_sha256": "e19005344da261c5f17a3694929cffe63446ed77b028827781e1b4d2f8ba3480"
+  },
+  "rates": {
+    "provider": "DeepSeek",
+    "snapshot_date": "2026-10-20",
+    "period": "peak",
+    "input_cache_hit_per_million": 0.006,
+    "input_cache_miss_per_million": 0.3,
+    "output_per_million": 1.2,
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/"
+  }
+}

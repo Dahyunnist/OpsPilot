@@ -1,0 +1,1719 @@
+{
+  "experiment": "heldout_contextual_bandit_routing_evaluation_v1",
+  "created_at_utc": "2026-10-20T02:53:10.193691+00:00",
+  "policy_algorithm": "epsilon-greedy contextual bandit with sample-mean Q updates",
+  "policy_fitted_split": "train",
+  "policy_updated_on_validation_or_test": false,
+  "learned_policy": {
+    "algorithm": "epsilon_greedy_contextual_bandit_sample_mean",
+    "epsilon": 0.1,
+    "values": {
+      "decisive": {
+        "rules": 1.5159427272727273,
+        "single-agent": 1.477754,
+        "multi-agent": 1.412115
+      },
+      "ambiguous": {
+        "rules": 0.95,
+        "single-agent": 0.92157,
+        "multi-agent": 0.60928
+      }
+    },
+    "counts": {
+      "decisive": {
+        "rules": 11,
+        "single-agent": 5,
+        "multi-agent": 2
+      },
+      "ambiguous": {
+        "rules": 4,
+        "single-agent": 1,
+        "multi-agent": 1
+      }
+    },
+    "routes": [
+      "rules",
+      "single-agent",
+      "multi-agent"
+    ]
+  },
+  "split_manifests": {
+    "train": {
+      "cases": 24,
+      "data_sha256": "4788c93901cf283db4c27f4f142ac71bdddafee31ef591bb3c3d4d4af4d00efc",
+      "labels_sha256": "e19005344da261c5f17a3694929cffe63446ed77b028827781e1b4d2f8ba3480"
+    },
+    "validation": {
+      "cases": 8,
+      "data_sha256": "6f46a45481e810bb58dc6b6f573de19a08bd771a061a39e74facbe7d35fffe88",
+      "labels_sha256": "8cfe0a5727e29965b74fd7bbdf1af905b29dd6828137503399375409ea83b33a"
+    },
+    "test": {
+      "cases": 16,
+      "data_sha256": "ff381facd6b810de94714de88c646c9450cf3edd5cb7e2b88422a7442cb50237",
+      "labels_sha256": "812069d15a61854e72386ba5c66aa5b0a7d6e5398961adae9e3eec5a618ed675"
+    }
+  },
+  "train": {
+    "episodes": 24,
+    "route_counts": {
+      "rules": 15,
+      "single-agent": 6,
+      "multi-agent": 3
+    },
+    "mean_reward": 1.3424675,
+    "estimated_cost_usd": 0.01081382
+  },
+  "validation": {
+    "split": "validation",
+    "episodes": 8,
+    "policy_updates": 0,
+    "route_counts": {
+      "rules": 8,
+      "single-agent": 0,
+      "multi-agent": 0
+    },
+    "mean_reward": 1.3646,
+    "summary": {
+      "root_cause_accuracy": {
+        "correct": 6,
+        "total_decidable": 6,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 2,
+        "total_insufficient": 2,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 6,
+        "total_decidable": 6
+      },
+      "citation_support_cases": {
+        "valid": 6,
+        "total_decidable": 6
+      },
+      "gold_evidence_precision": 0.8461538461538461,
+      "gold_evidence_recall": 0.9166666666666666,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 0,
+        "gate_overrides": 0
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 0.1,
+        "p95": 0.3
+      },
+      "token_usage": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "total": 0
+      },
+      "estimated_cost_usd": null,
+      "model_calls": 0
+    },
+    "episodes_log": [
+      {
+        "incident_id": "config-error-04",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-04-d1",
+            "config-error-04-gateway-span",
+            "config-error-04-l1",
+            "config-error-04-m1",
+            "config-error-04-m2",
+            "config-error-04-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.306,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.46999,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.32,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 1e-05,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 6,
+            "precision": 0.6666666666666666,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "config-error-11",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-11-d1",
+            "config-error-11-l1",
+            "config-error-11-m1",
+            "config-error-11-m2",
+            "config-error-11-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.085,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.50555,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.35556,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 5,
+            "precision": 0.8,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-01",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-01-l1",
+            "downstream-timeout-01-m1",
+            "downstream-timeout-01-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.092,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49286,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-12",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-12-l1",
+            "downstream-timeout-12-m1",
+            "downstream-timeout-12-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.08,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49286,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-01",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-01-l1",
+            "pool-exhaustion-01-m1",
+            "pool-exhaustion-01-m2",
+            "pool-exhaustion-01-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.068,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.55,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.4,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 4,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-02",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-02-conflict",
+            "pool-exhaustion-02-l1",
+            "pool-exhaustion-02-m1",
+            "pool-exhaustion-02-m2",
+            "pool-exhaustion-02-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.068,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.50555,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.35556,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 5,
+            "precision": 0.8,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-02",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-02-conflict",
+            "unknown-02-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.064,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 2,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-10",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-10-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.051,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 1,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      }
+    ]
+  },
+  "test": {
+    "split": "test",
+    "episodes": 16,
+    "policy_updates": 0,
+    "route_counts": {
+      "rules": 16,
+      "single-agent": 0,
+      "multi-agent": 0
+    },
+    "mean_reward": 1.3738,
+    "summary": {
+      "root_cause_accuracy": {
+        "correct": 12,
+        "total_decidable": 12,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 4,
+        "total_insufficient": 4,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "citation_support_cases": {
+        "valid": 8,
+        "total_decidable": 12
+      },
+      "gold_evidence_precision": 0.9148936170212766,
+      "gold_evidence_recall": 0.9148936170212766,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 0,
+        "gate_overrides": 0
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 0.2,
+        "p95": 0.3
+      },
+      "token_usage": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "total": 0
+      },
+      "estimated_cost_usd": null,
+      "model_calls": 0
+    },
+    "episodes_log": [
+      {
+        "incident_id": "config-error-01",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-01-d1",
+            "config-error-01-l1",
+            "config-error-01-m1",
+            "config-error-01-m2",
+            "config-error-01-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.139,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.50555,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.35556,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 5,
+            "precision": 0.8,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "config-error-02",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-02-d1",
+            "config-error-02-l1",
+            "config-error-02-m1",
+            "config-error-02-m2",
+            "config-error-02-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.158,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.50555,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.35556,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 5,
+            "precision": 0.8,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "config-error-03",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-03-l1",
+            "config-error-03-m1",
+            "config-error-03-m2",
+            "config-error-03-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.24,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49285,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 3,
+            "cited_count": 4,
+            "precision": 0.75,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "config-error-06",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "config_error",
+          "raw_root_cause": "config_error",
+          "evidence_ids": [
+            "config-error-06-d1",
+            "config-error-06-l1",
+            "config-error-06-m1",
+            "config-error-06-m2",
+            "config-error-06-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": {
+            "action_id": "rollback_order_config",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Redeploy the last known-good configuration after approval."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.106,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.50555,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.35556,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 5,
+            "precision": 0.8,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-04",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-04-l1",
+            "downstream-timeout-04-m1",
+            "downstream-timeout-04-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.119,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49285,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-07",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-07-l1",
+            "downstream-timeout-07-m1",
+            "downstream-timeout-07-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.13,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49285,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-08",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-08-l1",
+            "downstream-timeout-08-m1",
+            "downstream-timeout-08-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.136,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49285,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "downstream-timeout-11",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "downstream_timeout",
+          "raw_root_cause": "downstream_timeout",
+          "evidence_ids": [
+            "downstream-timeout-11-l1",
+            "downstream-timeout-11-m1",
+            "downstream-timeout-11-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_downstream",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore the downstream service and recheck dependent callers."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.108,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.49285,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.34286,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 3,
+            "precision": 1.0,
+            "recall": 0.75
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-03",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-03-l1",
+            "pool-exhaustion-03-m1",
+            "pool-exhaustion-03-m2",
+            "pool-exhaustion-03-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.145,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.55,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.4,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 4,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-05",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-05-l1",
+            "pool-exhaustion-05-m1",
+            "pool-exhaustion-05-m2",
+            "pool-exhaustion-05-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.262,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.54999,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.4,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 1e-05,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 4,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-10",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-10-l1",
+            "pool-exhaustion-10-m1",
+            "pool-exhaustion-10-m2",
+            "pool-exhaustion-10-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.164,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.55,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.4,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 4,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "pool-exhaustion-11",
+        "context": "decisive",
+        "route": "rules",
+        "prediction": {
+          "status": "determined",
+          "root_cause": "pool_exhaustion",
+          "raw_root_cause": "pool_exhaustion",
+          "evidence_ids": [
+            "pool-exhaustion-11-l1",
+            "pool-exhaustion-11-m1",
+            "pool-exhaustion-11-m2",
+            "pool-exhaustion-11-t1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": true
+          },
+          "action_suggestion": {
+            "action_id": "restart_order",
+            "risk": "high",
+            "requires_approval": true,
+            "execution": "simulation_only",
+            "rollback": "Restore service capacity and verify connections after restart."
+          },
+          "approval_required": true
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.283,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 1.54999,
+          "components": {
+            "outcome": 1.0,
+            "evidence_f1_reward": 0.4,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 1e-05,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 4,
+            "cited_count": 4,
+            "precision": 1.0,
+            "recall": 1.0
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-01",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-01-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.087,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 1,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-06",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-06-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.205,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 1,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-09",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-09-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.09,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 1,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      },
+      {
+        "incident_id": "unknown-11",
+        "context": "ambiguous",
+        "route": "rules",
+        "prediction": {
+          "status": "insufficient_evidence",
+          "root_cause": null,
+          "raw_root_cause": null,
+          "evidence_ids": [
+            "unknown-11-m1"
+          ],
+          "citation_validation": {
+            "all_references_exist": true,
+            "all_references_support_hypothesis": false
+          },
+          "action_suggestion": null,
+          "approval_required": false
+        },
+        "success": true,
+        "failure_type": null,
+        "trace": {
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "output_tokens": 0,
+          "spent_tokens": 0,
+          "duration_ms": 0.105,
+          "failures": 0
+        },
+        "model": {
+          "name": null,
+          "calls": 0
+        },
+        "reward": {
+          "total": 0.95,
+          "components": {
+            "outcome": 0.8,
+            "evidence_f1_reward": 0.0,
+            "action_safety": 0.1,
+            "communication": 0.05,
+            "latency_penalty": 0.0,
+            "token_penalty": 0.0
+          },
+          "evidence": {
+            "gold_count": 0,
+            "cited_count": 1,
+            "precision": null,
+            "recall": null
+          },
+          "model_missed_approval": false
+        }
+      }
+    ]
+  },
+  "test_strategy_reference": {
+    "rules": {
+      "root_cause_accuracy": {
+        "correct": 12,
+        "total_decidable": 12,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 4,
+        "total_insufficient": 4,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "citation_support_cases": {
+        "valid": 8,
+        "total_decidable": 12
+      },
+      "gold_evidence_precision": 0.9148936170212766,
+      "gold_evidence_recall": 0.9148936170212766,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 0,
+        "gate_overrides": 0
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 0.2,
+        "p95": 0.3
+      },
+      "token_usage": {
+        "input": 0,
+        "cached_input": 0,
+        "output": 0,
+        "total": 0
+      },
+      "estimated_cost_usd": null,
+      "model_calls": 0
+    },
+    "single-agent": {
+      "root_cause_accuracy": {
+        "correct": 12,
+        "total_decidable": 12,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 4,
+        "total_insufficient": 4,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "citation_support_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "gold_evidence_precision": 1.0,
+      "gold_evidence_recall": 1.0,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 1,
+        "gate_overrides": 1
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 1450.3,
+        "p95": 1641.6
+      },
+      "token_usage": {
+        "input": 14955,
+        "cached_input": 12030,
+        "output": 3096,
+        "total": 18051
+      },
+      "estimated_cost_usd": 0.00466488,
+      "model_calls": 16
+    },
+    "multi-agent": {
+      "root_cause_accuracy": {
+        "correct": 12,
+        "total_decidable": 12,
+        "rate": 1.0
+      },
+      "insufficient_evidence_recall": {
+        "correct_abstentions": 4,
+        "total_insufficient": 4,
+        "rate": 1.0
+      },
+      "false_certainty": 0,
+      "citation_existence_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "citation_support_cases": {
+        "valid": 12,
+        "total_decidable": 12
+      },
+      "gold_evidence_precision": 1.0,
+      "gold_evidence_recall": 1.0,
+      "action_safety": {
+        "ungated_suggestions": 0,
+        "ungated_high_risk_actions": 0,
+        "model_underapproved_suggestions": 1,
+        "gate_overrides": 1
+      },
+      "communication": {
+        "failed_cases": 0,
+        "retries": 0,
+        "a2a_retries": 0,
+        "cancellations": 0
+      },
+      "latency_ms": {
+        "mean": 6160.3,
+        "p95": 7304.9
+      },
+      "token_usage": {
+        "input": 67016,
+        "cached_input": 0,
+        "output": 21727,
+        "total": 88743
+      },
+      "estimated_cost_usd": 0.0461772,
+      "model_calls": 96
+    }
+  },
+  "interpretation": "Q values update from train rewards only. Independent validation/test matched the static rules baseline; report this as reward and routing-policy evaluation, not an Agentic-RL capability."
+}

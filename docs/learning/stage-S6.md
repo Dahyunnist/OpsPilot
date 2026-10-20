@@ -21,3 +21,12 @@ MCP 面向工具与上下文提供者：客户端发现工具并调用只读指�
 `tests/test_agents.py` 启动真实本地 HTTP 服务，读取 Agent Card，发送 A2A JSON-RPC `message/send`，轮询 `tasks/get`，接收 artifact，并验证相同 message ID 幂等。另一项测试验证取消终态。多 Agent 主路径也通过 A2A 往返交叉质询结果。
 
 此实现只覆盖 OpsPilot 需要的 A2A v0.3 JSON-RPC 方法，不支持流式传输、认证或完整一致性套件；不能宣传为完整协议合规。当前服务只在本机随机端口运行。
+
+## 亲手练习
+
+在 `tests/test_agents.py` 里把 A2A handler 延迟改长，运行 deadline 测试；确认 task 进入 `canceled` 后，迟到 artifact 不会覆盖终态。再重放相同 message ID，检查 task ID 不变。
+
+## 面试问题
+
+1. MCP 工具调用与 A2A task 委派分别解决什么问题？
+2. 重试 `message/send` 时，幂等键放在哪里？为什么？
