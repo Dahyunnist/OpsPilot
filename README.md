@@ -37,6 +37,8 @@ python -m opspilot investigate pool-01 --mode auto
 
 多 Agent 模式需要 `.env` 设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。专家按来源隔离证据上下文，进行独立推断；交叉质询与裁决由额外模型调用完成。规则模式仍是离线基线。详见 `docs/learning/stage-S5.md`。
 
+首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。密钥只放在本地 `.env`，不要提交。
+
 交叉质询通过本机 A2A v0.3 JSON-RPC Agent Card 和 task 生命周期完成。MCP 只负责只读工具访问；A2A 负责 Agent 任务委派。详见 `docs/learning/stage-S6.md`。
 
 ## 审批模拟
