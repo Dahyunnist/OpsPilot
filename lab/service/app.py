@@ -280,8 +280,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 payment = json_call(f"{PAYMENT_URL}/charge", {"order_id": order_id}, timeout=0.4 if FAULT in {"dependency_timeout", "double_root"} else 1.0)
                 break
-            except Exception:
-                emit("warning", "payment attempt failed", attempt=attempt + 1)
+            except Exception as exc:
+                emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__)
                 if attempt + 1 == retries:
                     raise RuntimeError("payment attempts exhausted")
         return {"order_id": order_id, "inventory": inventory.get("reserved", False), "payment": payment.get("charged", False)}

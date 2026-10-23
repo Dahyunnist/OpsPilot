@@ -62,6 +62,8 @@ python -m venv .venv
 
 `.\scripts\run_investigation.ps1 -IncidentId downstream-01` 可运行本地调查；`.\scripts\run_mcp.ps1 -Source logs` 可启动日志 MCP 服务。
 
+实验台启动后，`.\scripts\run_mcp.ps1 -Source live` 暴露只读实时遥测 MCP。工具要求 UTC 起止时间和最多 1000 条上限；`investigate_live_incident` 返回根因候选、正反证据引用、来源缺失、时间漂移与 trace 覆盖提示。启发式置信度不是校准概率，证据不足时弃答。
+
 ## 微服务故障实验台
 
 `lab/compose.yaml` 提供 gateway/orders/inventory/payment、PostgreSQL、Redis、OTLP、Jaeger 与 Prometheus。六种可重放故障与双根因清单见 `lab/scenarios/truth.json`。需先启动 Docker Desktop，再运行 `.\lab\run-scenario.ps1 -Scenario slow_sql`；六场景服务烟测为 `.\lab\smoke.ps1`。端口仅绑定本机。详见 `docs/learning/stage-OP1.md`。
@@ -109,6 +111,7 @@ python -m venv .venv
 - `docs/learning/stage-S14.md`：冻结 30 例实测结果、费用边界及 Multi-Agent 路线决策。
 - `docs/learning/stage-S15.md`：根据根因证据强度进行选择性升级，并在新 seed 测试集复测。
 - `docs/learning/stage-OP1.md`：本地微服务故障实验台、重放方式与验证边界。
+- `docs/learning/stage-OP2.md`：只读真实遥测适配、因果证据账本和弃答边界。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

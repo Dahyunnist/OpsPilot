@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('logs', 'traces')]
+    [ValidateSet('logs', 'traces', 'live')]
     [string] $Source
 )
 
