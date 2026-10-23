@@ -85,7 +85,7 @@ class StrategyEvaluationTests(unittest.TestCase):
         class OneExpertFails(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:
                 if "independent metrics telemetry expert" in system:
-                    raise ModelError("model request failed: HTTP 503")
+                    raise ModelError("model request failed: HTTP 503", category="provider_http", code=503, retryable=True)
                 return super().complete(system, user, budget)
 
         model = OneExpertFails()
@@ -93,7 +93,9 @@ class StrategyEvaluationTests(unittest.TestCase):
             lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
         report = score_case(report, ["database_pool_exhaustion"], {"m1", "l1"})
         multi = report["strategies"]["multi"]
-        self.assertEqual(multi["failures"], ["model request failed: HTTP 503"])
+        self.assertEqual(multi["failures"], ["provider_http:503"])
+        self.assertEqual(multi["error_trace"], [{"category": "provider_http", "code": 503,
+            "retryable": True, "http_status": 503}])
         self.assertEqual(multi["fallback_route"], "rules")
         self.assertEqual(multi["prediction"]["root_causes"], ["database_pool_exhaustion"])
         self.assertEqual(multi["model_calls"], 2)
@@ -104,7 +106,8 @@ class StrategyEvaluationTests(unittest.TestCase):
         class AdjudicatorFails(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:
                 if system.startswith("You are an adversarial incident adjudicator"):
-                    raise ModelError("model returned invalid JSON (finish=length)")
+                    raise ModelError("model returned invalid JSON (finish=length)", category="response_schema",
+                        code="invalid_json_content")
                 return super().complete(system, user, budget)
 
         model = AdjudicatorFails()
@@ -112,7 +115,8 @@ class StrategyEvaluationTests(unittest.TestCase):
             lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
         report = score_case(report, ["database_pool_exhaustion"], {"m1", "l1"})
         multi = report["strategies"]["multi"]
-        self.assertEqual(multi["failures"], ["model returned invalid JSON (finish=length)"])
+        self.assertEqual(multi["failures"], ["response_schema:invalid_json_content"])
+        self.assertEqual(multi["error_trace"][0]["code"], "invalid_json_content")
         self.assertEqual(multi["fallback_route"], "rules")
         self.assertEqual(multi["evaluation_status"], "failed")
         self.assertEqual(multi["prediction"]["root_causes"], ["database_pool_exhaustion"])

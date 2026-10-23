@@ -92,10 +92,16 @@ class RunBudget:
             with self.lock:
                 self.reserved_usd -= reserve
                 self.spent_usd += reserve
+                diagnostic = exc.diagnostic() if isinstance(exc, ModelError) else None
                 self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model, "reserve_usd": round(reserve, 8),
                               "run_peak_estimate_usd": round(self.spent_usd, 8), "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8), "limit_usd": self.limit_usd,
                               "error_type": type(exc).__name__,
-                              "error_detail": str(exc)[:180] if isinstance(exc, ModelError) else None})
+                              "error_category": diagnostic["category"] if diagnostic else "internal",
+                              "error_code": diagnostic["code"] if diagnostic else None,
+                              "error_retryable": diagnostic["retryable"] if diagnostic else False,
+                              "error_http_status": diagnostic.get("http_status") if diagnostic else None,
+                              "error_finish_reason": diagnostic.get("finish_reason") if diagnostic else None,
+                              "error_completion_tokens": diagnostic.get("completion_tokens") if diagnostic else None})
             raise
         usage = result.get("usage", {})
         actual = estimate_cost(self.model, usage.get("prompt_tokens", 0),

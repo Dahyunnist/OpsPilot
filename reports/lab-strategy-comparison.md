@@ -15,10 +15,12 @@
 
 Multi 的 6 个案例全部失败，失败样本不计入性能分数；因此本轮不能判断 Multi 的根因命中率，也不能宣称它优于其他策略。费用仍计入，含失败请求最坏情况预留。自动路由 4 案例选择 rules，2 案例选择 single；没有选择 multi。
 
-累计峰值估算 `$0.43334113 / $0.50`，剩余 `$0.06665887`。本轮后未再发模型请求。
+冻结实验累计峰值估算 `$0.43334113 / $0.50`。随后只对一个新开发窗口做受限诊断，累计峰值升至 `$0.43784833`，仍低于 `$0.50`。
 
 离线复核发现旧摘要曾把 2 个带 `ModelError` 的 Multi 部分结果计为命中。已将这 6 个样本改标为失败，逐案 JSON 的原始部分预测保留；原始提交记录也保留修正前文件。新 evaluator 在 specialist 或 adjudicator 失败时转用 rules 输出，同时保留失败标记；失败案例不计入策略准确率。失败错误今后会记录安全的 `ModelError` 详情。
 
-已有归档只保存 `ModelError` 类型和费用预留，没有 provider 状态码、超时类型或响应体，无法离线判定 6 次错误的具体原因。没有重发请求。固定快照的 specialist/adjudicator 故障回归与失败评分测试均通过。
+已有归档只保存 `ModelError` 类型和费用预留，没有 provider 状态码、超时类型或响应体，无法判定旧 6 次错误的具体原因。没有重跑冻结案例。一个新开发窗口（18 metrics、6 logs、4 traces）在输出预算 512 下复现 Multi JSON 截断：`finish_reason=length`、128 completion tokens、`response_schema:invalid_json_content`。这只说明该新样本在该预算下的失败机制，不代表旧案例原因。新诊断实际花费 `$0.0045072`，总额仍在 `$0.50` 闸内。
+
+客户端现按 HTTP、超时、响应结构等类别记录脱敏诊断；不会记录 provider 响应正文或异常消息。新增离线回归覆盖 HTTP 503、超时、畸形 JSON 和非对象 JSON。完整测试 86 项及 14 个子测试通过；容器已停止并保留卷。正式 Python 3.12 仍未验证。
 
 汇总见 [lab-strategy-summary.json](lab-strategy-summary.json)，逐案结果见 [lab-strategy-lab-pool-01.json](lab-strategy-lab-pool-01.json) 等文件；费用见 [api-cost-ledger.jsonl](api-cost-ledger.jsonl)。运行时边界与服务烟测见 [docker-smoke.md](docker-smoke.md)。

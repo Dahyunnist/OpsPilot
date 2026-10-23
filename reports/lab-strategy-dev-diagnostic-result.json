@@ -1,0 +1,128 @@
+{
+  "case_id": "dev-diagnostic-20261023-01",
+  "window": {
+    "start": "2026-10-23T07:21:35.3961234Z",
+    "end": "2026-10-23T07:22:09.4747108Z"
+  },
+  "source_counts": {
+    "metrics": 18,
+    "logs": 6,
+    "traces": 4,
+    "deployments": 0
+  },
+  "source_failures": {},
+  "model": "deepseek-v4-flash",
+  "token_budget": 512,
+  "preflight": {
+    "source_counts": {
+      "metrics": 18,
+      "logs": 6,
+      "traces": 4,
+      "deployments": 0
+    },
+    "requests": 5,
+    "estimated_requests": [
+      {
+        "route": "single",
+        "reserve_usd": 0.0056094
+      },
+      {
+        "route": "multi_expert",
+        "reserve_usd": 0.0026193
+      },
+      {
+        "route": "multi_expert",
+        "reserve_usd": 0.0014301
+      },
+      {
+        "route": "multi_expert",
+        "reserve_usd": 0.0017952
+      },
+      {
+        "route": "multi_adjudicator",
+        "reserve_usd": 0.0008907
+      }
+    ],
+    "estimated_worst_case_usd": 0.0123447,
+    "max_new_spend_usd": 0.02,
+    "prior_cumulative_peak_usd": 0.43334113,
+    "model": "deepseek-v4-flash",
+    "token_budget": 512
+  },
+  "cumulative_limit_usd": 0.45334113000000004,
+  "cumulative_peak_estimate_usd": 0.43784833,
+  "remaining_peak_reserve_usd": 0.0154928,
+  "strategies": {
+    "single": {
+      "selected_route": "single",
+      "fallback_route": null,
+      "evaluation_status": "complete",
+      "model_calls": 1,
+      "provider_rate_estimate_usd": 0.0015561,
+      "failures": [],
+      "error_trace": [],
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [],
+        "withheld_claims": [],
+        "status": "insufficient_evidence"
+      }
+    },
+    "multi": {
+      "selected_route": "multi",
+      "fallback_route": "rules",
+      "evaluation_status": "failed",
+      "model_calls": 3,
+      "provider_rate_estimate_usd": 0.0029511,
+      "failures": [
+        "response_schema:invalid_json_content"
+      ],
+      "error_trace": [
+        {
+          "category": "response_schema",
+          "code": "invalid_json_content",
+          "retryable": false,
+          "finish_reason": "length",
+          "completion_tokens": 128
+        }
+      ],
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [
+          "logs:d4bc696c3f57398a620a",
+          "logs:79461b190db4afcfc9dc",
+          "logs:6eae14ef11ba66d4edbb",
+          "metrics:2cbb11d19d7b8a2a9b24",
+          "metrics:7c198686eefb316cab0d",
+          "metrics:80dba6f7d57167b03c90",
+          "metrics:8630fc06ce36cd63d645",
+          "metrics:9b0f1090c2943b36cf2a",
+          "metrics:c80ac74ebc8adf1b0208",
+          "metrics:04563ee06be1f50c83a0",
+          "metrics:05fe58aa166640555bf7",
+          "metrics:093f503160ece3d21965",
+          "metrics:37c75dde295a698de178",
+          "metrics:3ab3858867ac18e90ccf",
+          "metrics:5904d6eadaeb2cff5f5f",
+          "metrics:6eedee70df27fec4b07b",
+          "metrics:70fa76d5d549e6639144",
+          "metrics:7edf7b8b116369516442",
+          "metrics:8b5d588761d53fdffca9",
+          "metrics:9acb3ab31c68c41b3d8a",
+          "metrics:d08330d6f37b4c2af665",
+          "traces:02e96b55e9c31f01345c",
+          "traces:c1c77105672677f28421",
+          "traces:196b9687153f489cf56e",
+          "logs:ecc8a75bfb5881f3c3cf",
+          "traces:3cdef8d6350d0281c275",
+          "logs:3cccd52a1c8b33a8d494",
+          "logs:bbee72200d1ffc2f475d"
+        ],
+        "withheld_claims": [],
+        "status": "insufficient_evidence"
+      }
+    }
+  }
+}

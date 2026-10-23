@@ -58,8 +58,14 @@ def _normalise_roots(data: dict[str, Any]) -> list[str]:
 
 def _failure_label(exc: Exception) -> str:
     if isinstance(exc, ModelError):
-        return str(exc)[:180]
+        return f"{exc.category}:{exc.code}" if exc.code is not None else exc.category
     return type(exc).__name__
+
+
+def _failure_diagnostic(exc: Exception) -> dict[str, Any]:
+    if isinstance(exc, ModelError):
+        return exc.diagnostic()
+    return {"category": "internal", "code": type(exc).__name__, "retryable": False}
 
 
 def _rules_prediction(live_report: dict[str, Any]) -> dict[str, Any]:
@@ -144,9 +150,11 @@ def _expert(model: ChatModel, call_gate: Callable[..., dict[str, Any]], source: 
 
 
 def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[str, Any]]],
-           model: ChatModel, call_gate: Callable[..., dict[str, Any]], token_budget: int) -> tuple[dict[str, Any], dict[str, int], list[dict[str, Any]]]:
+           model: ChatModel, call_gate: Callable[..., dict[str, Any]], token_budget: int
+           ) -> tuple[dict[str, Any], dict[str, int], list[str], list[dict[str, Any]]]:
     specialist_budget = max(128, min(320, token_budget // 5))
     findings = []
+    error_traces: list[dict[str, Any]] = []
     usage_totals = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     errors = []
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -160,12 +168,14 @@ def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[s
                     usage_totals[key] += int(usage.get(key, 0) or 0)
             except Exception as exc:
                 errors.append(_failure_label(exc))
+                error_traces.append(_failure_diagnostic(exc))
     if errors:
         return ({"root_causes": [], "evidence_by_root": {}, "evidence_ids": [],
-            "withheld_claims": [], "status": "incomplete"}, usage_totals, errors)
+            "withheld_claims": [], "status": "incomplete"}, usage_totals, errors, error_traces)
     if not findings:
         return ({"root_causes": [], "evidence_by_root": {}, "evidence_ids": [],
-            "withheld_claims": [], "status": "incomplete"}, usage_totals, ["NoEvidenceSources"])
+            "withheld_claims": [], "status": "incomplete"}, usage_totals, ["NoEvidenceSources"],
+            [{"category": "input", "code": "no_evidence_sources", "retryable": False}])
     findings.sort(key=lambda item: item["source"])
     evidence_by_id = {row["record_id"]: row["source"] for rows in records_by_source.values() for row in rows}
     cross_exam = {
@@ -180,7 +190,7 @@ def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[s
         cross_exam, max(256, min(512, token_budget - specialist_budget * 4)))
     for key in usage_totals:
         usage_totals[key] += int(result.get("usage", {}).get(key, 0) or 0)
-    return _ground_prediction(result["data"], live_report), usage_totals, errors
+    return _ground_prediction(result["data"], live_report), usage_totals, errors, error_traces
 
 
 def _auto_route(live_report: dict[str, Any]) -> str:
@@ -248,6 +258,7 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
         started = time.perf_counter()
         calls = 0
         errors: list[str] = []
+        error_trace: list[dict[str, Any]] = []
         fallback_route = None
         usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
         prediction = {"root_causes": [], "evidence_ids": [], "evidence_by_root": {}, "withheld_claims": [], "status": "insufficient_evidence"}
@@ -264,12 +275,13 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
                 if selected == "single":
                     prediction, usage = _single(live_report, records, model, tracked_gate, token_budget)
                 elif selected == "multi":
-                    prediction, usage, errors = _multi(live_report, records_by_source, model, tracked_gate, token_budget)
+                    prediction, usage, errors, error_trace = _multi(live_report, records_by_source, model, tracked_gate, token_budget)
                     if errors:
                         prediction = _rules_prediction(live_report)
                         fallback_route = "rules"
         except Exception as exc:
             errors.append(_failure_label(exc))
+            error_trace.append(_failure_diagnostic(exc))
             if selected == "multi":
                 prediction = _rules_prediction(live_report)
                 fallback_route = "rules"
@@ -277,7 +289,7 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             "fallback_route": fallback_route, "evaluation_status": "failed" if errors else "complete",
             "prediction": prediction, "duration_ms": round((time.perf_counter() - started) * 1000, 2),
             "model_calls": tracker[strategy]["calls"], "provider_rate_estimate_usd": round(tracker[strategy]["cost"], 8),
-            "usage": usage, "failures": errors}
+            "usage": usage, "failures": errors, "error_trace": error_trace}
     snapshot_sha = __import__("hashlib").sha256(json.dumps(source_results, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
     return {"case_id": case_id, "window": {"start": start, "end": end}, "snapshot_sha256": snapshot_sha,
         "source_status": live_report["source_status"], "source_counts": {source: len(rows) for source, rows in records_by_source.items()},

@@ -86,20 +86,25 @@ class BenchmarkTests(unittest.TestCase):
                 blocked.call(operation, instance, "long system " * 100, "long user " * 100, 512)
             self.assertFalse(called)
 
-    def test_run_budget_preserves_sanitized_model_error_detail(self):
+    def test_run_budget_preserves_sanitized_model_error_classification(self):
         with TemporaryDirectory() as temp:
             ledger = Path(temp) / "cost.jsonl"
             budget = RunBudget(0.01, ledger, "deepseek-v4-flash")
             instance = SimpleNamespace(max_tokens=512)
 
             def failed(*_args):
-                raise ModelError("model request failed: HTTP 503")
+                raise ModelError("model request failed: HTTP 503", category="provider_http", code=503,
+                    retryable=True)
 
             with self.assertRaisesRegex(ModelError, "HTTP 503"):
                 budget.call(failed, instance, "system", "user", 128)
             failure = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
             self.assertEqual(failure["error_type"], "ModelError")
-            self.assertEqual(failure["error_detail"], "model request failed: HTTP 503")
+            self.assertEqual(failure["error_category"], "provider_http")
+            self.assertEqual(failure["error_code"], 503)
+            self.assertTrue(failure["error_retryable"])
+            self.assertEqual(failure["error_http_status"], 503)
+            self.assertNotIn("error_detail", failure)
 
     def test_run_budget_includes_completed_ledger_runs(self):
         with TemporaryDirectory() as temp:

@@ -1,0 +1,11 @@
+{
+  "case_id": "dev-diagnostic-20261023-01",
+  "order_id": "dev-diagnostic-c5e05cd5-d883-414c-afa5-eb91d31f423f",
+  "start": "2026-10-23T07:21:35.3961234Z",
+  "end": "2026-10-23T07:22:09.4747108Z",
+  "response": {
+    "order_id": "dev-diagnostic-c5e05cd5-d883-414c-afa5-eb91d31f423f",
+    "inventory": true,
+    "payment": true
+  }
+}

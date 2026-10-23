@@ -36,7 +36,25 @@ def redact(value: Any) -> Any:
 
 
 class ModelError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, category: str = "unknown", code: str | int | None = None,
+                 retryable: bool = False, finish_reason: str | None = None,
+                 completion_tokens: int | None = None) -> None:
+        super().__init__(message)
+        self.category = category
+        self.code = code
+        self.retryable = retryable
+        self.finish_reason = finish_reason
+        self.completion_tokens = completion_tokens
+
+    def diagnostic(self) -> dict[str, Any]:
+        trace = {"category": self.category, "code": self.code, "retryable": self.retryable}
+        if self.category == "provider_http" and isinstance(self.code, int):
+            trace["http_status"] = self.code
+        if self.finish_reason is not None:
+            trace["finish_reason"] = self.finish_reason[:40]
+        if self.completion_tokens is not None:
+            trace["completion_tokens"] = max(0, self.completion_tokens)
+        return trace
 
 
 class ChatModel:
@@ -48,7 +66,8 @@ class ChatModel:
         self.timeout = min(120.0, max(2.0, float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))))
         self.max_tokens = min(4096, max(64, int(os.getenv("LLM_MAX_COMPLETION_TOKENS", "512"))))
         if not (self.base_url and self.api_key and self.model):
-            raise ModelError("LLM_BASE_URL, LLM_API_KEY and LLM_MODEL must be set in .env")
+            raise ModelError("LLM_BASE_URL, LLM_API_KEY and LLM_MODEL must be set in .env",
+                category="configuration", code="missing_credentials")
 
     def complete(self, system: str, user: str, token_budget: int) -> dict[str, Any]:
         cap = min(self.max_tokens, max(64, token_budget))
@@ -69,16 +88,32 @@ class ChatModel:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 result = json.loads(response.read(1_000_000))
         except urllib.error.HTTPError as exc:
-            raise ModelError(f"model request failed: HTTP {exc.code}") from exc
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise ModelError(f"model request failed: {type(exc).__name__}") from exc
+            raise ModelError(f"model request failed: HTTP {exc.code}", category="provider_http",
+                code=exc.code, retryable=exc.code in {408, 425, 429} or exc.code >= 500) from exc
+        except TimeoutError as exc:
+            raise ModelError("model request timed out", category="transport_timeout", retryable=True) from exc
+        except urllib.error.URLError as exc:
+            timed_out = isinstance(exc.reason, TimeoutError)
+            raise ModelError("model request timed out" if timed_out else "model transport failed",
+                category="transport_timeout" if timed_out else "transport_error", retryable=True) from exc
+        except json.JSONDecodeError as exc:
+            raise ModelError("model returned invalid response JSON", category="response_schema",
+                code="invalid_response_json") from exc
         try:
             choice = result["choices"][0]
             content = choice["message"]["content"]
             parsed = json.loads(content)
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-            finish = result.get("choices", [{}])[0].get("finish_reason", "unknown") if isinstance(result, dict) else "unknown"
+            choices = result.get("choices", []) if isinstance(result, dict) else []
+            first_choice = choices[0] if isinstance(choices, list) and choices else {}
+            finish = first_choice.get("finish_reason", "unknown") if isinstance(first_choice, dict) else "unknown"
             usage = result.get("usage", {}) if isinstance(result, dict) else {}
-            raise ModelError(f"model returned invalid JSON response (finish={finish}, completion_tokens={usage.get('completion_tokens', 'unknown')})") from exc
+            completion_tokens = usage.get("completion_tokens", "unknown") if isinstance(usage, dict) else "unknown"
+            raise ModelError(f"model returned invalid JSON response (finish={finish}, completion_tokens={completion_tokens})",
+                category="response_schema", code="invalid_json_content", finish_reason=str(finish),
+                completion_tokens=completion_tokens if isinstance(completion_tokens, int) else None) from exc
+        if not isinstance(parsed, dict):
+            raise ModelError("model returned JSON that was not an object", category="response_schema",
+                code="expected_object")
         usage = result.get("usage", {})
         return {"data": parsed, "usage": usage, "duration_ms": round((time.monotonic() - started) * 1000, 1)}
