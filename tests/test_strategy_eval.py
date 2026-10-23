@@ -4,6 +4,7 @@ import json
 import unittest
 
 from opspilot.strategy_eval import STRATEGIES, evaluate_snapshot, score_case, summarize_cases
+from opspilot.model_client import ModelError
 
 
 START = "2026-10-23T10:00:00Z"
@@ -80,6 +81,70 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(report["strategies"]["single"]["prediction"]["root_causes"], [])
         self.assertEqual(report["strategies"]["single"]["prediction"]["withheld_claims"], ["slow_database_query"])
 
+    def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
+        class OneExpertFails(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                if "independent metrics telemetry expert" in system:
+                    raise ModelError("model request failed: HTTP 503")
+                return super().complete(system, user, budget)
+
+        model = OneExpertFails()
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model,
+            lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
+        report = score_case(report, ["database_pool_exhaustion"], {"m1", "l1"})
+        multi = report["strategies"]["multi"]
+        self.assertEqual(multi["failures"], ["model request failed: HTTP 503"])
+        self.assertEqual(multi["fallback_route"], "rules")
+        self.assertEqual(multi["prediction"]["root_causes"], ["database_pool_exhaustion"])
+        self.assertEqual(multi["model_calls"], 2)
+        self.assertIsNone(multi["metrics"]["exact_root_set"])
+        self.assertEqual(len(model.calls), 1)
+
+    def test_adjudicator_failure_falls_back_without_claiming_multi_success(self) -> None:
+        class AdjudicatorFails(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                if system.startswith("You are an adversarial incident adjudicator"):
+                    raise ModelError("model returned invalid JSON (finish=length)")
+                return super().complete(system, user, budget)
+
+        model = AdjudicatorFails()
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model,
+            lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
+        report = score_case(report, ["database_pool_exhaustion"], {"m1", "l1"})
+        multi = report["strategies"]["multi"]
+        self.assertEqual(multi["failures"], ["model returned invalid JSON (finish=length)"])
+        self.assertEqual(multi["fallback_route"], "rules")
+        self.assertEqual(multi["evaluation_status"], "failed")
+        self.assertEqual(multi["prediction"]["root_causes"], ["database_pool_exhaustion"])
+        self.assertEqual(multi["model_calls"], 3)
+        self.assertIsNone(multi["metrics"]["exact_root_set"])
+        self.assertEqual(len(model.calls), 2)
+
+    def test_summary_excludes_failed_partial_predictions_from_performance(self) -> None:
+        def row(*, failed: bool, exact: bool, duration: int) -> dict:
+            return {"duration_ms": duration, "model_calls": 1, "provider_rate_estimate_usd": 0.1,
+                "failures": ["ModelError"] if failed else [], "evaluation_status": "failed" if failed else "complete",
+                "metrics": {"exact_root_set": exact, "top1": exact, "top3_recall": 1.0,
+                    "false_positives": 0, "evidence_true_positive": 1, "evidence_predicted": 1, "evidence_gold": 1}}
+
+        summary = summarize_cases([
+            {"case_id": "complete", "strategies": {"multi": row(failed=False, exact=True, duration=100)}},
+            {"case_id": "partial", "strategies": {"multi": row(failed=True, exact=True, duration=900)}},
+        ])
+        self.assertEqual(summary["multi"]["cases"], 2)
+        self.assertEqual(summary["multi"]["completed_cases"], 1)
+        self.assertEqual(summary["multi"]["failed_cases"], 1)
+        self.assertEqual(summary["multi"]["exact_root_set_successes"], 1)
+        self.assertEqual(summary["multi"]["p95_latency_ms"], 100)
+        self.assertEqual(summary["multi"]["failures"][0]["case_id"], "partial")
+
+        failed_only = summarize_cases([
+            {"case_id": "partial", "strategies": {"multi": row(failed=True, exact=True, duration=900)}}])
+        self.assertEqual(failed_only["multi"]["completed_cases"], 0)
+        self.assertEqual(failed_only["multi"]["exact_root_set_successes"], 0)
+        self.assertIsNone(failed_only["multi"]["top1_rate"])
+        self.assertIsNone(failed_only["multi"]["p95_latency_ms"])
+
     def test_summary_reports_cost_per_exact_success_and_p95(self) -> None:
         first = {"case_id": "a", "strategies": {"rules": {"duration_ms": 100, "model_calls": 0,
             "provider_rate_estimate_usd": 0, "failures": [], "metrics": {"exact_root_set": True, "top1": True,
@@ -89,7 +154,9 @@ class StrategyEvaluationTests(unittest.TestCase):
                 "top3_recall": 0, "false_positives": 1, "evidence_true_positive": 0, "evidence_predicted": 0, "evidence_gold": 1}}}}
         summary = summarize_cases([first, second])
         self.assertEqual(summary["rules"]["exact_root_set_successes"], 1)
-        self.assertEqual(summary["rules"]["p95_latency_ms"], 300)
+        self.assertEqual(summary["rules"]["p95_latency_ms"], 100)
+        self.assertEqual(summary["rules"]["completed_cases"], 1)
+        self.assertEqual(summary["rules"]["failed_cases"], 1)
         self.assertEqual(summary["rules"]["failures"][0]["case_id"], "b")
 
 

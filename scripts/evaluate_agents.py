@@ -27,7 +27,7 @@ from opspilot.a2a import A2AClient, A2AError, A2AServer  # noqa: E402
 from opspilot.agents import investigate_multi_agent, investigate_single_agent  # noqa: E402
 from opspilot.cli import load_incidents  # noqa: E402
 from opspilot.investigator import investigate  # noqa: E402
-from opspilot.model_client import load_project_env  # noqa: E402
+from opspilot.model_client import ModelError, load_project_env  # noqa: E402
 from opspilot.routing import select_route  # noqa: E402
 
 CAUSES = {
@@ -94,7 +94,8 @@ class RunBudget:
                 self.spent_usd += reserve
                 self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model, "reserve_usd": round(reserve, 8),
                               "run_peak_estimate_usd": round(self.spent_usd, 8), "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8), "limit_usd": self.limit_usd,
-                              "error_type": type(exc).__name__})
+                              "error_type": type(exc).__name__,
+                              "error_detail": str(exc)[:180] if isinstance(exc, ModelError) else None})
             raise
         usage = result.get("usage", {})
         actual = estimate_cost(self.model, usage.get("prompt_tokens", 0),

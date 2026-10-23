@@ -684,6 +684,18 @@
         "ModelError"
       ],
       "metrics": {
+        "top1": null,
+        "top3_recall": null,
+        "exact_root_set": null,
+        "false_positives": null,
+        "evidence_precision": null,
+        "evidence_recall": null,
+        "evidence_true_positive": null,
+        "evidence_predicted": null,
+        "evidence_gold": null
+      },
+      "evaluation_status": "failed",
+      "partial_metrics": {
         "top1": false,
         "top3_recall": 0.0,
         "exact_root_set": false,

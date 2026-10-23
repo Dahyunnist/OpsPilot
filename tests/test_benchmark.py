@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from opspilot.cli import load_incidents
 from opspilot.memory import retrieve_memories
 from opspilot.investigator import investigate
+from opspilot.model_client import ModelError
 from scripts.generate_benchmark import generate
 from scripts.evaluate_agents import BudgetLimitExceeded, RunBudget, normalize_cause, summarize
 
@@ -84,6 +85,21 @@ class BenchmarkTests(unittest.TestCase):
             with self.assertRaises(BudgetLimitExceeded):
                 blocked.call(operation, instance, "long system " * 100, "long user " * 100, 512)
             self.assertFalse(called)
+
+    def test_run_budget_preserves_sanitized_model_error_detail(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost.jsonl"
+            budget = RunBudget(0.01, ledger, "deepseek-v4-flash")
+            instance = SimpleNamespace(max_tokens=512)
+
+            def failed(*_args):
+                raise ModelError("model request failed: HTTP 503")
+
+            with self.assertRaisesRegex(ModelError, "HTTP 503"):
+                budget.call(failed, instance, "system", "user", 128)
+            failure = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(failure["error_type"], "ModelError")
+            self.assertEqual(failure["error_detail"], "model request failed: HTTP 503")
 
     def test_run_budget_includes_completed_ledger_runs(self):
         with TemporaryDirectory() as temp:

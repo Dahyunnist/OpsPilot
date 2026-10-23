@@ -13,7 +13,7 @@ from typing import Any, Callable
 import uuid
 
 from .live_investigation import CAUSES, investigate_live
-from .model_client import ChatModel, redact
+from .model_client import ChatModel, ModelError, redact
 
 
 STRATEGIES = ("rules", "single", "multi", "auto")
@@ -54,6 +54,20 @@ def _normalise_roots(data: dict[str, Any]) -> list[str]:
         if isinstance(value, str) and value in CAUSE_IDS and value not in roots:
             roots.append(value)
     return roots
+
+
+def _failure_label(exc: Exception) -> str:
+    if isinstance(exc, ModelError):
+        return str(exc)[:180]
+    return type(exc).__name__
+
+
+def _rules_prediction(live_report: dict[str, Any]) -> dict[str, Any]:
+    return {"root_causes": live_report["root_causes"],
+        "evidence_by_root": {item["id"]: [row["record_id"] for row in item.get("support", [])]
+            for item in live_report["hypotheses"] if item["id"] in live_report["root_causes"]},
+        "evidence_ids": [ref["record_id"] for ref in live_report["evidence_refs"]],
+        "withheld_claims": [], "status": live_report["status"]}
 
 
 def _ground_prediction(data: dict[str, Any], live_report: dict[str, Any]) -> dict[str, Any]:
@@ -145,9 +159,13 @@ def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[s
                 for key in usage_totals:
                     usage_totals[key] += int(usage.get(key, 0) or 0)
             except Exception as exc:
-                errors.append(type(exc).__name__)
+                errors.append(_failure_label(exc))
+    if errors:
+        return ({"root_causes": [], "evidence_by_root": {}, "evidence_ids": [],
+            "withheld_claims": [], "status": "incomplete"}, usage_totals, errors)
     if not findings:
-        raise RuntimeError("all source specialists failed")
+        return ({"root_causes": [], "evidence_by_root": {}, "evidence_ids": [],
+            "withheld_claims": [], "status": "incomplete"}, usage_totals, ["NoEvidenceSources"])
     findings.sort(key=lambda item: item["source"])
     evidence_by_id = {row["record_id"]: row["source"] for rows in records_by_source.values() for row in rows}
     cross_exam = {
@@ -230,6 +248,7 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
         started = time.perf_counter()
         calls = 0
         errors: list[str] = []
+        fallback_route = None
         usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
         prediction = {"root_causes": [], "evidence_ids": [], "evidence_by_root": {}, "withheld_claims": [], "status": "insufficient_evidence"}
         selected = strategy
@@ -237,11 +256,7 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             selected = _auto_route(live_report)
         try:
             if selected == "rules":
-                prediction = {"root_causes": live_report["root_causes"],
-                    "evidence_by_root": {item["id"]: [row["record_id"] for row in item.get("support", [])]
-                        for item in live_report["hypotheses"] if item["id"] in live_report["root_causes"]},
-                    "evidence_ids": [ref["record_id"] for ref in live_report["evidence_refs"]],
-                    "withheld_claims": [], "status": live_report["status"]}
+                prediction = _rules_prediction(live_report)
                 calls = 0
             else:
                 if model is None or call_gate is None:
@@ -250,9 +265,16 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
                     prediction, usage = _single(live_report, records, model, tracked_gate, token_budget)
                 elif selected == "multi":
                     prediction, usage, errors = _multi(live_report, records_by_source, model, tracked_gate, token_budget)
+                    if errors:
+                        prediction = _rules_prediction(live_report)
+                        fallback_route = "rules"
         except Exception as exc:
-            errors.append(type(exc).__name__)
+            errors.append(_failure_label(exc))
+            if selected == "multi":
+                prediction = _rules_prediction(live_report)
+                fallback_route = "rules"
         evaluated[strategy] = {"strategy": strategy, "selected_route": selected,
+            "fallback_route": fallback_route, "evaluation_status": "failed" if errors else "complete",
             "prediction": prediction, "duration_ms": round((time.perf_counter() - started) * 1000, 2),
             "model_calls": tracker[strategy]["calls"], "provider_rate_estimate_usd": round(tracker[strategy]["cost"], 8),
             "usage": usage, "failures": errors}
@@ -270,7 +292,8 @@ def score_case(evaluation: dict[str, Any], true_roots: list[str], gold_evidence:
         top3_set = set(predicted[:3])
         refs = set(item["prediction"].get("evidence_ids", []))
         true_refs = refs & gold_evidence
-        rows[strategy] = {**item, "metrics": {
+        valid = not item.get("failures")
+        metrics = {
             "top1": bool(predicted and predicted[0] in gold_set),
             "top3_recall": len(top3_set & gold_set) / len(gold_set) if gold_set else None,
             "exact_root_set": predicted_set == gold_set,
@@ -278,7 +301,9 @@ def score_case(evaluation: dict[str, Any], true_roots: list[str], gold_evidence:
             "evidence_precision": len(true_refs) / len(refs) if refs else 0.0,
             "evidence_recall": len(true_refs) / len(gold_evidence) if gold_evidence else None,
             "evidence_true_positive": len(true_refs), "evidence_predicted": len(refs), "evidence_gold": len(gold_evidence),
-        }}
+        }
+        rows[strategy] = {**item, "evaluation_status": "complete" if valid else "failed",
+            "metrics": metrics if valid else {key: None for key in metrics}}
     return {**evaluation, "truth": {"root_causes": true_roots, "gold_evidence_count": len(gold_evidence)}, "strategies": rows}
 
 
@@ -287,19 +312,21 @@ def summarize_cases(cases: list[dict[str, Any]], provider_rate_costs: dict[str, 
     result = {}
     for strategy in STRATEGIES:
         rows = [case["strategies"][strategy] for case in cases if strategy in case.get("strategies", {})]
-        metrics = [row["metrics"] for row in rows]
+        completed = [row for row in rows if not row.get("failures") and row.get("evaluation_status", "complete") == "complete"]
+        metrics = [row["metrics"] for row in completed]
         successes = sum(bool(row["exact_root_set"]) for row in metrics)
-        latencies = sorted(row["duration_ms"] for row in rows)
+        latencies = sorted(row["duration_ms"] for row in completed)
         p95_index = max(0, math.ceil(0.95 * len(latencies)) - 1) if latencies else 0
         cost = float(provider_rate_costs.get(strategy,
             sum(case.get("strategies", {}).get(strategy, {}).get("provider_rate_estimate_usd", 0.0) for case in cases)))
         result[strategy] = {
-            "cases": len(rows), "exact_root_set_successes": successes,
-            "top1_rate": sum(bool(row["top1"]) for row in metrics) / len(rows) if rows else None,
-            "mean_top3_recall": statistics.mean([row["top3_recall"] for row in metrics if row["top3_recall"] is not None]) if rows else None,
-            "false_positives": sum(int(row["false_positives"]) for row in metrics),
-            "evidence_precision": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_predicted"] for row in metrics)),
-            "evidence_recall": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_gold"] for row in metrics)),
+            "cases": len(rows), "completed_cases": len(completed), "failed_cases": len(rows) - len(completed),
+            "exact_root_set_successes": successes,
+            "top1_rate": sum(bool(row["top1"]) for row in metrics) / len(metrics) if metrics else None,
+            "mean_top3_recall": statistics.mean([row["top3_recall"] for row in metrics if row["top3_recall"] is not None]) if metrics else None,
+            "false_positives": sum(int(row["false_positives"]) for row in metrics) if metrics else None,
+            "evidence_precision": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_predicted"] for row in metrics)) if metrics else None,
+            "evidence_recall": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_gold"] for row in metrics)) if metrics else None,
             "model_calls": sum(row["model_calls"] for row in rows), "provider_rate_estimate_usd": round(cost, 8),
             "cost_per_exact_success_usd": round(cost / successes, 8) if successes else None,
             "p95_latency_ms": latencies[p95_index] if latencies else None,

@@ -26,7 +26,8 @@ def main() -> int:
         "strategy_metrics": summarize_cases(reports),
         "cumulative_peak_budget_usd": max((item.get("budget", {}).get("cumulative_peak_estimate_usd", 0) for item in reports), default=0),
         "budget_limit_usd": 0.50,
-        "failure_cases": {strategy: [row for row in reports if row.get("strategies", {}).get(strategy, {}).get("failures")]
+        "failure_cases": {strategy: [{"case_id": row["case_id"], "reasons": row["strategies"][strategy]["failures"]}
+            for row in reports if row.get("strategies", {}).get(strategy, {}).get("failures")]
             for strategy in ("rules", "single", "multi", "auto")},
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
