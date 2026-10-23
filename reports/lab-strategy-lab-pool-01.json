@@ -1,0 +1,643 @@
+{
+  "case_id": "lab-pool-01",
+  "window": {
+    "start": "2026-10-23T06:28:29.4202186Z",
+    "end": "2026-10-23T06:28:37.5214671Z"
+  },
+  "snapshot_sha256": "a630260b1b61beed43274a2d452b0b115377aa28180a1e5eb63f066b994ce624",
+  "source_status": {
+    "metrics": "ok",
+    "logs": "ok",
+    "traces": "ok",
+    "deployments": "ok"
+  },
+  "source_counts": {
+    "metrics": 60,
+    "logs": 5,
+    "traces": 2,
+    "deployments": 1
+  },
+  "rules_diagnostic": {
+    "window": {
+      "start": "2026-10-23T06:28:29.4202186Z",
+      "end": "2026-10-23T06:28:37.5214671Z"
+    },
+    "status": "insufficient_evidence",
+    "root_causes": [],
+    "confidence": "abstain",
+    "hypotheses": [
+      {
+        "id": "database_pool_exhaustion",
+        "title": "PostgreSQL connection pool exhaustion",
+        "support": [
+          {
+            "source": "logs",
+            "record_id": "logs:c7f1c87192b98581196d",
+            "reason": "orders reports occupied PostgreSQL sessions"
+          },
+          {
+            "source": "logs",
+            "record_id": "logs:24af41b04d93ae89fd1e",
+            "reason": "orders database request returned a connection error"
+          }
+        ],
+        "against": [
+          {
+            "source": "metrics",
+            "record_id": "metrics:3d65c2b1c658c685c8cc",
+            "reason": "orders error counter did not increase"
+          }
+        ],
+        "confidence": "medium",
+        "score": 0.26,
+        "independent_sources": [
+          "logs"
+        ]
+      },
+      {
+        "id": "invalid_release_configuration",
+        "title": "invalid orders release configuration",
+        "support": [],
+        "against": [],
+        "confidence": "low",
+        "score": 0.0,
+        "independent_sources": []
+      },
+      {
+        "id": "payment_dependency_timeout",
+        "title": "payment dependency timeout",
+        "support": [],
+        "against": [],
+        "confidence": "low",
+        "score": 0.0,
+        "independent_sources": []
+      },
+      {
+        "id": "retry_amplification",
+        "title": "payment retry amplification",
+        "support": [],
+        "against": [],
+        "confidence": "low",
+        "score": 0.0,
+        "independent_sources": []
+      },
+      {
+        "id": "slow_database_query",
+        "title": "slow PostgreSQL query",
+        "support": [],
+        "against": [],
+        "confidence": "low",
+        "score": 0.0,
+        "independent_sources": []
+      }
+    ],
+    "source_status": {
+      "metrics": "ok",
+      "logs": "ok",
+      "traces": "ok",
+      "deployments": "ok"
+    },
+    "evidence_refs": [
+      {
+        "source": "logs",
+        "record_id": "logs:739056f5cff131e72571"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:1368d9e7b3b72dc56854"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:2a73819ab0b445744db5"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:2da7ca260746fbbfa773"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:2ec51fdcd23bb70e13f5"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:33e83f04c2f306815916"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:5fa242d4cdb1235101a1"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:6e05ff10c569006b2441"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:738f6c5f67c501d87c37"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:7d2500fb091ced3aba03"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:82fdaecb2f714a885211"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:a1ecd4c1fdef5b7fea68"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:abf20adb86137bf0eaca"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:bc59a4269d77c6c28c4f"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:e768c3ec91b101fb7f2a"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:f0a30b116521b1d16b7e"
+      },
+      {
+        "source": "logs",
+        "record_id": "logs:b5eb191ba28a1854de77"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:0d65d3983158d90f055c"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:3629d327028256b07569"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:43136160bc7d9aec087b"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:5d11de8de24d153b87bc"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:632fe8ba44d12052294a"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:8ec6d485a9ba53fe8a5a"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:96a5c8a47107f1dae8e8"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:a958fd5e2f238d6e0185"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:aa8b5df658f34be88d62"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:b485cc7d683c84fc4463"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:b4c4d1a78f632e3d74c4"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:ce164a965ac049436cd2"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:e14a1d7ca4f4bb45a7d1"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:e4b35dcb60e3d4e50039"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:f4b4eeb655f914d8a0ad"
+      },
+      {
+        "source": "logs",
+        "record_id": "logs:5e257d6324f6cda3463f"
+      },
+      {
+        "source": "deployments",
+        "record_id": "56f8b0d6-b811-45a4-9e4c-ff55a1ab36fd"
+      },
+      {
+        "source": "traces",
+        "record_id": "traces:978fad72a956ee35e610"
+      },
+      {
+        "source": "traces",
+        "record_id": "traces:b20a135769cea6ebea18"
+      },
+      {
+        "source": "logs",
+        "record_id": "logs:c7f1c87192b98581196d"
+      },
+      {
+        "source": "logs",
+        "record_id": "logs:24af41b04d93ae89fd1e"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:0dbf7d5fac551225fafa"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:32f8ee4db73bcda657ff"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:52de0ad7b8f58a13de30"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:53e8f13f54dd331af174"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:5e8f61608458cf141406"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:66aa9e5cb0e2d3c67261"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:7e199a826b280e6391f4"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:7e4b2b446c8cfe0cdc09"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:a2950763e3f86a1213d2"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:d15ef9528c7733465540"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:d674c187205cd3c3e396"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:d8c3a218631a3c5bc48e"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:e7fdd66a73547a24d08a"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:efe4c1926b0657b30df5"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:fd7d02b8e6cfb44a2564"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:15f4dd31e6577df0e6d0"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:16f4398f1ea69debad5d"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:2486b2eef137c9635cfd"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:26246ac5be81165b7ffa"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:3a49dd06808b5d5bf719"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:3d65c2b1c658c685c8cc"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:475e10942e9884f196a7"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:5cb265e7a2e9d8a3ce48"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:64330e05389509810dac"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:6d06d2736c1e5cd5a34d"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:7e59b9d6f539f0985128"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:81d6ca1fc6081a7966d4"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:867f49da52c2e2f18a18"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:dffc9aada7f46f08fe2f"
+      },
+      {
+        "source": "metrics",
+        "record_id": "metrics:fb38b96c5e5ef6fc891b"
+      }
+    ],
+    "dependency_graph": [
+      {
+        "caller": "gateway",
+        "callee": "orders",
+        "evidence": [
+          {
+            "source": "traces",
+            "record_id": "traces:b20a135769cea6ebea18"
+          }
+        ]
+      }
+    ],
+    "counter_evidence": [
+      {
+        "hypothesis_id": "database_pool_exhaustion",
+        "source": "metrics",
+        "record_id": "metrics:3d65c2b1c658c685c8cc",
+        "reason": "orders error counter did not increase"
+      }
+    ],
+    "quality": {
+      "missing_trace_log_records": 5,
+      "trace_coverage_ratio_approx": null,
+      "same_trace_clock_skews": [],
+      "warnings": [
+        "missing_trace_context"
+      ]
+    },
+    "failures": {}
+  },
+  "strategies": {
+    "rules": {
+      "strategy": "rules",
+      "selected_route": "rules",
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [
+          "logs:739056f5cff131e72571",
+          "metrics:1368d9e7b3b72dc56854",
+          "metrics:2a73819ab0b445744db5",
+          "metrics:2da7ca260746fbbfa773",
+          "metrics:2ec51fdcd23bb70e13f5",
+          "metrics:33e83f04c2f306815916",
+          "metrics:5fa242d4cdb1235101a1",
+          "metrics:6e05ff10c569006b2441",
+          "metrics:738f6c5f67c501d87c37",
+          "metrics:7d2500fb091ced3aba03",
+          "metrics:82fdaecb2f714a885211",
+          "metrics:a1ecd4c1fdef5b7fea68",
+          "metrics:abf20adb86137bf0eaca",
+          "metrics:bc59a4269d77c6c28c4f",
+          "metrics:e768c3ec91b101fb7f2a",
+          "metrics:f0a30b116521b1d16b7e",
+          "logs:b5eb191ba28a1854de77",
+          "metrics:0d65d3983158d90f055c",
+          "metrics:3629d327028256b07569",
+          "metrics:43136160bc7d9aec087b",
+          "metrics:5d11de8de24d153b87bc",
+          "metrics:632fe8ba44d12052294a",
+          "metrics:8ec6d485a9ba53fe8a5a",
+          "metrics:96a5c8a47107f1dae8e8",
+          "metrics:a958fd5e2f238d6e0185",
+          "metrics:aa8b5df658f34be88d62",
+          "metrics:b485cc7d683c84fc4463",
+          "metrics:b4c4d1a78f632e3d74c4",
+          "metrics:ce164a965ac049436cd2",
+          "metrics:e14a1d7ca4f4bb45a7d1",
+          "metrics:e4b35dcb60e3d4e50039",
+          "metrics:f4b4eeb655f914d8a0ad",
+          "logs:5e257d6324f6cda3463f",
+          "56f8b0d6-b811-45a4-9e4c-ff55a1ab36fd",
+          "traces:978fad72a956ee35e610",
+          "traces:b20a135769cea6ebea18",
+          "logs:c7f1c87192b98581196d",
+          "logs:24af41b04d93ae89fd1e",
+          "metrics:0dbf7d5fac551225fafa",
+          "metrics:32f8ee4db73bcda657ff",
+          "metrics:52de0ad7b8f58a13de30",
+          "metrics:53e8f13f54dd331af174",
+          "metrics:5e8f61608458cf141406",
+          "metrics:66aa9e5cb0e2d3c67261",
+          "metrics:7e199a826b280e6391f4",
+          "metrics:7e4b2b446c8cfe0cdc09",
+          "metrics:a2950763e3f86a1213d2",
+          "metrics:d15ef9528c7733465540",
+          "metrics:d674c187205cd3c3e396",
+          "metrics:d8c3a218631a3c5bc48e",
+          "metrics:e7fdd66a73547a24d08a",
+          "metrics:efe4c1926b0657b30df5",
+          "metrics:fd7d02b8e6cfb44a2564",
+          "metrics:15f4dd31e6577df0e6d0",
+          "metrics:16f4398f1ea69debad5d",
+          "metrics:2486b2eef137c9635cfd",
+          "metrics:26246ac5be81165b7ffa",
+          "metrics:3a49dd06808b5d5bf719",
+          "metrics:3d65c2b1c658c685c8cc",
+          "metrics:475e10942e9884f196a7",
+          "metrics:5cb265e7a2e9d8a3ce48",
+          "metrics:64330e05389509810dac",
+          "metrics:6d06d2736c1e5cd5a34d",
+          "metrics:7e59b9d6f539f0985128",
+          "metrics:81d6ca1fc6081a7966d4",
+          "metrics:867f49da52c2e2f18a18",
+          "metrics:dffc9aada7f46f08fe2f",
+          "metrics:fb38b96c5e5ef6fc891b"
+        ],
+        "withheld_claims": [],
+        "status": "insufficient_evidence"
+      },
+      "duration_ms": 0.01,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "usage": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0
+      },
+      "failures": [],
+      "metrics": {
+        "top1": false,
+        "top3_recall": 0.0,
+        "exact_root_set": false,
+        "false_positives": 0,
+        "evidence_precision": 0.1323529411764706,
+        "evidence_recall": 1.0,
+        "evidence_true_positive": 9,
+        "evidence_predicted": 68,
+        "evidence_gold": 9
+      }
+    },
+    "single": {
+      "strategy": "single",
+      "selected_route": "single",
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [],
+        "withheld_claims": [
+          "database_pool_exhaustion"
+        ],
+        "status": "insufficient_evidence"
+      },
+      "duration_ms": 2082.06,
+      "model_calls": 1,
+      "provider_rate_estimate_usd": 0.0028014,
+      "usage": {
+        "prompt_tokens": 8478,
+        "completion_tokens": 215,
+        "total_tokens": 8693,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 8478
+      },
+      "failures": [],
+      "metrics": {
+        "top1": false,
+        "top3_recall": 0.0,
+        "exact_root_set": false,
+        "false_positives": 0,
+        "evidence_precision": 0.0,
+        "evidence_recall": 0.0,
+        "evidence_true_positive": 0,
+        "evidence_predicted": 0,
+        "evidence_gold": 9
+      }
+    },
+    "multi": {
+      "strategy": "multi",
+      "selected_route": "multi",
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [],
+        "withheld_claims": [
+          "database_pool_exhaustion"
+        ],
+        "status": "insufficient_evidence"
+      },
+      "duration_ms": 3941.91,
+      "model_calls": 5,
+      "provider_rate_estimate_usd": 0.0096663,
+      "usage": {
+        "prompt_tokens": 3561,
+        "completion_tokens": 463,
+        "total_tokens": 4024
+      },
+      "failures": [
+        "ModelError"
+      ],
+      "metrics": {
+        "top1": false,
+        "top3_recall": 0.0,
+        "exact_root_set": false,
+        "false_positives": 0,
+        "evidence_precision": 0.0,
+        "evidence_recall": 0.0,
+        "evidence_true_positive": 0,
+        "evidence_predicted": 0,
+        "evidence_gold": 9
+      }
+    },
+    "auto": {
+      "strategy": "auto",
+      "selected_route": "single",
+      "prediction": {
+        "root_causes": [],
+        "evidence_by_root": {},
+        "evidence_ids": [],
+        "withheld_claims": [
+          "database_pool_exhaustion"
+        ],
+        "status": "insufficient_evidence"
+      },
+      "duration_ms": 2100.94,
+      "model_calls": 1,
+      "provider_rate_estimate_usd": 0.00038052,
+      "usage": {
+        "prompt_tokens": 8478,
+        "completion_tokens": 236,
+        "total_tokens": 8714,
+        "prompt_tokens_details": {
+          "cached_tokens": 8320
+        },
+        "prompt_cache_hit_tokens": 8320,
+        "prompt_cache_miss_tokens": 158
+      },
+      "failures": [],
+      "metrics": {
+        "top1": false,
+        "top3_recall": 0.0,
+        "exact_root_set": false,
+        "false_positives": 0,
+        "evidence_precision": 0.0,
+        "evidence_recall": 0.0,
+        "evidence_true_positive": 0,
+        "evidence_predicted": 0,
+        "evidence_gold": 9
+      }
+    }
+  },
+  "truth": {
+    "root_causes": [
+      "database_pool_exhaustion"
+    ],
+    "gold_evidence_count": 9
+  },
+  "model": {
+    "id": "deepseek-v4-flash",
+    "temperature": 0,
+    "token_budget_per_route": 2048
+  },
+  "budget": {
+    "cumulative_limit_usd": 0.5,
+    "prior_peak_estimate_usd": 0.33974803000000003,
+    "this_run_peak_estimate_usd": 0.01284822,
+    "cumulative_peak_estimate_usd": 0.35259625,
+    "provider_rate_estimate_usd": {
+      "rules": 0.0,
+      "single": 0.0028014,
+      "multi": 0.0096663,
+      "auto": 0.00038052
+    },
+    "remaining_peak_reserve_usd": 0.14740375,
+    "cost_ledger": "E:\\job\\opspilot\\reports\\api-cost-ledger.jsonl"
+  },
+  "source_failures": {}
+}

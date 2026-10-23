@@ -6,16 +6,20 @@ param(
 
 $ErrorActionPreference = "Stop"
 $composeFile = Join-Path $PSScriptRoot "compose.yaml"
+$composeFiles = @("-f", $composeFile)
+if ($env:OPSPILOT_COMPOSE_OVERRIDE) {
+    $composeFiles += @("-f", $env:OPSPILOT_COMPOSE_OVERRIDE)
+}
 $env:LAB_FAULT = $Scenario
 $env:LAB_ORDERS_VERSION = if ($Scenario -eq "bad_release") { "v2" } else { "v1" }
 $env:LAB_INVENTORY_URL = if ($Scenario -eq "bad_release") { "http://inventory-v2:8080" } else { "http://inventory:8080" }
 $telemetryPath = Join-Path $PSScriptRoot "telemetry"
 New-Item -ItemType Directory -Path $telemetryPath -Force | Out-Null
 
-docker compose -f $composeFile up --build --force-recreate -d
+docker compose @composeFiles up --build --force-recreate -d
 if ($LASTEXITCODE -ne 0) { throw "Compose failed to start the lab." }
 
-docker compose -f $composeFile exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
+docker compose @composeFiles exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
 if ($LASTEXITCODE -ne 0) { throw "Could not reset deterministic lab state." }
 
 $deployment = @{

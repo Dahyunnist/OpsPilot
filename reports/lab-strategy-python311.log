@@ -1,0 +1,1882 @@
+Compose configuration: valid
+Docker Engine: 29.1.3
+Running six-scenario service smoke; no model API calls are made.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB 0.0s done
+#1 DONE 0.0s
+
+#2 [inventory internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [inventory internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.1s
+
+#4 [orders internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [gateway internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [gateway 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [orders 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [orders 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [orders 3/5] COPY requirements.txt ./requirements.txt
+#9 CACHED
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [gateway] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#11 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#11 exporting attestation manifest sha256:9932c0482546cc02b49801f52d3fcbe43c4a419519859d44befd5ee245e6b38f
+#11 ...
+
+#12 [orders] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#12 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#12 exporting attestation manifest sha256:344c5cf2d7dd28767fb92af6db46a590d835b3ad448e04e4fff18b23f31c999c 0.1s done
+#12 exporting manifest list sha256:c447cff496ae8afddabae3623e7db0cd11be1b75680c2ae3437c89ec054551d8 0.0s done
+#12 naming to docker.io/library/opspilot-lab-orders:latest done
+#12 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#12 DONE 0.2s
+
+#11 [gateway] exporting to image
+#11 exporting attestation manifest sha256:9932c0482546cc02b49801f52d3fcbe43c4a419519859d44befd5ee245e6b38f 0.1s done
+#11 exporting manifest list sha256:2839c209e893c0a7d3e06451a11bcacdbab73c154ba13fc4596816d2472cb767 0.0s done
+#11 naming to docker.io/library/opspilot-lab-gateway:latest done
+#11 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#11 DONE 0.2s
+
+#13 [payment] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#13 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#13 exporting attestation manifest sha256:98242264a60adf392643dc9c8f9e71f8fd33a297a347a02c72a05d160b888c4a 0.1s done
+#13 exporting manifest list sha256:23520ebdf617c6d710a3a526ec66dbbaa0fe35a6390beb50bd0a665d09f38433 0.0s done
+#13 naming to docker.io/library/opspilot-lab-payment:latest done
+#13 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:5f6b9fbec2642fde8ccf14238408973605d27fb238bf3b90a4084f7c77dad71a 0.1s done
+#14 exporting manifest list sha256:dfbcbe8636359e724351ffd8158e7cdd7874c7e55034494c481b9b40f02a695b 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#14 DONE 0.2s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [payment] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [orders] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-payment  Built
+ Network opspilot-lab_backend  Creating
+ Network opspilot-lab_backend  Created
+ Container opspilot-lab-redis-1  Creating
+ Container opspilot-lab-postgres-1  Creating
+ Container opspilot-lab-jaeger-1  Creating
+ Container opspilot-lab-prometheus-1  Creating
+ Container opspilot-lab-otel-collector-1  Creating
+ Container opspilot-lab-payment-1  Creating
+ Container opspilot-lab-payment-1  Created
+ Container opspilot-lab-otel-collector-1  Created
+ Container opspilot-lab-jaeger-1  Created
+ Container opspilot-lab-prometheus-1  Created
+ Container opspilot-lab-postgres-1  Created
+ Container opspilot-lab-redis-1  Created
+ Container opspilot-lab-inventory-1  Creating
+ Container opspilot-lab-orders-1  Creating
+ Container opspilot-lab-inventory-1  Created
+ Container opspilot-lab-orders-1  Created
+ Container opspilot-lab-gateway-1  Creating
+ Container opspilot-lab-gateway-1  Created
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: db_pool_exhaustion
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [orders internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [payment internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [orders internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [payment internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [payment 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [orders 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [orders 3/5] COPY requirements.txt ./requirements.txt
+#8 CACHED
+
+#9 [orders 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 CACHED
+
+#10 [payment 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [payment] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#11 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#11 exporting attestation manifest sha256:3baacadd8222b9626cf1da7f1281cf2b68b4e5e7e5f116ac23a9d13fd88e1ed2
+#11 ...
+
+#12 [orders] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#12 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#12 exporting attestation manifest sha256:c4b48d5a991aa6f13bf39c0bba6089a6839dc646adba23ea2a8da7bdad0676a3 0.0s done
+#12 exporting manifest list sha256:2c7f466dfb7af0ee48b3a379a8ea52cfa22996281c461c41406a133940e82982 0.0s done
+#12 naming to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#12 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#12 DONE 0.1s
+
+#11 [payment] exporting to image
+#11 exporting attestation manifest sha256:3baacadd8222b9626cf1da7f1281cf2b68b4e5e7e5f116ac23a9d13fd88e1ed2 0.0s done
+#11 exporting manifest list sha256:9e63a08b10e611e810b5c5dc498bd7ce33541ffa01861fd9bcff82e145a004b1 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#11 DONE 0.2s
+
+#13 [inventory] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#13 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#13 exporting attestation manifest sha256:99a78bffd2153ae127aca89a40a098c988b0769c920c0172ec16878d3072ccdb 0.0s done
+#13 exporting manifest list sha256:4f670331b203d0fb33709080ced24b37b327526ac658cde98ef5551dec51d9ea 0.0s done
+#13 naming to docker.io/library/opspilot-lab-inventory:latest done
+#13 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#13 DONE 0.2s
+
+#14 [gateway] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#14 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#14 exporting attestation manifest sha256:b353f91e4b626107ba7291a66c649e60a7b37c559770ade54c2883396d69bced 0.0s done
+#14 exporting manifest list sha256:63823d5c3afedb5c02ec17743c7bd3488daa85e938b83e5f701ab06f2e064f44 0.0s done
+#14 naming to docker.io/library/opspilot-lab-gateway:latest done
+#14 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#14 DONE 0.2s
+
+#15 [orders] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [payment] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [inventory] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [gateway] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-payment  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 0
+Scenario ready: dependency_timeout
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB 0.0s done
+#1 DONE 0.0s
+
+#2 [payment internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [payment internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [orders internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [orders internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [inventory 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [inventory 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [inventory 3/5] COPY requirements.txt ./requirements.txt
+#8 CACHED
+
+#9 [inventory 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 CACHED
+
+#10 [gateway 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [payment] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#11 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#11 exporting attestation manifest sha256:943d5b9bc8a4cc52bd7eb783c5356b7cbcc9f2c950c6d7f34772b13b95b102b5
+#11 exporting attestation manifest sha256:943d5b9bc8a4cc52bd7eb783c5356b7cbcc9f2c950c6d7f34772b13b95b102b5 0.1s done
+#11 exporting manifest list sha256:fc173bbde60f45785dd15174649134ed0dfc8707fc8778e2e438a8e6dd4bc191 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#11 DONE 0.2s
+
+#12 [gateway] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#12 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#12 exporting attestation manifest sha256:5f07f8ef18b7561d4fdb679869806b90395d1395748dd38371544b13f3ef8b04 0.1s done
+#12 exporting manifest list sha256:b81d7ae963985dd5e9fbf863195eaf8c8355562c97f4a03bff426351dc7460d0 0.0s done
+#12 naming to docker.io/library/opspilot-lab-gateway:latest 0.0s done
+#12 unpacking to docker.io/library/opspilot-lab-gateway:latest 0.0s done
+#12 DONE 0.2s
+
+#13 [orders] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#13 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#13 exporting attestation manifest sha256:b3154b6b9b841646862c08d6786544b5986ee74497a6b98f10dc53a28a502900 0.1s done
+#13 exporting manifest list sha256:7406d57807d801b84844e776117539c7859306ca7cd8fdd1dcb16166a5fcc38a 0.0s done
+#13 naming to docker.io/library/opspilot-lab-orders:latest done
+#13 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:e36d44e3f1dd19560ca8fd65755f57534170458d2e0fa20a8e8995c2e34fca78 0.1s done
+#14 exporting manifest list sha256:d1b825694327c0f2f2a45a366c3675ea2d6a5b1d0d39b2ad44c2e3df98c2aa31 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest 0.0s done
+#14 DONE 0.2s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [orders] resolving provenance for metadata file
+#17 DONE 0.1s
+
+#18 [payment] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-inventory  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-payment  Built
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: bad_release
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [orders internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [gateway internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [inventory internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [gateway internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [payment 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [payment 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [payment 3/5] COPY requirements.txt ./requirements.txt
+#8 CACHED
+
+#9 [payment 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 CACHED
+
+#10 [payment 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [gateway] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#11 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#11 exporting attestation manifest sha256:51ace5d0f4f433eef6ab650672395ab588815313b47d2c7dc9c8385d2d0b1b93
+#11 ...
+
+#12 [payment] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#12 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#12 exporting attestation manifest sha256:3811fb416e1d933d06462a9cac05683c63aa73303deaa5383f014a37c085b753 0.0s done
+#12 exporting manifest list sha256:17016eebed126956272eec86ef0d6656d2223273105ff8cd3197dafa681dc49a 0.0s done
+#12 naming to docker.io/library/opspilot-lab-payment:latest done
+#12 unpacking to docker.io/library/opspilot-lab-payment:latest 0.0s done
+#12 DONE 0.2s
+
+#11 [gateway] exporting to image
+#11 exporting attestation manifest sha256:51ace5d0f4f433eef6ab650672395ab588815313b47d2c7dc9c8385d2d0b1b93 0.0s done
+#11 exporting manifest list sha256:97eb75bfbd5d54ae8f874a668999b659f50c19bf95b36200f60e81d3c0ceba37 0.0s done
+#11 naming to docker.io/library/opspilot-lab-gateway:latest done
+#11 unpacking to docker.io/library/opspilot-lab-gateway:latest 0.0s done
+#11 DONE 0.2s
+
+#13 [inventory] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#13 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#13 exporting attestation manifest sha256:dfb29b1640129f57edaed0d95aea1bfbe448a40e158acbe5122585e5244dd001 0.0s done
+#13 exporting manifest list sha256:a08573724f1f28a3ef12e52e4fc1256c171c822649234aa13e58cc254a2ab0b4 0.0s done
+#13 naming to docker.io/library/opspilot-lab-inventory:latest done
+#13 unpacking to docker.io/library/opspilot-lab-inventory:latest 0.0s done
+#13 DONE 0.2s
+
+#14 [orders] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#14 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#14 exporting attestation manifest sha256:2aa6958c0290def4028a6e6042265fb64e8755a7fb61bebb624c059a4a8f29ac 0.0s done
+#14 exporting manifest list sha256:e8ff09e18fcb1d5a448347b442a7eb8fda0b75f34f719ae8f5017a408a32cdea 0.0s done
+#14 naming to docker.io/library/opspilot-lab-orders:latest done
+#14 unpacking to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#14 DONE 0.2s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [payment] resolving provenance for metadata file
+#17 DONE 0.1s
+
+#18 [orders] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-inventory  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-payment  Built
+ opspilot-lab-gateway  Built
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: slow_sql
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [inventory internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [gateway internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [inventory internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [inventory internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [inventory 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [gateway 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#7 CACHED
+
+#8 [gateway 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [gateway 3/5] COPY requirements.txt ./requirements.txt
+#9 CACHED
+
+#10 [inventory 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [payment] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#11 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#11 exporting attestation manifest sha256:0de36061f41b388f87159d82bb1760acab0e2dbcc00b5d7e2fc1d0aa48296e7b
+#11 ...
+
+#12 [gateway] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#12 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#12 exporting attestation manifest sha256:3be74a34c3e59c65d1ebac60ccf90a62c30c92c03317bde0713020500342dca3 0.0s done
+#12 exporting manifest list sha256:ffd5f880940307c7f2fe4c650ce44de7309020489a526760e94c5a706a19370b 0.0s done
+#12 naming to docker.io/library/opspilot-lab-gateway:latest done
+#12 unpacking to docker.io/library/opspilot-lab-gateway:latest 0.0s done
+#12 DONE 0.2s
+
+#11 [payment] exporting to image
+#11 exporting attestation manifest sha256:0de36061f41b388f87159d82bb1760acab0e2dbcc00b5d7e2fc1d0aa48296e7b 0.0s done
+#11 exporting manifest list sha256:d186c65c54368ff45eefb9334f29accbbdb3da9c89fff05219f04e99424609ce 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest 0.0s done
+#11 DONE 0.2s
+
+#13 [orders] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#13 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#13 exporting attestation manifest sha256:222e211469da26f1b16b44079f8a3089f0d485b53682bfc8727b70c6969f956f 0.0s done
+#13 exporting manifest list sha256:39ec322f4ab49cae324e25771f33f07c75c4d5e31288d3daf9d9514e90fa192b 0.0s done
+#13 naming to docker.io/library/opspilot-lab-orders:latest done
+#13 unpacking to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:06aba64c937bd06cba8c9f41e1a265afd65ed7f65f902cab9c1983d2ced3429f 0.0s done
+#14 exporting manifest list sha256:fd8160347037931bdb9ae203eef6648c6a23f80da2938745107b516a51f90930 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest 0.0s done
+#14 DONE 0.2s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [orders] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [payment] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [inventory] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-gateway  Built
+ opspilot-lab-payment  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-orders  Built
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: retry_storm
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB 0.0s done
+#1 DONE 0.0s
+
+#2 [orders internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [inventory internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [gateway internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [payment internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [payment 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [payment 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#7 CACHED
+
+#8 [payment 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [payment 3/5] COPY requirements.txt ./requirements.txt
+#9 CACHED
+
+#10 [payment 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [inventory] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#11 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#11 exporting attestation manifest sha256:206753fd26313c3e2aadaa80cfb3ede23cd5210a3fd8ea2a992a65e5ba51426c
+#11 ...
+
+#12 [orders] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#12 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#12 exporting attestation manifest sha256:57e009715f28ca952bb1ac20af37eb7dd4378edf5ac0c8f41ae788591449ca06 0.0s done
+#12 exporting manifest list sha256:f04029d5e173ea20275eb80bb7ae08d2c738bec21cd8ff1e7339e89d1a313dc1 0.0s done
+#12 naming to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#12 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#12 DONE 0.1s
+
+#11 [inventory] exporting to image
+#11 exporting attestation manifest sha256:206753fd26313c3e2aadaa80cfb3ede23cd5210a3fd8ea2a992a65e5ba51426c 0.0s done
+#11 exporting manifest list sha256:4c90b506186cf801f0add6cf0867983c56c0dc9f90c6a38948e756256061f453 0.0s done
+#11 naming to docker.io/library/opspilot-lab-inventory:latest done
+#11 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#11 DONE 0.2s
+
+#13 [gateway] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#13 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#13 exporting attestation manifest sha256:bba893adf32675b1a0bbee86f9456894bace91f22a86235d291aac4280f2ea5b 0.0s done
+#13 exporting manifest list sha256:cddf00f5f78b1089987776128c79f2d92320f763c009ee00c9e9964daea0cd3b 0.0s done
+#13 naming to docker.io/library/opspilot-lab-gateway:latest done
+#13 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#13 DONE 0.2s
+
+#14 [payment] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#14 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#14 exporting attestation manifest sha256:f4a3ff4fc2b3e2d0dff8d2ee3e84111487439823577e6acb88ebe5672312db5b 0.0s done
+#14 exporting manifest list sha256:8acdc739c8a1671a36897ae0da5b098dfe558a3a1ae008364e589dbe6bf3ced1 0.0s done
+#14 naming to docker.io/library/opspilot-lab-payment:latest done
+#14 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#14 DONE 0.2s
+
+#15 [orders] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [gateway] resolving provenance for metadata file
+#17 DONE 0.1s
+
+#18 [payment] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-payment  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: double_root
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+[
+  {
+    "case_id": "lab-pool-01",
+    "status": 502,
+    "order_log_records": 3,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 4
+  },
+  {
+    "case_id": "lab-dependency-01",
+    "status": 502,
+    "order_log_records": 3,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 4
+  },
+  {
+    "case_id": "lab-release-01",
+    "status": 504,
+    "order_log_records": 2,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 5
+  },
+  {
+    "case_id": "lab-sql-01",
+    "status": 200,
+    "order_log_records": 2,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 5
+  },
+  {
+    "case_id": "lab-retry-01",
+    "status": 200,
+    "order_log_records": 5,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 5
+  },
+  {
+    "case_id": "lab-double-01",
+    "status": 502,
+    "order_log_records": 3,
+    "deployment_records": 6,
+    "trace_count": 1,
+    "prometheus_series": 5
+  }
+]
+Docker smoke: passed
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB 0.0s done
+#1 DONE 0.0s
+
+#2 [orders internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [inventory internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [payment internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [orders internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [orders 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [payment 3/5] COPY requirements.txt ./requirements.txt
+#7 CACHED
+
+#8 [payment 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [payment 2/5] WORKDIR /app
+#9 CACHED
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [orders] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#11 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#11 exporting attestation manifest sha256:a46e67f6884e003dd74332bf09750938bc9f181d6ca3f0404edb8078756ad2fb
+#11 ...
+
+#12 [gateway] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#12 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#12 exporting attestation manifest sha256:67298d610e877fab814ec3ec0750d3c33e8247d27a30ae909232c4daca5321cc 0.0s done
+#12 exporting manifest list sha256:726c490578ea3789bca687d61081cdf3d502e2d2cbd6ed400c48e9058d94a147 0.0s done
+#12 naming to docker.io/library/opspilot-lab-gateway:latest done
+#12 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#12 DONE 0.1s
+
+#11 [orders] exporting to image
+#11 exporting attestation manifest sha256:a46e67f6884e003dd74332bf09750938bc9f181d6ca3f0404edb8078756ad2fb 0.0s done
+#11 exporting manifest list sha256:bb4772362c65fcbdaf063ae59107b1f3eaff1be91e241a2acab7e7ba1af87802 0.0s done
+#11 naming to docker.io/library/opspilot-lab-orders:latest done
+#11 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#11 DONE 0.2s
+
+#13 [payment] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#13 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#13 exporting attestation manifest sha256:caf4d4fbc97e549a59a3b3ead9a153a58c4c40fa510663b6138d9048d4f19cbc 0.0s done
+#13 exporting manifest list sha256:bd5a8e17a735326267a4619a4617fdddc260812b6fd8d4a087d436164274ec0d 0.0s done
+#13 naming to docker.io/library/opspilot-lab-payment:latest done
+#13 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:c9868d891e30b62714f187749ebf8ef2a84234f542df594370c6a83b576f66c5 0.0s done
+#14 exporting manifest list sha256:df47d2f88f2b007aa94e177d1b1c25c83405b6f5a81618bb7ba64647e9c54820 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#14 DONE 0.2s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [payment] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [orders] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [inventory] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-payment  Built
+ opspilot-lab-orders  Built
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: db_pool_exhaustion
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [gateway internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [payment internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [gateway internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [gateway internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [gateway 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [orders 3/5] COPY requirements.txt ./requirements.txt
+#7 CACHED
+
+#8 [orders 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [orders 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 CACHED
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [gateway] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#11 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#11 exporting attestation manifest sha256:7f63191020c11927b9b10c8dc391bdc3e35f1b61e27edbcfa949172ab780353d
+#11 exporting attestation manifest sha256:7f63191020c11927b9b10c8dc391bdc3e35f1b61e27edbcfa949172ab780353d 0.0s done
+#11 exporting manifest list sha256:58ddeeb59bec9f3fb481c15607a61d048ff0186fcb1dc07ea0cf9dcf3437f724 0.0s done
+#11 naming to docker.io/library/opspilot-lab-gateway:latest done
+#11 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#11 DONE 0.1s
+
+#12 [orders] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#12 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#12 exporting attestation manifest sha256:7da2964801c0de4932d796d562a13bdc8e924ce51bfde863d1f4431a74a77147 0.0s done
+#12 exporting manifest list sha256:b05ae4bdce62b7805b5e4764843cceddc687d245e0040fa427d44970f97f4b1f 0.0s done
+#12 naming to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#12 unpacking to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#12 DONE 0.1s
+
+#13 [payment] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#13 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#13 exporting attestation manifest sha256:5c46b542d0adf0b3daae0c83c42338aad09da022919084c74ac62906380a203c 0.0s done
+#13 exporting manifest list sha256:8bb3bdb3ef69af525e87f44428c87c9ac9a30cd70fae4c0a3023472e651e8f20 0.0s done
+#13 naming to docker.io/library/opspilot-lab-payment:latest done
+#13 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#13 DONE 0.1s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:49aacdf368f7f2824dfbb5269d051bacd1a8af739de8eafa33e5aa2429bd0817 0.0s done
+#14 exporting manifest list sha256:c1b4456ed65472bbd93347f28b3710b2f401482966c266585883a8948c9a2ebc 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#14 DONE 0.1s
+
+#15 [orders] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [payment] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [inventory] resolving provenance for metadata file
+#17 DONE 0.1s
+
+#18 [gateway] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-payment  Built
+ opspilot-lab-orders  Built
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 0
+Scenario ready: dependency_timeout
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [inventory internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [gateway internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [payment internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [inventory internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [payment 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [inventory 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [inventory 3/5] COPY requirements.txt ./requirements.txt
+#8 CACHED
+
+#9 [inventory 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 CACHED
+
+#10 [payment 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [payment] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#11 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#11 exporting attestation manifest sha256:fde557297889d2fd29d1e69dcd4a7f3ebc813291d2eea7c2aa29c4c54268ab41
+#11 ...
+
+#12 [inventory] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#12 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#12 exporting attestation manifest sha256:227938a229e95db6d4f56279c34af49926fb22d1592371c1ecb933e89a0d9cf5 0.0s done
+#12 exporting manifest list sha256:fbd078b6e19c3d5b4762aa46ad79ae3b93457beef65c75318fd4653647e39aa5 0.0s done
+#12 naming to docker.io/library/opspilot-lab-inventory:latest done
+#12 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#12 DONE 0.1s
+
+#11 [payment] exporting to image
+#11 exporting attestation manifest sha256:fde557297889d2fd29d1e69dcd4a7f3ebc813291d2eea7c2aa29c4c54268ab41 0.0s done
+#11 exporting manifest list sha256:7861224b2e5af9ef3fa00273ce696f29ddb499bb51c5769c17e9efbd345b9b7b 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#11 DONE 0.2s
+
+#13 [orders] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#13 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#13 exporting attestation manifest sha256:bbc3ce5e322344893d088b75140df52f2db0a614d5b7b1b6f93c085f575219a5 0.0s done
+#13 exporting manifest list sha256:8c0fb5e268627ebc422e4daab0cd4b267719dc8c2240744c6abfb68827d20f25 0.0s done
+#13 naming to docker.io/library/opspilot-lab-orders:latest done
+#13 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#13 DONE 0.1s
+
+#14 [gateway] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#14 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#14 exporting attestation manifest sha256:088165896c655780c285f181234db3b3b8cb7fb7c18770b45fdca13a8fb8c261 0.1s done
+#14 exporting manifest list sha256:a1108ed3ba6c993c230cf1123514c1ab7b791ad74c25c8e5d54c5f931a62dffb 0.0s done
+#14 naming to docker.io/library/opspilot-lab-gateway:latest done
+#14 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#14 DONE 0.2s
+
+#15 [inventory] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [orders] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [payment] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [gateway] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-payment  Built
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: bad_release
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [payment internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [gateway internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [orders internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [gateway internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [inventory 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [inventory 3/5] COPY requirements.txt ./requirements.txt
+#7 CACHED
+
+#8 [inventory 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [inventory 2/5] WORKDIR /app
+#9 CACHED
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [gateway] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#11 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#11 exporting attestation manifest sha256:e2c950fe22e9d85ea554aa4daad041996b4b79850ac03d3a4c1587414ddfcd45
+#11 ...
+
+#12 [payment] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#12 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#12 exporting attestation manifest sha256:a6189078f74eafe69d394106bc993b521b8d2fc7c1d58fdb0ce159e3ce9f3352 0.1s done
+#12 exporting manifest list sha256:de52c8f5a37d869ce4744203f93a8de6cae04f420f581b77f9ae66d3dd969713 0.0s done
+#12 naming to docker.io/library/opspilot-lab-payment:latest done
+#12 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#12 DONE 0.2s
+
+#11 [gateway] exporting to image
+#11 exporting attestation manifest sha256:e2c950fe22e9d85ea554aa4daad041996b4b79850ac03d3a4c1587414ddfcd45 0.0s done
+#11 exporting manifest list sha256:153e4c7a26913c48fc7072bb43a05be101fa051c65f469b5b5e8e6d14e788c6c 0.0s done
+#11 naming to docker.io/library/opspilot-lab-gateway:latest done
+#11 unpacking to docker.io/library/opspilot-lab-gateway:latest 0.0s done
+#11 DONE 0.2s
+
+#13 [orders] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#13 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#13 exporting attestation manifest sha256:fe705bdf4dc9d310e369acd7b29a395f859dd34a4813755fe5521e98f1fe2602 0.0s done
+#13 exporting manifest list sha256:102cff3076b82270d54142763fc13025d0c8e7df9254d2ca30f85074eaedf4ec 0.0s done
+#13 naming to docker.io/library/opspilot-lab-orders:latest done
+#13 unpacking to docker.io/library/opspilot-lab-orders:latest 0.0s done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da 0.0s done
+#14 exporting attestation manifest sha256:74a7de2d69b1aa31e8482a39a3f6bcaf6cb7fc0e921dda3e49deff5c5e3be408 0.0s done
+#14 exporting manifest list sha256:756945e2bdbb86ddaad80d395058eaf77b20ca73c151c9e15bfb0b6e7ab45b65 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest 0.0s done
+#14 DONE 0.2s
+
+#15 [payment] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [orders] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [gateway] resolving provenance for metadata file
+#17 DONE 0.1s
+
+#18 [inventory] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-payment  Built
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: slow_sql
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [gateway internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [inventory internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [inventory internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [payment internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [orders 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [gateway 3/5] COPY requirements.txt ./requirements.txt
+#7 CACHED
+
+#8 [gateway 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [gateway 2/5] WORKDIR /app
+#9 CACHED
+
+#10 [payment 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [gateway] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#11 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#11 exporting attestation manifest sha256:674c4aa0c593d2f1493260d6a3c71920854ae1973c2e3f93457b9a4b6465e7c9
+#11 ...
+
+#12 [payment] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#12 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#12 exporting attestation manifest sha256:ec5981223673cdc0659d64112287645417f52e836fc8e956725795f6457862b7 0.0s done
+#12 exporting manifest list sha256:76f23819be9014f425bb3b5480d32db42d03cf928d3cbfe64e27ef54ce8be818 0.0s done
+#12 naming to docker.io/library/opspilot-lab-payment:latest 0.0s done
+#12 unpacking to docker.io/library/opspilot-lab-payment:latest 0.0s done
+#12 DONE 0.1s
+
+#11 [gateway] exporting to image
+#11 exporting attestation manifest sha256:674c4aa0c593d2f1493260d6a3c71920854ae1973c2e3f93457b9a4b6465e7c9 0.0s done
+#11 exporting manifest list sha256:d03b3b26ad3493b9f9b737827b26cece6f7eb51fbd5c0340c1bdb3585afef4e0 0.0s done
+#11 naming to docker.io/library/opspilot-lab-gateway:latest done
+#11 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#11 DONE 0.2s
+
+#13 [inventory] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#13 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#13 exporting attestation manifest sha256:b5edc31a594d45f7d0b98bb5dcbaf88548b2ba3c6627751729540cc4d11f8cfa 0.0s done
+#13 exporting manifest list sha256:a6900983004726ef1880f1b3175591bc6759be9acfe46a4bc7523170efca9fc0 0.0s done
+#13 naming to docker.io/library/opspilot-lab-inventory:latest done
+#13 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#13 DONE 0.2s
+
+#14 [orders] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#14 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#14 exporting attestation manifest sha256:fa4cdbae1ae552f9bd3336307c1a8adc134f4ec528558cefb2fc3642fa86d4f5 0.0s done
+#14 exporting manifest list sha256:3dc6c38ae08599689fada8f819604b56a900fae7ea433c64aac3e50a75ce8f85 0.0s done
+#14 naming to docker.io/library/opspilot-lab-orders:latest done
+#14 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#14 DONE 0.2s
+
+#15 [payment] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [gateway] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [orders] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-orders  Built
+ opspilot-lab-payment  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: retry_storm
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB done
+#1 DONE 0.0s
+
+#2 [gateway internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B done
+#2 DONE 0.0s
+
+#3 [gateway internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [inventory internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [payment internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [orders 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#7 [gateway 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#7 CACHED
+
+#8 [gateway 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [gateway 3/5] COPY requirements.txt ./requirements.txt
+#9 CACHED
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 CACHED
+
+#11 [payment] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:f6152213aaad97c0a0d08463f1afb7775c56e3cb05128d3e5dff09a2057f1667 done
+#11 exporting config sha256:e61163e3da32a149362724966f20732141a8c079c907a5223b4fb81affaf0498 done
+#11 exporting attestation manifest sha256:f4898fd1d07f1c6b0799a3054cc2f63586c077593b04c8fecc6457700d32dd49
+#11 exporting attestation manifest sha256:f4898fd1d07f1c6b0799a3054cc2f63586c077593b04c8fecc6457700d32dd49 0.1s done
+#11 exporting manifest list sha256:111145ec7072e249247a363af52bfbd15ef8aa42d80ba62e89982a0b3c2ca6a6 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest done
+#11 DONE 0.2s
+
+#12 [gateway] exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:b99376311cd5597b8d01f160aa69c8469cd350dca49757c0ae61022d113472d9 done
+#12 exporting config sha256:a6cde8e5ecbf97c570005249bc1b7787f02efa622ee7ee9eb5b6b5372a56c400 done
+#12 exporting attestation manifest sha256:0896c7c550278aa302d0b968f8dcf95f67f1b259a77aa990952b96e25b916ece 0.1s done
+#12 exporting manifest list sha256:8aa84ba9923b14adc100495fd097becf3c1942a9b4a4b6c230d89552dd56acc6 0.0s done
+#12 naming to docker.io/library/opspilot-lab-gateway:latest done
+#12 unpacking to docker.io/library/opspilot-lab-gateway:latest done
+#12 DONE 0.2s
+
+#13 [orders] exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:b40190926f53a7d0934752ffae4a5d07ea68444b63ed9d916baec09783368381 done
+#13 exporting config sha256:cf1dce6cfe738b1cfa998265b884366e93acce10569a543e0cd87e5cca1ae9d9 done
+#13 exporting attestation manifest sha256:5a517c388140209afa92bb818e01fec797cd88370dc6b63481e455b24cc84719 0.1s done
+#13 exporting manifest list sha256:d589a0441a356d67a399097a4386a3013b3fbe9290adeae337d670a470461860 0.0s done
+#13 naming to docker.io/library/opspilot-lab-orders:latest done
+#13 unpacking to docker.io/library/opspilot-lab-orders:latest done
+#13 DONE 0.2s
+
+#14 [inventory] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:46cf93945338c8a30175899f22fd748ffcee106c1fa22c415631c81dbd8a1f11 done
+#14 exporting config sha256:552c1d0d0515ce4052b515b4ebf701e10b28a320ccab1dc6770cd9e70b1ee6da done
+#14 exporting attestation manifest sha256:8e9c62354898c274520f76697077d27cecaab42901083ef8488fbb4156404512 0.1s done
+#14 exporting manifest list sha256:c9080c848295d7ae2949e7df2d0b65ea748b18dc52b7c9e3319317b9b9b38705 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest done
+#14 DONE 0.2s
+
+#15 [payment] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [gateway] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [orders] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [inventory] resolving provenance for metadata file
+#18 DONE 0.0s
+ opspilot-lab-payment  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-orders  Built
+ Container opspilot-lab-jaeger-1  Recreate
+ Container opspilot-lab-postgres-1  Recreate
+ Container opspilot-lab-prometheus-1  Recreate
+ Container opspilot-lab-redis-1  Recreate
+ Container opspilot-lab-otel-collector-1  Recreate
+ Container opspilot-lab-payment-1  Recreate
+ Container opspilot-lab-jaeger-1  Recreated
+ Container opspilot-lab-otel-collector-1  Recreated
+ Container opspilot-lab-redis-1  Recreated
+ Container opspilot-lab-prometheus-1  Recreated
+ Container opspilot-lab-postgres-1  Recreated
+ Container opspilot-lab-orders-1  Recreate
+ Container opspilot-lab-inventory-1  Recreate
+ Container opspilot-lab-payment-1  Recreated
+ Container opspilot-lab-orders-1  Recreated
+ Container opspilot-lab-gateway-1  Recreate
+ Container opspilot-lab-inventory-1  Recreated
+ Container opspilot-lab-gateway-1  Recreated
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 1
+Scenario ready: double_root
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+{
+  "rules": {
+    "cases": 6,
+    "exact_root_set_successes": 4,
+    "top1_rate": 0.6666666666666666,
+    "mean_top3_recall": 0.6666666666666666,
+    "false_positives": 0,
+    "evidence_precision": 0.07889546351084813,
+    "evidence_recall": 1.0,
+    "model_calls": 0,
+    "provider_rate_estimate_usd": 0.0,
+    "cost_per_exact_success_usd": 0.0,
+    "p95_latency_ms": 0.01,
+    "failures": []
+  },
+  "single": {
+    "cases": 6,
+    "exact_root_set_successes": 2,
+    "top1_rate": 0.5,
+    "mean_top3_recall": 0.4166666666666667,
+    "false_positives": 0,
+    "evidence_precision": 1.0,
+    "evidence_recall": 0.275,
+    "model_calls": 6,
+    "provider_rate_estimate_usd": 0.0215496,
+    "cost_per_exact_success_usd": 0.0107748,
+    "p95_latency_ms": 3496.21,
+    "failures": []
+  },
+  "multi": {
+    "cases": 6,
+    "exact_root_set_successes": 2,
+    "top1_rate": 0.3333333333333333,
+    "mean_top3_recall": 0.3333333333333333,
+    "false_positives": 0,
+    "evidence_precision": 1.0,
+    "evidence_recall": 0.225,
+    "model_calls": 30,
+    "provider_rate_estimate_usd": 0.0711957,
+    "cost_per_exact_success_usd": 0.03559785,
+    "p95_latency_ms": 6095.29,
+    "failures": [
+      {
+        "case_id": "lab-pool-01",
+        "reasons": [
+          "ModelError"
+        ]
+      },
+      {
+        "case_id": "lab-dependency-01",
+        "reasons": [
+          "ModelError"
+        ]
+      },
+      {
+        "case_id": "lab-release-01",
+        "reasons": [
+          "ModelError"
+        ]
+      },
+      {
+        "case_id": "lab-sql-01",
+        "reasons": [
+          "ModelError"
+        ]
+      },
+      {
+        "case_id": "lab-retry-01",
+        "reasons": [
+          "ModelError"
+        ]
+      },
+      {
+        "case_id": "lab-double-01",
+        "reasons": [
+          "ModelError"
+        ]
+      }
+    ]
+  },
+  "auto": {
+    "cases": 6,
+    "exact_root_set_successes": 4,
+    "top1_rate": 0.6666666666666666,
+    "mean_top3_recall": 0.6666666666666666,
+    "false_positives": 0,
+    "evidence_precision": 0.06818181818181818,
+    "evidence_recall": 0.6,
+    "model_calls": 2,
+    "provider_rate_estimate_usd": 0.0008478,
+    "cost_per_exact_success_usd": 0.00021195,
+    "p95_latency_ms": 2686.12,
+    "failures": []
+  }
+}

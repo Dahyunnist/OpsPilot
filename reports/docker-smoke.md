@@ -1,13 +1,14 @@
-# Docker 六场景烟测记录
+# Docker 六场景烟测报告
 
 - 日期：2026-10-23
-- 结果：未完成；未进入场景执行。
-- Docker Engine：29.1.3，可由提权执行环境访问。
-- Compose 配置：通过。
-- 阻塞阶段：首次应用镜像构建，Docker Hub 认证请求超时。
-- 原始错误：`failed to fetch oauth token: Post "https://auth.docker.io/token": dial tcp 31.13.82.33:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.`
-- 清理检查：`docker compose ps --all` 无项目容器；Compose 项目标记筛选也无残留容器。
-- 模型费用：未发模型请求。账本累计峰值估算 `$0.33974803 / $0.50`，剩余 `$0.16025197`。
-- 结论：真实服务烟测和模型策略对照均未验收；不将本地模拟结果视为 Docker 服务验证。
+- Docker Engine：29.1.3。
+- 正式运行时仍为 Python 3.12；`python:3.12-slim` 未缓存，Docker Hub 认证请求超时，见 [原始失败日志](docker-smoke.log)。
+- 临时验证运行时：Python 3.11。服务依赖的最低 Python 版本为 3.8（psycopg）、3.9（Redis 与 OpenTelemetry）；Python 3.11 满足这些约束。[psycopg](https://pypi.org/project/psycopg/3.2.12/)、[psycopg-binary](https://pypi.org/project/psycopg-binary/3.2.12/)、[Redis](https://pypi.org/project/redis/6.4.0/)、[OpenTelemetry SDK](https://pypi.org/project/opentelemetry-sdk/1.38.0/)
+- 验证方式：临时 Compose override 指向 Python 3.11 Dockerfile；正式 Dockerfile 与 Python 3.12 运行时未改。
+- 结果：6/6 场景通过。pool 502、dependency timeout 502、bad release 504、slow SQL 200、retry storm 200、double root 502；每个场景均采到日志、部署、指标、trace。
+- 首次 Python 3.11 烟测发现 pool fault 有竞态，连接池日志虽出现，订单仍成功。故障实验现等待压力建立并占满 20 个连接；重跑后通过。首次失败日志见 [attempt 1](docker-smoke-python311-attempt1.log)。
+- 原始通过日志：[docker-smoke-python311.log](docker-smoke-python311.log)。
+- 清理：烟测及策略对照后均运行 `lab/stop.ps1`；容器和网络移除，`docker compose ps --all` 无容器。数据库 named volumes 保留。
+- 限制：本次验证的是 Python 3.11 服务镜像，不代表 Python 3.12 镜像构建已验证。
 
-完整原始输出见 [docker-smoke.log](docker-smoke.log)。
+策略对照和费用结果见 [lab-strategy-comparison.md](lab-strategy-comparison.md)。

@@ -8,6 +8,10 @@ $global:LASTEXITCODE = 0
 $root = Split-Path -Parent $PSScriptRoot
 $composeFile = Join-Path $root "lab/compose.yaml"
 $smokeScript = Join-Path $root "lab/smoke.ps1"
+$composeFiles = @("-f", $composeFile)
+if ($env:OPSPILOT_COMPOSE_OVERRIDE) {
+    $composeFiles += @("-f", $env:OPSPILOT_COMPOSE_OVERRIDE)
+}
 $docker = Get-Command docker -ErrorAction SilentlyContinue
 
 if (-not $docker) {
@@ -17,7 +21,7 @@ if (-not $docker) {
     return
 }
 
-$composeOutput = @(& $docker.Source compose -f $composeFile config --quiet 2>&1)
+$composeOutput = @(& $docker.Source compose @composeFiles config --quiet 2>&1)
 $composeExit = $LASTEXITCODE
 if ($composeExit -ne 0) {
     Write-Host "Compose configuration: invalid"

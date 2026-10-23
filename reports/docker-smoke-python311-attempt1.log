@@ -1,0 +1,245 @@
+Compose configuration: valid
+Docker Engine: 29.1.3
+Running six-scenario service smoke; no model API calls are made.
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.93kB 0.0s done
+#1 DONE 0.0s
+
+#2 [gateway internal] load build definition from Dockerfile.python311.smoke
+#2 transferring dockerfile: 241B 0.0s done
+#2 DONE 0.0s
+
+#3 [orders internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.0s
+
+#4 [payment internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [orders internal] load build context
+#5 ...
+
+#6 [gateway 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 resolve docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce 0.0s done
+#6 DONE 0.0s
+
+#6 [gateway 1/5] FROM docker.io/library/python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+#6 CACHED
+
+#7 [orders 2/5] WORKDIR /app
+#7 DONE 0.0s
+
+#5 [inventory internal] load build context
+#5 transferring context: 15.53kB 0.0s done
+#5 DONE 0.3s
+
+#8 [payment 3/5] COPY requirements.txt ./requirements.txt
+#8 DONE 0.3s
+
+#8 [inventory 3/5] COPY requirements.txt ./requirements.txt
+#8 DONE 0.3s
+
+#9 [payment 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 2.321 Collecting psycopg==3.2.12 (from psycopg[binary]==3.2.12->-r requirements.txt (line 1))
+#9 3.676   Downloading psycopg-3.2.12-py3-none-any.whl.metadata (4.5 kB)
+#9 3.855 Collecting redis==6.4.0 (from -r requirements.txt (line 2))
+#9 3.954   Downloading redis-6.4.0-py3-none-any.whl.metadata (10 kB)
+#9 4.094 Collecting opentelemetry-api==1.38.0 (from -r requirements.txt (line 3))
+#9 4.197   Downloading opentelemetry_api-1.38.0-py3-none-any.whl.metadata (1.5 kB)
+#9 4.527 Collecting opentelemetry-sdk==1.38.0 (from -r requirements.txt (line 4))
+#9 5.910   Downloading opentelemetry_sdk-1.38.0-py3-none-any.whl.metadata (1.5 kB)
+#9 6.028 Collecting opentelemetry-exporter-otlp-proto-http==1.38.0 (from -r requirements.txt (line 5))
+#9 6.130   Downloading opentelemetry_exporter_otlp_proto_http-1.38.0-py3-none-any.whl.metadata (2.3 kB)
+#9 6.471 Collecting typing-extensions>=4.6 (from psycopg==3.2.12->psycopg[binary]==3.2.12->-r requirements.txt (line 1))
+#9 6.573   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#9 6.724 Collecting importlib-metadata<8.8.0,>=6.0 (from opentelemetry-api==1.38.0->-r requirements.txt (line 3))
+#9 6.828   Downloading importlib_metadata-8.7.1-py3-none-any.whl.metadata (4.7 kB)
+#9 6.948 Collecting opentelemetry-semantic-conventions==0.59b0 (from opentelemetry-sdk==1.38.0->-r requirements.txt (line 4))
+#9 7.047   Downloading opentelemetry_semantic_conventions-0.59b0-py3-none-any.whl.metadata (2.4 kB)
+#9 7.180 Collecting googleapis-common-protos~=1.52 (from opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 7.282   Downloading googleapis_common_protos-1.76.0-py3-none-any.whl.metadata (8.5 kB)
+#9 7.402 Collecting opentelemetry-exporter-otlp-proto-common==1.38.0 (from opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 7.499   Downloading opentelemetry_exporter_otlp_proto_common-1.38.0-py3-none-any.whl.metadata (1.8 kB)
+#9 7.625 Collecting opentelemetry-proto==1.38.0 (from opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 7.720   Downloading opentelemetry_proto-1.38.0-py3-none-any.whl.metadata (2.3 kB)
+#9 7.854 Collecting requests~=2.7 (from opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 7.956   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#9 8.301 Collecting psycopg-binary==3.2.12 (from psycopg[binary]==3.2.12->-r requirements.txt (line 1))
+#9 8.398   Downloading psycopg_binary-3.2.12-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.9 kB)
+#9 8.631 Collecting protobuf<7.0,>=5.0 (from opentelemetry-proto==1.38.0->opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 8.731   Downloading protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+#9 8.867 Collecting zipp>=3.20 (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api==1.38.0->-r requirements.txt (line 3))
+#9 8.961   Downloading zipp-4.1.2-py3-none-any.whl.metadata (3.6 kB)
+#9 9.186 Collecting charset_normalizer<4,>=2 (from requests~=2.7->opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 9.296   Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+#9 9.348      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.4/46.4 kB 825.6 kB/s eta 0:00:00
+#9 9.673 Collecting idna<4,>=2.5 (from requests~=2.7->opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 9.770   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#9 10.10 Collecting urllib3<3,>=1.26 (from requests~=2.7->opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 10.21   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+#9 10.33 Collecting certifi>=2023.5.7 (from requests~=2.7->opentelemetry-exporter-otlp-proto-http==1.38.0->-r requirements.txt (line 5))
+#9 10.44   Downloading certifi-2026.10.19-py3-none-any.whl.metadata (2.5 kB)
+#9 10.57 Downloading psycopg-3.2.12-py3-none-any.whl (206 kB)
+#9 10.69    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 206.8/206.8 kB 1.8 MB/s eta 0:00:00
+#9 11.12 Downloading redis-6.4.0-py3-none-any.whl (279 kB)
+#9 11.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 279.8/279.8 kB 5.4 MB/s eta 0:00:00
+#9 11.28 Downloading opentelemetry_api-1.38.0-py3-none-any.whl (65 kB)
+#9 11.29    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.9/65.9 kB 22.2 MB/s eta 0:00:00
+#9 11.39 Downloading opentelemetry_sdk-1.38.0-py3-none-any.whl (132 kB)
+#9 11.41    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.3/132.3 kB 13.0 MB/s eta 0:00:00
+#9 11.51 Downloading opentelemetry_exporter_otlp_proto_http-1.38.0-py3-none-any.whl (19 kB)
+#9 11.62 Downloading opentelemetry_exporter_otlp_proto_common-1.38.0-py3-none-any.whl (18 kB)
+#9 11.73 Downloading opentelemetry_proto-1.38.0-py3-none-any.whl (72 kB)
+#9 11.75    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 72.5/72.5 kB 5.1 MB/s eta 0:00:00
+#9 11.86 Downloading opentelemetry_semantic_conventions-0.59b0-py3-none-any.whl (207 kB)
+#9 11.87    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 208.0/208.0 kB 16.6 MB/s eta 0:00:00
+#9 11.97 Downloading psycopg_binary-3.2.12-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.4 MB)
+#9 12.92    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 4.7 MB/s eta 0:00:00
+#9 13.02 Downloading googleapis_common_protos-1.76.0-py3-none-any.whl (307 kB)
+#9 13.07    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 307.7/307.7 kB 8.5 MB/s eta 0:00:00
+#9 13.17 Downloading importlib_metadata-8.7.1-py3-none-any.whl (27 kB)
+#9 13.78 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#9 13.79    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.1/73.1 kB 5.5 MB/s eta 0:00:00
+#9 13.89 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#9 13.90    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 21.4 MB/s eta 0:00:00
+#9 14.00 Downloading certifi-2026.10.19-py3-none-any.whl (136 kB)
+#9 14.04    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 136.5/136.5 kB 4.4 MB/s eta 0:00:00
+#9 14.15 Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (269 kB)
+#9 14.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 270.0/270.0 kB 9.1 MB/s eta 0:00:00
+#9 14.28 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#9 14.30    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 5.3 MB/s eta 0:00:00
+#9 14.40 Downloading protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+#9 14.44    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 323.4/323.4 kB 6.7 MB/s eta 0:00:00
+#9 14.55 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#9 14.57    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 135.7/135.7 kB 14.1 MB/s eta 0:00:00
+#9 14.67 Downloading zipp-4.1.2-py3-none-any.whl (10 kB)
+#9 14.76 Installing collected packages: zipp, urllib3, typing-extensions, redis, psycopg-binary, protobuf, idna, charset_normalizer, certifi, requests, psycopg, opentelemetry-proto, importlib-metadata, googleapis-common-protos, opentelemetry-exporter-otlp-proto-common, opentelemetry-api, opentelemetry-semantic-conventions, opentelemetry-sdk, opentelemetry-exporter-otlp-proto-http
+#9 15.51 Successfully installed certifi-2026.10.19 charset_normalizer-3.5.2 googleapis-common-protos-1.76.0 idna-3.20 importlib-metadata-8.7.1 opentelemetry-api-1.38.0 opentelemetry-exporter-otlp-proto-common-1.38.0 opentelemetry-exporter-otlp-proto-http-1.38.0 opentelemetry-proto-1.38.0 opentelemetry-sdk-1.38.0 opentelemetry-semantic-conventions-0.59b0 protobuf-6.33.6 psycopg-3.2.12 psycopg-binary-3.2.12 redis-6.4.0 requests-2.34.2 typing-extensions-4.16.0 urllib3-2.8.0 zipp-4.1.2
+#9 15.51 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#9 15.92 
+#9 15.92 [notice] A new release of pip is available: 24.0 -> 26.2.2
+#9 15.92 [notice] To update, run: pip install --upgrade pip
+#9 DONE 16.1s
+
+#9 [payment 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#9 DONE 16.1s
+
+#10 [orders 5/5] COPY app.py ./app.py
+#10 DONE 0.0s
+
+#11 [payment] exporting to image
+#11 exporting layers
+#11 exporting layers 1.1s done
+#11 exporting manifest sha256:4b85ccf7fb187449e53f3f8945b607d6969215fb114d09dd669dbe91ec5e8e94 0.0s done
+#11 exporting config sha256:f78f8a24b6da333a0e496a72051d5cc98d598982a759beaa7f67cedd6b21faad 0.0s done
+#11 exporting attestation manifest sha256:cb7bb96438db70eb5eff0afa5028899bbae0a617a6efefc401a8a0c55af0b464
+#11 exporting attestation manifest sha256:cb7bb96438db70eb5eff0afa5028899bbae0a617a6efefc401a8a0c55af0b464 0.1s done
+#11 exporting manifest list sha256:8b957a2f229c6be015c2a96701b87f56d24972913de15a239bce35a54fb435e2 0.0s done
+#11 naming to docker.io/library/opspilot-lab-payment:latest done
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest
+#11 unpacking to docker.io/library/opspilot-lab-payment:latest 0.5s done
+#11 DONE 1.9s
+
+#12 [orders] exporting to image
+#12 exporting layers 1.1s done
+#12 exporting manifest sha256:d4b79ea1a5207f2e129eca232e38f8a871ae2e733b0122210f92d8a5a8d39176 0.0s done
+#12 exporting config sha256:b3dad7121fd635b25e256abf2dc6c810a3e5545d7dcf32101c45d71359891fdd 0.0s done
+#12 exporting attestation manifest sha256:c783d3db24ea362392ba5a5a22a3c5dfb613c4cd08347412634c2ca59ace4334 0.1s done
+#12 exporting manifest list sha256:75560c10dab755982766d30e95eec8f43a178cb3c686a42ea7cd27983dc1ca97 0.0s done
+#12 naming to docker.io/library/opspilot-lab-orders:latest done
+#12 unpacking to docker.io/library/opspilot-lab-orders:latest 0.5s done
+#12 DONE 1.9s
+
+#13 [gateway] exporting to image
+#13 exporting layers 1.1s done
+#13 exporting manifest sha256:aa36303e21661ebb254aa1c35c4b502c1dd173d156f49e08351f188dcebee54d 0.0s done
+#13 exporting config sha256:3e7216ea59b1bdf6cdaa644d53d302faeaa31f395c559365096a7111fad06b38 0.0s done
+#13 exporting attestation manifest sha256:63c2d7d89242da5bce420b75396328c8787b58dd7356521ba9aab45195084fb6 0.1s done
+#13 exporting manifest list sha256:efd96a1e17fe6d4a11dfcdb029d12f3b28e3621bf549e44ed61eac1fefb86714 0.0s done
+#13 naming to docker.io/library/opspilot-lab-gateway:latest done
+#13 unpacking to docker.io/library/opspilot-lab-gateway:latest 0.5s done
+#13 DONE 1.9s
+
+#14 [inventory] exporting to image
+#14 exporting layers 1.1s done
+#14 exporting manifest sha256:f9d46471451bc39c16488d0e72f86b4a8d98d2ebc1b85ff8962d49469d00035a 0.0s done
+#14 exporting config sha256:facb42ab5ac946aaae99c3cfcd9b39a9815630779cc7d3e383672c9432a773da 0.0s done
+#14 exporting attestation manifest sha256:455742bf556dd2c19c5c7106f85bbbd83cb4a3fdf9aab3774adb1858b9c26adb 0.1s done
+#14 exporting manifest list sha256:218521c3ac8c14502af974593a1ba60b0558fd03b8d1a5cbf814cd7afe820b3e 0.0s done
+#14 naming to docker.io/library/opspilot-lab-inventory:latest done
+#14 unpacking to docker.io/library/opspilot-lab-inventory:latest 0.5s done
+#14 DONE 1.9s
+
+#15 [gateway] resolving provenance for metadata file
+#15 DONE 0.1s
+
+#16 [inventory] resolving provenance for metadata file
+#16 DONE 0.1s
+
+#17 [payment] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [orders] resolving provenance for metadata file
+#18 DONE 0.1s
+ opspilot-lab-orders  Built
+ opspilot-lab-gateway  Built
+ opspilot-lab-inventory  Built
+ opspilot-lab-payment  Built
+ Network opspilot-lab_backend  Creating
+ Network opspilot-lab_backend  Created
+ Volume opspilot-lab_pgdata  Creating
+ Volume opspilot-lab_pgdata  Created
+ Volume opspilot-lab_redisdata  Creating
+ Volume opspilot-lab_redisdata  Created
+ Container opspilot-lab-prometheus-1  Creating
+ Container opspilot-lab-postgres-1  Creating
+ Container opspilot-lab-redis-1  Creating
+ Container opspilot-lab-jaeger-1  Creating
+ Container opspilot-lab-payment-1  Creating
+ Container opspilot-lab-otel-collector-1  Creating
+ Container opspilot-lab-payment-1  Created
+ Container opspilot-lab-jaeger-1  Created
+ Container opspilot-lab-otel-collector-1  Created
+ Container opspilot-lab-postgres-1  Created
+ Container opspilot-lab-redis-1  Created
+ Container opspilot-lab-orders-1  Creating
+ Container opspilot-lab-inventory-1  Creating
+ Container opspilot-lab-prometheus-1  Created
+ Container opspilot-lab-orders-1  Created
+ Container opspilot-lab-gateway-1  Creating
+ Container opspilot-lab-inventory-1  Created
+ Container opspilot-lab-gateway-1  Created
+ Container opspilot-lab-prometheus-1  Starting
+ Container opspilot-lab-payment-1  Starting
+ Container opspilot-lab-postgres-1  Starting
+ Container opspilot-lab-redis-1  Starting
+ Container opspilot-lab-jaeger-1  Starting
+ Container opspilot-lab-otel-collector-1  Starting
+ Container opspilot-lab-payment-1  Started
+ Container opspilot-lab-redis-1  Started
+ Container opspilot-lab-postgres-1  Started
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-postgres-1  Waiting
+ Container opspilot-lab-redis-1  Waiting
+ Container opspilot-lab-prometheus-1  Started
+ Container opspilot-lab-jaeger-1  Started
+ Container opspilot-lab-otel-collector-1  Started
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-redis-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-postgres-1  Healthy
+ Container opspilot-lab-orders-1  Starting
+ Container opspilot-lab-inventory-1  Starting
+ Container opspilot-lab-inventory-1  Started
+ Container opspilot-lab-orders-1  Started
+ Container opspilot-lab-gateway-1  Starting
+ Container opspilot-lab-gateway-1  Started
+UPDATE 1
+DELETE 0
+Scenario ready: db_pool_exhaustion
+Gateway: http://127.0.0.1:18080
+Send POST /checkout with JSON { order_id: <unique-id> } to trigger one request.
+Read-only views: Prometheus http://127.0.0.1:19090 and Jaeger http://127.0.0.1:16686.
+Bounded evidence: /logs and /deployments require start, end (UTC ISO 8601), and limit=1..1000.
+Docker smoke failed: Expected injected failure: lab-pool-01; got HTTP 200

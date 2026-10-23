@@ -41,6 +41,7 @@ LOCK = threading.Lock()
 LOGS: deque[dict[str, Any]] = deque(maxlen=5000)
 COUNTS: dict[str, int] = {"requests": 0, "errors": 0, "duration_ms_sum": 0}
 POOL_FAULT_STARTED = False
+POOL_PRESSURE_READY = threading.Event()
 PAYMENT_ATTEMPTS = 0
 PAYMENT_FAILURES_REMAINING = 3
 
@@ -121,13 +122,16 @@ def start_pool_pressure() -> None:
     def hold_connections() -> None:
         connections: list[psycopg.Connection] = []
         try:
-            for _ in range(18):
+            for _ in range(20):
                 connections.append(db_connect())
+            POOL_PRESSURE_READY.set()
             emit("warning", "database sessions remain occupied", occupied_sessions=len(connections))
             time.sleep(8)
         except Exception as exc:
+            POOL_PRESSURE_READY.set()
             emit("error", "database session pressure could not be established", error_type=type(exc).__name__)
         finally:
+            POOL_PRESSURE_READY.set()
             for connection in connections:
                 connection.close()
             emit("info", "database sessions released", released_sessions=len(connections))
@@ -284,13 +288,13 @@ class Handler(BaseHTTPRequestHandler):
         order_id = str(payload.get("order_id") or uuid.uuid4())
         if FAULT == "db_pool_exhaustion":
             start_pool_pressure()
+            if not POOL_PRESSURE_READY.wait(timeout=2.0):
+                raise RuntimeError("database session pressure did not become ready")
         if FAULT in {"slow_sql", "double_root"}:
             with TRACER.start_as_current_span("postgres.query") as span:
                 span.set_attribute("db.system", "postgresql")
                 with db_connect() as connection:
                     connection.execute("SELECT pg_sleep(1.5)")
-        if FAULT == "db_pool_exhaustion":
-            time.sleep(0.25)
         with db_connect() as connection:
             connection.execute("INSERT INTO orders (order_id, sku, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (order_id, "demo-1", 1))
         if REDIS_HOST:
