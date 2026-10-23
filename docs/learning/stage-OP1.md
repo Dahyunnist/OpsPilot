@@ -31,6 +31,6 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 ## 验证状态
 
-冻结清单结构测试通过。Python 语法编译通过。Docker Compose 客户端已安装，但本轮 Docker Engine 管道不存在，因此未能构建镜像或运行真实服务烟测。真实故障、OTLP 导出和 Prometheus 抓取仍待 Docker Engine 可用后复核；不能把静态检查称为服务集成测试。
+2026-10-23 收尾复核：Docker Engine 可用。Python 3.11 Compose override 下六个服务故障场景烟测通过，日志、部署、指标和 trace 均采集成功；结果见 [Docker 烟测](../../reports/docker-smoke.md)。Python 3.12 镜像不在本机，且此前 Docker Hub 认证请求超时；正式镜像仍未验证。
 
-本阶段不调用模型 API。历史成本账本峰值 `$0.33974803`，本轮总上限 `$0.50`，可用预留余额 `$0.16025197`。
+随后新增一个非冻结开发窗口，真实服务请求与遥测采集成功；这不是六案例重新评测。该窗口只用于检查截断诊断费用闸，模型请求因预估超限而跳过，见[最终升级验收](../../reports/final-upgrade-acceptance.md)。
