@@ -21,7 +21,7 @@ Multi 的 6 个案例全部失败，失败样本不计入性能分数；因此�
 
 已有归档只保存 `ModelError` 类型和费用预留，没有 provider 状态码、超时类型或响应体，无法判定旧 6 次错误的具体原因。没有重跑冻结案例。一个新开发窗口（18 metrics、6 logs、4 traces）在输出预算 512 下复现 Multi JSON 截断：`finish_reason=length`、128 completion tokens、`response_schema:invalid_json_content`。这只说明该新样本在该预算下的失败机制，不代表旧案例原因。新诊断实际花费 `$0.0045072`，总额仍在 `$0.50` 闸内。
 
-客户端现按 HTTP、超时、响应结构等类别记录脱敏诊断；不会记录 provider 响应正文或异常消息。新增离线回归覆盖 HTTP 503、超时、畸形 JSON 和非对象 JSON。完整测试 88 项及 14 个子测试通过；容器已停止并保留卷。正式 Python 3.12 仍未验证。
+客户端现按 HTTP、超时、响应结构等类别记录脱敏诊断；不会记录 provider 响应正文或异常消息。新增离线回归覆盖 HTTP 503、超时、畸形 JSON 和非对象 JSON。后续收尾验收完整测试为 91 项及 14 个子测试；容器已停止并保留卷。正式 Python 3.12 仍未验证。
 
 后续修正：`finish_reason=length` 现在分类为 `truncated_json`，诊断保留 completion token 数与本次 token 上限。只允许一次自适应重试：初始预算翻倍，最高 512 tokens；重试再次通过 `RunBudget`，账本逐次预留，预算不足即在请求前拒绝。非截断 JSON 错误不重试。Stub 覆盖完整 JSON、截断 JSON、普通错误 JSON、单次重试和重试后 rules fallback。没有再发真实模型请求；旧实验容器已关闭，当前环境无法重新读取该开发窗口遥测，因此本次改动仅做 stub 验证，未声称实测恢复成功。账本累计峰值仍为 `$0.43784833 / $0.50`，新增费用 `$0`。
 

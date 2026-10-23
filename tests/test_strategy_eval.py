@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import threading
 import unittest
 
 from opspilot.strategy_eval import STRATEGIES, evaluate_snapshot, score_case, summarize_cases
 from opspilot.model_client import ModelError
+from scripts.evaluate_agents import BudgetLimitExceeded
 
 
 START = "2026-10-23T10:00:00Z"
@@ -147,6 +149,64 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(multi["fallback_route"], "rules")
         self.assertEqual(multi["evaluation_status"], "failed")
         self.assertTrue(all(trace["code"] == "truncated_json" for trace in multi["error_trace"]))
+
+    def test_single_truncation_recovers_once_without_fallback(self) -> None:
+        class TruncateOnce(FakeChatModel):
+            def __init__(self):
+                super().__init__()
+                self.truncated = set()
+
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                if system.startswith("You are an independent ") and "metrics" not in self.truncated:
+                    self.truncated.add("metrics")
+                    raise ModelError("truncated", category="response_schema", code="truncated_json",
+                        retryable=True, finish_reason="length", completion_tokens=budget,
+                        completion_token_budget=budget)
+                return super().complete(system, user, budget)
+
+        model = TruncateOnce()
+        budgets = []
+        lock = threading.Lock()
+
+        def gate(operation, instance, system, user, budget):
+            with lock:
+                budgets.append(budget)
+            return operation(instance, system, user, budget)
+
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model, gate, ("multi",))
+        multi = report["strategies"]["multi"]
+        self.assertEqual(sorted(budgets), [320, 320, 512, 512])
+        self.assertEqual(multi["model_calls"], 4)
+        self.assertEqual(multi["evaluation_status"], "complete")
+        self.assertIsNone(multi["fallback_route"])
+
+    def test_retry_budget_exhaustion_stops_before_call_and_falls_back(self) -> None:
+        class TruncateExperts(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                if system.startswith("You are an independent "):
+                    raise ModelError("truncated", category="response_schema", code="truncated_json",
+                        retryable=True, finish_reason="length", completion_tokens=budget,
+                        completion_token_budget=budget)
+                return super().complete(system, user, budget)
+
+        model = TruncateExperts()
+        retries_denied = []
+        lock = threading.Lock()
+
+        def gate(operation, instance, system, user, budget):
+            if budget > 320:
+                with lock:
+                    retries_denied.append(budget)
+                raise BudgetLimitExceeded("ledger cap")
+            return operation(instance, system, user, budget)
+
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model, gate, ("multi",))
+        multi = report["strategies"]["multi"]
+        self.assertEqual(retries_denied, [512, 512])
+        self.assertEqual(multi["model_calls"], 2)
+        self.assertEqual(multi["fallback_route"], "rules")
+        self.assertEqual(multi["evaluation_status"], "failed")
+        self.assertEqual(multi["failures"], ["BudgetLimitExceeded", "BudgetLimitExceeded"])
 
     def test_summary_excludes_failed_partial_predictions_from_performance(self) -> None:
         def row(*, failed: bool, exact: bool, duration: int) -> dict:

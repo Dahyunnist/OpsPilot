@@ -3,6 +3,8 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from concurrent.futures import ThreadPoolExecutor
+import threading
 from types import SimpleNamespace
 
 from opspilot.cli import load_incidents
@@ -105,6 +107,45 @@ class BenchmarkTests(unittest.TestCase):
             self.assertTrue(failure["error_retryable"])
             self.assertEqual(failure["error_http_status"], 503)
             self.assertNotIn("error_detail", failure)
+
+    def test_run_budget_reserves_concurrent_retries_atomically(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost.jsonl"
+            budget = RunBudget(0.0007, ledger, "deepseek-v4-flash")
+            instance = SimpleNamespace(max_tokens=512)
+            start = threading.Barrier(3)
+            entered = threading.Event()
+            release = threading.Event()
+            calls = 0
+            calls_lock = threading.Lock()
+
+            def operation(*_args):
+                nonlocal calls
+                with calls_lock:
+                    calls += 1
+                entered.set()
+                self.assertTrue(release.wait(timeout=2))
+                return {"usage": {}}
+
+            def worker():
+                start.wait()
+                try:
+                    budget.call(operation, instance, "s", "u", 512)
+                    return "completed"
+                except BudgetLimitExceeded:
+                    return "blocked"
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [pool.submit(worker) for _ in range(2)]
+                start.wait()
+                self.assertTrue(entered.wait(timeout=2))
+                release.set()
+                results = [future.result(timeout=2) for future in futures]
+
+            self.assertCountEqual(results, ["completed", "blocked"])
+            self.assertEqual(calls, 1)
+            self.assertEqual(budget.reserved_usd, 0)
+            self.assertEqual(len(ledger.read_text(encoding="utf-8").splitlines()), 1)
 
     def test_run_budget_includes_completed_ledger_runs(self):
         with TemporaryDirectory() as temp:

@@ -10,5 +10,6 @@
 - 原始通过日志：[docker-smoke-python311.log](docker-smoke-python311.log)。
 - 清理：烟测及策略对照后均运行 `lab/stop.ps1`；容器和网络移除，`docker compose ps --all` 无容器。数据库 named volumes 保留。
 - 限制：本次验证的是 Python 3.11 服务镜像，不代表 Python 3.12 镜像构建已验证。
+- 2026-10-23 收尾复核：Docker Engine `29.1.3` 可用；本地仅有 `python:3.11-slim`，`python:3.12-slim` 不存在。根据要求未再次拉取；此前 Docker Hub 认证请求已超时。
 
 策略对照和费用结果见 [lab-strategy-comparison.md](lab-strategy-comparison.md)。
