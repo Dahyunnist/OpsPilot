@@ -115,7 +115,7 @@ class BenchmarkTests(unittest.TestCase):
             instance = SimpleNamespace(max_tokens=512)
             start = threading.Barrier(3)
             entered = threading.Event()
-            release = threading.Event()
+            blocked = threading.Event()
             calls = 0
             calls_lock = threading.Lock()
 
@@ -124,7 +124,7 @@ class BenchmarkTests(unittest.TestCase):
                 with calls_lock:
                     calls += 1
                 entered.set()
-                self.assertTrue(release.wait(timeout=2))
+                self.assertTrue(blocked.wait(timeout=2))
                 return {"usage": {}}
 
             def worker():
@@ -133,13 +133,13 @@ class BenchmarkTests(unittest.TestCase):
                     budget.call(operation, instance, "s", "u", 512)
                     return "completed"
                 except BudgetLimitExceeded:
+                    blocked.set()
                     return "blocked"
 
             with ThreadPoolExecutor(max_workers=2) as pool:
                 futures = [pool.submit(worker) for _ in range(2)]
                 start.wait()
                 self.assertTrue(entered.wait(timeout=2))
-                release.set()
                 results = [future.result(timeout=2) for future in futures]
 
             self.assertCountEqual(results, ["completed", "blocked"])

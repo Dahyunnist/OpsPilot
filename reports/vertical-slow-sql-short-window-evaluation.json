@@ -1,0 +1,557 @@
+{
+  "case_id": "op1-vertical-slow-sql-20261023-01",
+  "scenario": "slow_sql",
+  "window": {
+    "fault_response_error_type": null,
+    "recovery_response_status": 200,
+    "fault_window_end": "2026-10-23T12:32:38.3859434Z",
+    "recovery_request_duration_ms": 29.9,
+    "recovery_request_order_id": "op1-vertical-slow-sql-20261023-01-recovery",
+    "fault_response_status": 200,
+    "fault_request_order_id": "op1-vertical-slow-sql-20261023-01-fault",
+    "recovery_started": "2026-10-23T12:32:41.3993535Z",
+    "fault_request_completed": "2026-10-23T12:32:34.3620511Z",
+    "recovery_response_error_type": null,
+    "fault_request_duration_ms": 1586.6,
+    "recovery_request_completed": "2026-10-23T12:32:41.4294182Z",
+    "fault_window_start": "2026-10-23T12:32:32.6774733Z"
+  },
+  "source_counts": {
+    "metrics": 15,
+    "logs": 1,
+    "traces": 5,
+    "deployments": 1
+  },
+  "source_failures": {},
+  "model": {
+    "id": "deepseek-v4-flash",
+    "max_completion_tokens": 512
+  },
+  "preflight": {
+    "attempts": [
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.0048261
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.002493
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0027234
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0008154
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0010458
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0023004
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0025308
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0007875
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0010179
+      },
+      {
+        "route": "adjudicator",
+        "attempt": "initial",
+        "reserve_usd": 0.0011574
+      },
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.0048261
+      }
+    ],
+    "planned_request_attempts": 11,
+    "worst_case_usd": 0.0245238,
+    "prior_peak_usd": 0.4515009,
+    "remaining_usd": 0.0284991,
+    "cumulative_cap_usd": 0.48,
+    "all_requests_pre_reserved": true
+  },
+  "independent_oracle": {
+    "root_causes": [
+      "slow_database_query"
+    ],
+    "affected_services": [
+      "gateway",
+      "orders",
+      "postgres"
+    ],
+    "independent_questions": [
+      "Which operation dominates checkout latency, and what source evidence supports that conclusion?",
+      "Does the trace support a database delay or a payment dependency timeout? Cite evidence for both the conclusion and the distinction."
+    ],
+    "gold_evidence_ids": [
+      "metrics:904a4e6acbcca2161324",
+      "traces:0c3fc2854fe780c08213"
+    ],
+    "gold_evidence_rules": [
+      "trace operation postgres.query with duration_us >= 1200000",
+      "orders metric op...duration_ms_sum with value >= 1200"
+    ]
+  },
+  "snapshot_file": "E:\\job\\opspilot\\reports\\vertical-slow-sql-snapshot.json",
+  "status": "completed",
+  "run_id": "04ea13ef-a7bc-4c80-acee-2b5a16c65358",
+  "budget": {
+    "run_peak_usd": 0.0040364,
+    "cumulative_peak_usd": 0.4555373,
+    "remaining_usd": 0.0244627,
+    "attempts_started": 7,
+    "attempt_cap": 11
+  },
+  "evaluation": {
+    "case_id": "op1-vertical-slow-sql-20261023-01",
+    "window": {
+      "start": "2026-10-23T12:32:32.6774733Z",
+      "end": "2026-10-23T12:32:38.3859434Z"
+    },
+    "snapshot_sha256": "b3f22d9b3bdcb8dd2a751b8eaa8b2d03dbb4766deea5309983190b16b0c45983",
+    "source_status": {
+      "metrics": "ok",
+      "logs": "ok",
+      "traces": "ok",
+      "deployments": "ok"
+    },
+    "source_counts": {
+      "metrics": 15,
+      "logs": 1,
+      "traces": 5,
+      "deployments": 1
+    },
+    "rules_diagnostic": {
+      "window": {
+        "start": "2026-10-23T12:32:32.6774733Z",
+        "end": "2026-10-23T12:32:38.3859434Z"
+      },
+      "status": "insufficient_evidence",
+      "root_causes": [],
+      "confidence": "abstain",
+      "hypotheses": [
+        {
+          "id": "slow_database_query",
+          "title": "slow PostgreSQL query",
+          "support": [
+            {
+              "source": "traces",
+              "record_id": "traces:0c3fc2854fe780c08213",
+              "reason": "PostgreSQL query span lasted 1515 ms"
+            }
+          ],
+          "against": [],
+          "confidence": "medium",
+          "score": 0.43,
+          "independent_sources": [
+            "traces"
+          ]
+        },
+        {
+          "id": "database_pool_exhaustion",
+          "title": "PostgreSQL connection pool exhaustion",
+          "support": [],
+          "against": [
+            {
+              "source": "metrics",
+              "record_id": "metrics:d1c5bfa3d4e98f53c4bf",
+              "reason": "orders error counter did not increase"
+            }
+          ],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "invalid_release_configuration",
+          "title": "invalid orders release configuration",
+          "support": [],
+          "against": [],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "payment_dependency_timeout",
+          "title": "payment dependency timeout",
+          "support": [],
+          "against": [
+            {
+              "source": "traces",
+              "record_id": "traces:bde54143008fd6686c6f",
+              "reason": "payment span completed below the timeout threshold"
+            }
+          ],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "retry_amplification",
+          "title": "payment retry amplification",
+          "support": [],
+          "against": [],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        }
+      ],
+      "source_status": {
+        "metrics": "ok",
+        "logs": "ok",
+        "traces": "ok",
+        "deployments": "ok"
+      },
+      "evidence_refs": [
+        {
+          "source": "deployments",
+          "record_id": "3bc28928-2810-4481-a391-601afdd9afac"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:5b0cda454a0233ebacb0"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:2dd4774df9f54755ca18"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:0c3fc2854fe780c08213"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:f04595dcc07bde5f5ef3"
+        },
+        {
+          "source": "logs",
+          "record_id": "logs:a7bfa273d0f9d98070ee"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:bde54143008fd6686c6f"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:2f424efe86cfa15d542c"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:34ab335a88768ea8d611"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:6e9718f58e197c6a335e"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:0fed33c91e941696c7a5"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:1c7f47b2c3065e8cc272"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:48f8b535782b8ee236a6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:6860e061c03d586320b4"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:72afac45f0a831172abe"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:73aa6e95bca7245379a4"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:794b4fdde9bbd14828e7"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:88aa12d68b6494b168a7"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:8c58c39a077748fc50cd"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:8ec793996e703e2fb28d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:904a4e6acbcca2161324"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:d1c5bfa3d4e98f53c4bf"
+        }
+      ],
+      "dependency_graph": [
+        {
+          "caller": "gateway",
+          "callee": "orders",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:2dd4774df9f54755ca18"
+            }
+          ]
+        },
+        {
+          "caller": "orders",
+          "callee": "inventory",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:f04595dcc07bde5f5ef3"
+            }
+          ]
+        },
+        {
+          "caller": "orders",
+          "callee": "payment",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:bde54143008fd6686c6f"
+            }
+          ]
+        }
+      ],
+      "counter_evidence": [
+        {
+          "hypothesis_id": "database_pool_exhaustion",
+          "source": "metrics",
+          "record_id": "metrics:d1c5bfa3d4e98f53c4bf",
+          "reason": "orders error counter did not increase"
+        },
+        {
+          "hypothesis_id": "payment_dependency_timeout",
+          "source": "traces",
+          "record_id": "traces:bde54143008fd6686c6f",
+          "reason": "payment span completed below the timeout threshold"
+        }
+      ],
+      "quality": {
+        "missing_trace_log_records": 1,
+        "trace_coverage_ratio_approx": null,
+        "same_trace_clock_skews": [],
+        "warnings": [
+          "missing_trace_context"
+        ]
+      },
+      "failures": {}
+    },
+    "strategies": {
+      "rules": {
+        "strategy": "rules",
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [],
+          "evidence_by_root": {},
+          "evidence_ids": [
+            "3bc28928-2810-4481-a391-601afdd9afac",
+            "traces:5b0cda454a0233ebacb0",
+            "traces:2dd4774df9f54755ca18",
+            "traces:0c3fc2854fe780c08213",
+            "traces:f04595dcc07bde5f5ef3",
+            "logs:a7bfa273d0f9d98070ee",
+            "traces:bde54143008fd6686c6f",
+            "metrics:2f424efe86cfa15d542c",
+            "metrics:34ab335a88768ea8d611",
+            "metrics:6e9718f58e197c6a335e",
+            "metrics:0fed33c91e941696c7a5",
+            "metrics:1c7f47b2c3065e8cc272",
+            "metrics:48f8b535782b8ee236a6",
+            "metrics:6860e061c03d586320b4",
+            "metrics:72afac45f0a831172abe",
+            "metrics:73aa6e95bca7245379a4",
+            "metrics:794b4fdde9bbd14828e7",
+            "metrics:88aa12d68b6494b168a7",
+            "metrics:8c58c39a077748fc50cd",
+            "metrics:8ec793996e703e2fb28d",
+            "metrics:904a4e6acbcca2161324",
+            "metrics:d1c5bfa3d4e98f53c4bf"
+          ],
+          "withheld_claims": [],
+          "status": "insufficient_evidence"
+        },
+        "duration_ms": 0.0,
+        "model_calls": 0,
+        "provider_rate_estimate_usd": 0.0,
+        "usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": false,
+          "top3_recall": 0.0,
+          "exact_root_set": false,
+          "false_positives": 0,
+          "evidence_precision": 0.09090909090909091,
+          "evidence_recall": 1.0,
+          "evidence_true_positive": 2,
+          "evidence_predicted": 22,
+          "evidence_gold": 2
+        }
+      },
+      "single": {
+        "strategy": "single",
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [],
+          "evidence_by_root": {},
+          "evidence_ids": [],
+          "withheld_claims": [
+            "slow_database_query"
+          ],
+          "status": "insufficient_evidence"
+        },
+        "duration_ms": 2005.57,
+        "model_calls": 1,
+        "provider_rate_estimate_usd": 0.0014157,
+        "usage": {
+          "prompt_tokens": 3735,
+          "completion_tokens": 246,
+          "total_tokens": 3981,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 3735
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": false,
+          "top3_recall": 0.0,
+          "exact_root_set": false,
+          "false_positives": 0,
+          "evidence_precision": 0.0,
+          "evidence_recall": 0.0,
+          "evidence_true_positive": 0,
+          "evidence_predicted": 0,
+          "evidence_gold": 2
+        }
+      },
+      "multi": {
+        "strategy": "multi",
+        "selected_route": "multi",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [],
+          "evidence_by_root": {},
+          "evidence_ids": [],
+          "withheld_claims": [
+            "slow_database_query"
+          ],
+          "status": "insufficient_evidence"
+        },
+        "duration_ms": 3694.46,
+        "model_calls": 5,
+        "provider_rate_estimate_usd": 0.0022815,
+        "usage": {
+          "prompt_tokens": 4969,
+          "completion_tokens": 659,
+          "total_tokens": 5628
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": false,
+          "top3_recall": 0.0,
+          "exact_root_set": false,
+          "false_positives": 0,
+          "evidence_precision": 0.0,
+          "evidence_recall": 0.0,
+          "evidence_true_positive": 0,
+          "evidence_predicted": 0,
+          "evidence_gold": 2
+        }
+      },
+      "auto": {
+        "strategy": "auto",
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [],
+          "evidence_by_root": {},
+          "evidence_ids": [],
+          "withheld_claims": [
+            "slow_database_query"
+          ],
+          "status": "insufficient_evidence"
+        },
+        "duration_ms": 2085.59,
+        "model_calls": 1,
+        "provider_rate_estimate_usd": 0.0003392,
+        "usage": {
+          "prompt_tokens": 3735,
+          "completion_tokens": 227,
+          "total_tokens": 3962,
+          "prompt_tokens_details": {
+            "cached_tokens": 3584
+          },
+          "prompt_cache_hit_tokens": 3584,
+          "prompt_cache_miss_tokens": 151
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": false,
+          "top3_recall": 0.0,
+          "exact_root_set": false,
+          "false_positives": 0,
+          "evidence_precision": 0.0,
+          "evidence_recall": 0.0,
+          "evidence_true_positive": 0,
+          "evidence_predicted": 0,
+          "evidence_gold": 2
+        }
+      }
+    },
+    "truth": {
+      "root_causes": [
+        "slow_database_query"
+      ],
+      "gold_evidence_count": 2
+    }
+  }
+}

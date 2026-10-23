@@ -1,0 +1,30 @@
+{
+  "timeline": {
+    "recovery_started": "2026-10-23T12:40:46.3161472Z",
+    "recovery_response_error_type": null,
+    "recovery_request_order_id": "3d99079d-f541-48c1-bc71-8869cad0cb6a",
+    "baseline_order_id": "43537bf1-d112-4125-8e26-04e6d9140d73",
+    "fault_window_start": "2026-10-23T12:40:37.7726364Z",
+    "fault_request_completed": "2026-10-23T12:40:39.3380315Z",
+    "baseline_completed": "2026-10-23T12:40:29.7649180Z",
+    "assessment_window": {
+      "start": "2026-10-23T12:40:29.6471845Z",
+      "end": "2026-10-23T12:40:43.3542103Z"
+    },
+    "recovery_request_completed": "2026-10-23T12:40:46.3446546Z",
+    "fault_window_end": "2026-10-23T12:40:43.3542103Z",
+    "baseline_response_status": 200,
+    "recovery_request_duration_ms": 28.3,
+    "fault_request_duration_ms": 1538.0,
+    "recovery_response_status": 200,
+    "fault_response_error_type": null,
+    "fault_response_status": 200,
+    "baseline_response_error_type": null,
+    "baseline_request_duration_ms": 99.3,
+    "assessment_start": "2026-10-23T12:40:29.6471845Z",
+    "fault_request_order_id": "79176353-725e-4e04-8e7a-2dc3c46dd13b"
+  },
+  "case_id": "op1-vertical-slow-sql-20261023-01",
+  "trial_id": "e142b634-1c1e-4ff9-a788-72cfd778b1fb",
+  "scenario": "slow_sql"
+}

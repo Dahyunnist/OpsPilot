@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "case_id": "op1-vertical-slow-sql-20261023-01",
+  "injection": {
+    "fault": "slow_sql",
+    "service": "orders",
+    "operation": "postgres.query",
+    "delay_seconds": 1.5
+  },
+  "oracle": {
+    "root_causes": ["slow_database_query"],
+    "affected_services": ["gateway", "orders", "postgres"],
+    "independent_questions": [
+      "Which operation dominates checkout latency, and what source evidence supports that conclusion?",
+      "Does the trace support a database delay or a payment dependency timeout? Cite evidence for both the conclusion and the distinction."
+    ],
+    "gold_evidence_rules": [
+      "trace operation postgres.query with duration_us >= 1200000",
+      "orders metric op...duration_ms_sum with value >= 1200"
+    ]
+  }
+}

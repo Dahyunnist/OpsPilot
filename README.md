@@ -98,6 +98,8 @@ python -m venv .venv
 - `reports/causal-agent-evaluation.json`、`reports/causal-agent-evaluation.md`：30 例新因果盲测三路实测、Top-K/多根因、证据质量、延迟、失败和费用。
 - `reports/causal-routing-validation.json`、`reports/causal-routing-replication.json`：成本感知 auto 路由验证集实测与新 seed 复测。
 - `reports/api-cost-ledger.jsonl`：历史报告估算与本轮逐次请求峰值费用记录；不是服务商账单。
+- `lab/run-vertical-slice.ps1`、`scripts/evaluate_vertical_slice.py`：本地 slow SQL baseline/注入/恢复控制器及费用预检、四路评分器；`lab/scenarios/vertical-slow-sql.json` 单独保存注入配置与 oracle。
+- `reports/vertical-slow-sql-window.json`、`reports/vertical-slow-sql-snapshot.json`、`reports/vertical-slow-sql-evaluation.json`：真实服务时间线、遥测快照及四路对照结果；完整分析见 `docs/learning/OP1-vertical-slice.md`。
 - `scripts/train_routing_policy.py`、`scripts/evaluate_routing_policy.py`：从轨迹奖励学习上下文路由策略并做独立评估。
 - `reports/reward-training.json`、`reports/reward-evaluation.json`、`reports/reward-evaluation.md`：路由 policy 的训练轨迹和未更新留出评估。
 - `scripts/generate_dataset.py`：固定种子的生成器和结构校验。
@@ -117,6 +119,7 @@ python -m venv .venv
 - `docs/learning/stage-S14.md`：冻结 30 例实测结果、费用边界及 Multi-Agent 路线决策。
 - `docs/learning/stage-S15.md`：根据根因证据强度进行选择性升级，并在新 seed 测试集复测。
 - `docs/learning/stage-OP1.md`：本地微服务故障实验台、重放方式与验证边界。
+- `docs/learning/OP1-vertical-slice.md`：健康基线→慢 SQL 注入→遥测 oracle→服务恢复的可复现实验、四路对照与成本边界。
 - `docs/learning/stage-OP2.md`：只读真实遥测适配、因果证据账本和弃答边界。
 - `docs/learning/stage-OP3.md`：四路策略对照、模型费用闸和指标口径。
 - `docs/learning/stage-OP4.md`：一次性人工批准、环境/权限拒绝和模拟回滚边界。

@@ -1,0 +1,979 @@
+{
+  "case_id": "op1-vertical-slow-sql-20261023-01",
+  "scenario": "slow_sql",
+  "window": {
+    "recovery_started": "2026-10-23T12:40:46.3161472Z",
+    "recovery_response_error_type": null,
+    "recovery_request_order_id": "3d99079d-f541-48c1-bc71-8869cad0cb6a",
+    "baseline_order_id": "43537bf1-d112-4125-8e26-04e6d9140d73",
+    "fault_window_start": "2026-10-23T12:40:37.7726364Z",
+    "fault_request_completed": "2026-10-23T12:40:39.3380315Z",
+    "baseline_completed": "2026-10-23T12:40:29.7649180Z",
+    "assessment_window": {
+      "start": "2026-10-23T12:40:29.6471845Z",
+      "end": "2026-10-23T12:40:43.3542103Z"
+    },
+    "recovery_request_completed": "2026-10-23T12:40:46.3446546Z",
+    "fault_window_end": "2026-10-23T12:40:43.3542103Z",
+    "baseline_response_status": 200,
+    "recovery_request_duration_ms": 28.3,
+    "fault_request_duration_ms": 1538.0,
+    "recovery_response_status": 200,
+    "fault_response_error_type": null,
+    "fault_response_status": 200,
+    "baseline_response_error_type": null,
+    "baseline_request_duration_ms": 99.3,
+    "assessment_start": "2026-10-23T12:40:29.6471845Z",
+    "fault_request_order_id": "79176353-725e-4e04-8e7a-2dc3c46dd13b"
+  },
+  "assessment_window": {
+    "start": "2026-10-23T12:40:29.6471845Z",
+    "end": "2026-10-23T12:40:43.3542103Z"
+  },
+  "source_counts": {
+    "metrics": 66,
+    "logs": 2,
+    "traces": 9,
+    "deployments": 1
+  },
+  "source_failures": {},
+  "model": {
+    "id": "deepseek-v4-flash",
+    "max_completion_tokens": 512
+  },
+  "preflight": {
+    "attempts": [
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.0127137
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0087936
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.009024
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0009924
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0012228
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0037026
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.003933
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.000795
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0010254
+      },
+      {
+        "route": "adjudicator",
+        "attempt": "initial",
+        "reserve_usd": 0.0018066
+      }
+    ],
+    "planned_request_attempts": 10,
+    "worst_case_usd": 0.0440091,
+    "prior_peak_usd": 0.4555373,
+    "remaining_usd": 0.0444627,
+    "cumulative_cap_usd": 0.5,
+    "all_requests_pre_reserved": true
+  },
+  "independent_oracle": {
+    "root_causes": [
+      "slow_database_query"
+    ],
+    "affected_services": [
+      "gateway",
+      "orders",
+      "postgres"
+    ],
+    "independent_questions": [
+      "Which operation dominates checkout latency, and what source evidence supports that conclusion?",
+      "Does the trace support a database delay or a payment dependency timeout? Cite evidence for both the conclusion and the distinction."
+    ],
+    "gold_evidence_ids": [
+      "metrics:8a63321bad18bd79cf35",
+      "traces:4ffc3d0bcdef84fe99ef"
+    ],
+    "gold_evidence_rules": [
+      "trace operation postgres.query with duration_us >= 1200000",
+      "orders metric op...duration_ms_sum with value >= 1200"
+    ]
+  },
+  "snapshot_file": "E:\\job\\opspilot\\reports\\vertical-slow-sql-snapshot.json",
+  "status": "completed",
+  "run_id": "1f22a1a9-e2c0-422a-ad62-1a795d6d167d",
+  "budget": {
+    "run_peak_usd": 0.0084096,
+    "cumulative_peak_usd": 0.4639469,
+    "remaining_usd": 0.0360531,
+    "attempts_started": 6,
+    "attempt_cap": 10
+  },
+  "evaluation": {
+    "case_id": "op1-vertical-slow-sql-20261023-01",
+    "window": {
+      "start": "2026-10-23T12:40:29.6471845Z",
+      "end": "2026-10-23T12:40:43.3542103Z"
+    },
+    "snapshot_sha256": "679b17a0100655c381ec4403f0724dd77e5797e49b94178c1d7aa3c7257a290e",
+    "source_status": {
+      "metrics": "ok",
+      "logs": "ok",
+      "traces": "ok",
+      "deployments": "ok"
+    },
+    "source_counts": {
+      "metrics": 66,
+      "logs": 2,
+      "traces": 9,
+      "deployments": 1
+    },
+    "rules_diagnostic": {
+      "window": {
+        "start": "2026-10-23T12:40:29.6471845Z",
+        "end": "2026-10-23T12:40:43.3542103Z"
+      },
+      "status": "concluded",
+      "root_causes": [
+        "slow_database_query"
+      ],
+      "confidence": "high",
+      "hypotheses": [
+        {
+          "id": "slow_database_query",
+          "title": "slow PostgreSQL query",
+          "support": [
+            {
+              "source": "traces",
+              "record_id": "traces:4ffc3d0bcdef84fe99ef",
+              "reason": "PostgreSQL query span lasted 1509 ms"
+            },
+            {
+              "source": "metrics",
+              "record_id": "metrics:8a63321bad18bd79cf35",
+              "reason": "orders request duration counter increased by at least 1200 ms"
+            }
+          ],
+          "against": [],
+          "confidence": "high",
+          "score": 0.86,
+          "independent_sources": [
+            "metrics",
+            "traces"
+          ]
+        },
+        {
+          "id": "database_pool_exhaustion",
+          "title": "PostgreSQL connection pool exhaustion",
+          "support": [],
+          "against": [
+            {
+              "source": "metrics",
+              "record_id": "metrics:e56d30df2c0e7f9ca5fd",
+              "reason": "orders error counter did not increase"
+            }
+          ],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "invalid_release_configuration",
+          "title": "invalid orders release configuration",
+          "support": [],
+          "against": [],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "payment_dependency_timeout",
+          "title": "payment dependency timeout",
+          "support": [],
+          "against": [
+            {
+              "source": "traces",
+              "record_id": "traces:e726d44f997c3f6a32e6",
+              "reason": "payment span completed below the timeout threshold"
+            },
+            {
+              "source": "traces",
+              "record_id": "traces:3b28088da03c41c016f7",
+              "reason": "payment span completed below the timeout threshold"
+            }
+          ],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        },
+        {
+          "id": "retry_amplification",
+          "title": "payment retry amplification",
+          "support": [],
+          "against": [],
+          "confidence": "low",
+          "score": 0.0,
+          "independent_sources": []
+        }
+      ],
+      "source_status": {
+        "metrics": "ok",
+        "logs": "ok",
+        "traces": "ok",
+        "deployments": "ok"
+      },
+      "evidence_refs": [
+        {
+          "source": "traces",
+          "record_id": "traces:324060c4835ca27a5f34"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:8fb2be8043d3ee83c9d9"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:7865de487fa0e15ed998"
+        },
+        {
+          "source": "logs",
+          "record_id": "logs:4845655f7b7184ed2730"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:e726d44f997c3f6a32e6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:08bbbbad9f2ab3b350a3"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:0c8d24d99a532538fbb6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:1d084ebea58cbe892732"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:457d317a0af1e9c278e5"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:5b5fb8eb79c03c1c1d32"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:66b45264665d4bfb7df7"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:6f6d0b17cf2cdb06d9c6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:835d37521718f9869979"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:a13dd9a9a636ae82dd23"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:b868523baa4a5db0a9b3"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:e9e841828db838a7e783"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:f115ee4a1369e2b044f1"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:19be073eb516a204ce55"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:4107787a9e0b7509982d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:41becf36585c0d554aa3"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:5546b50fc856658bb20c"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:80ab64defd4dbba8e692"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:b0e3f8018cd90f25b60d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:bb02e765c48806471f4f"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:c3e9dd2a602c6090887d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:c8267d8c82f4aa28046e"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:daeb9fd43303da6eb63e"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:dc64234675b66989460a"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:ec6cac3a532939ab10ad"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:14f98ca839806d4b5cd7"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:3596c5fc62e8fe8a68ca"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:36f5b6a7b264fa523e2d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:43bcfaa17aa9448197f6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:51f2e3f65208a6a67628"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:583da3d1f793f0d27d84"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:7a7441514a243a322232"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:979c4673ea1c31847999"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:a551e27aa07717a0f70d"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:b9ec4d7a5120b9a8d24a"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:d1eb1423431165eec485"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:fb2d8ab696ad372b8429"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:024b671ebc814c8de947"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:02a9a570ef221e3f6514"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:125ec6de08ce9d47566c"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:37b42ec8ab33cb56edad"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:4e1863e154feaf207eb2"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:6913365ca8f11bf2c931"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:6e31b37eab94888fd2f2"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:8baadeb89af6667f5cf5"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:d1bce6deda48ccdd0942"
+        },
+        {
+          "source": "deployments",
+          "record_id": "2e18842b-6dcf-4236-a60a-304537970dd1"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:c2cf4964718ede6a0b69"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:f3b104cfce4919374414"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:4ffc3d0bcdef84fe99ef"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:683b960e22a2dfb3d24f"
+        },
+        {
+          "source": "logs",
+          "record_id": "logs:30df94a183d600295df2"
+        },
+        {
+          "source": "traces",
+          "record_id": "traces:3b28088da03c41c016f7"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:1accfe91278f3cc7024f"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:38958886dc40d1327dab"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:529609df2bc18935edd6"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:a33505a525d3258b87c3"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:b273ead5be1dc91f8102"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:c1e6d480ea357d0b2964"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:e4db481975f9f9a5506b"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:f0dc12c670617e719eb2"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:f810a9fd2194438c80e3"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:0d7b5907ddf93f246834"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:129c63d05b3ca2cb8c2b"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:1e026d2cb54753cf3f0b"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:366a50bb47244a80b649"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:89354f00f2edf0855ff5"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:8a63321bad18bd79cf35"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:d0a97eaba9c53c2f0fab"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:d45ef504c34cf018feae"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:dafedcc792a4a2d2c488"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:e56d30df2c0e7f9ca5fd"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:f3df38791134e3fc86db"
+        },
+        {
+          "source": "metrics",
+          "record_id": "metrics:fdd476acee82f6574b90"
+        }
+      ],
+      "dependency_graph": [
+        {
+          "caller": "gateway",
+          "callee": "orders",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:8fb2be8043d3ee83c9d9"
+            },
+            {
+              "source": "traces",
+              "record_id": "traces:f3b104cfce4919374414"
+            }
+          ]
+        },
+        {
+          "caller": "orders",
+          "callee": "inventory",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:7865de487fa0e15ed998"
+            },
+            {
+              "source": "traces",
+              "record_id": "traces:683b960e22a2dfb3d24f"
+            }
+          ]
+        },
+        {
+          "caller": "orders",
+          "callee": "payment",
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "traces:e726d44f997c3f6a32e6"
+            },
+            {
+              "source": "traces",
+              "record_id": "traces:3b28088da03c41c016f7"
+            }
+          ]
+        }
+      ],
+      "counter_evidence": [
+        {
+          "hypothesis_id": "database_pool_exhaustion",
+          "source": "metrics",
+          "record_id": "metrics:e56d30df2c0e7f9ca5fd",
+          "reason": "orders error counter did not increase"
+        },
+        {
+          "hypothesis_id": "payment_dependency_timeout",
+          "source": "traces",
+          "record_id": "traces:e726d44f997c3f6a32e6",
+          "reason": "payment span completed below the timeout threshold"
+        },
+        {
+          "hypothesis_id": "payment_dependency_timeout",
+          "source": "traces",
+          "record_id": "traces:3b28088da03c41c016f7",
+          "reason": "payment span completed below the timeout threshold"
+        }
+      ],
+      "quality": {
+        "missing_trace_log_records": 2,
+        "trace_coverage_ratio_approx": null,
+        "same_trace_clock_skews": [],
+        "warnings": [
+          "missing_trace_context"
+        ]
+      },
+      "failures": {}
+    },
+    "strategies": {
+      "rules": {
+        "strategy": "rules",
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [
+            "slow_database_query"
+          ],
+          "evidence_by_root": {
+            "slow_database_query": [
+              "traces:4ffc3d0bcdef84fe99ef",
+              "metrics:8a63321bad18bd79cf35"
+            ]
+          },
+          "evidence_ids": [
+            "traces:324060c4835ca27a5f34",
+            "traces:8fb2be8043d3ee83c9d9",
+            "traces:7865de487fa0e15ed998",
+            "logs:4845655f7b7184ed2730",
+            "traces:e726d44f997c3f6a32e6",
+            "metrics:08bbbbad9f2ab3b350a3",
+            "metrics:0c8d24d99a532538fbb6",
+            "metrics:1d084ebea58cbe892732",
+            "metrics:457d317a0af1e9c278e5",
+            "metrics:5b5fb8eb79c03c1c1d32",
+            "metrics:66b45264665d4bfb7df7",
+            "metrics:6f6d0b17cf2cdb06d9c6",
+            "metrics:835d37521718f9869979",
+            "metrics:a13dd9a9a636ae82dd23",
+            "metrics:b868523baa4a5db0a9b3",
+            "metrics:e9e841828db838a7e783",
+            "metrics:f115ee4a1369e2b044f1",
+            "metrics:19be073eb516a204ce55",
+            "metrics:4107787a9e0b7509982d",
+            "metrics:41becf36585c0d554aa3",
+            "metrics:5546b50fc856658bb20c",
+            "metrics:80ab64defd4dbba8e692",
+            "metrics:b0e3f8018cd90f25b60d",
+            "metrics:bb02e765c48806471f4f",
+            "metrics:c3e9dd2a602c6090887d",
+            "metrics:c8267d8c82f4aa28046e",
+            "metrics:daeb9fd43303da6eb63e",
+            "metrics:dc64234675b66989460a",
+            "metrics:ec6cac3a532939ab10ad",
+            "metrics:14f98ca839806d4b5cd7",
+            "metrics:3596c5fc62e8fe8a68ca",
+            "metrics:36f5b6a7b264fa523e2d",
+            "metrics:43bcfaa17aa9448197f6",
+            "metrics:51f2e3f65208a6a67628",
+            "metrics:583da3d1f793f0d27d84",
+            "metrics:7a7441514a243a322232",
+            "metrics:979c4673ea1c31847999",
+            "metrics:a551e27aa07717a0f70d",
+            "metrics:b9ec4d7a5120b9a8d24a",
+            "metrics:d1eb1423431165eec485",
+            "metrics:fb2d8ab696ad372b8429",
+            "metrics:024b671ebc814c8de947",
+            "metrics:02a9a570ef221e3f6514",
+            "metrics:125ec6de08ce9d47566c",
+            "metrics:37b42ec8ab33cb56edad",
+            "metrics:4e1863e154feaf207eb2",
+            "metrics:6913365ca8f11bf2c931",
+            "metrics:6e31b37eab94888fd2f2",
+            "metrics:8baadeb89af6667f5cf5",
+            "metrics:d1bce6deda48ccdd0942",
+            "2e18842b-6dcf-4236-a60a-304537970dd1",
+            "traces:c2cf4964718ede6a0b69",
+            "traces:f3b104cfce4919374414",
+            "traces:4ffc3d0bcdef84fe99ef",
+            "traces:683b960e22a2dfb3d24f",
+            "logs:30df94a183d600295df2",
+            "traces:3b28088da03c41c016f7",
+            "metrics:1accfe91278f3cc7024f",
+            "metrics:38958886dc40d1327dab",
+            "metrics:529609df2bc18935edd6",
+            "metrics:a33505a525d3258b87c3",
+            "metrics:b273ead5be1dc91f8102",
+            "metrics:c1e6d480ea357d0b2964",
+            "metrics:e4db481975f9f9a5506b",
+            "metrics:f0dc12c670617e719eb2",
+            "metrics:f810a9fd2194438c80e3",
+            "metrics:0d7b5907ddf93f246834",
+            "metrics:129c63d05b3ca2cb8c2b",
+            "metrics:1e026d2cb54753cf3f0b",
+            "metrics:366a50bb47244a80b649",
+            "metrics:89354f00f2edf0855ff5",
+            "metrics:8a63321bad18bd79cf35",
+            "metrics:d0a97eaba9c53c2f0fab",
+            "metrics:d45ef504c34cf018feae",
+            "metrics:dafedcc792a4a2d2c488",
+            "metrics:e56d30df2c0e7f9ca5fd",
+            "metrics:f3df38791134e3fc86db",
+            "metrics:fdd476acee82f6574b90"
+          ],
+          "withheld_claims": [],
+          "status": "concluded"
+        },
+        "duration_ms": 0.0,
+        "model_calls": 0,
+        "provider_rate_estimate_usd": 0.0,
+        "usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": true,
+          "top3_recall": 1.0,
+          "exact_root_set": true,
+          "false_positives": 0,
+          "evidence_precision": 0.02564102564102564,
+          "evidence_recall": 1.0,
+          "evidence_true_positive": 2,
+          "evidence_predicted": 78,
+          "evidence_gold": 2
+        }
+      },
+      "single": {
+        "strategy": "single",
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [
+            "slow_database_query"
+          ],
+          "evidence_by_root": {
+            "slow_database_query": [
+              "traces:4ffc3d0bcdef84fe99ef",
+              "metrics:8a63321bad18bd79cf35"
+            ]
+          },
+          "evidence_ids": [
+            "traces:4ffc3d0bcdef84fe99ef",
+            "metrics:8a63321bad18bd79cf35"
+          ],
+          "withheld_claims": [],
+          "status": "concluded"
+        },
+        "duration_ms": 2607.97,
+        "model_calls": 1,
+        "provider_rate_estimate_usd": 0.0035373,
+        "usage": {
+          "prompt_tokens": 10763,
+          "completion_tokens": 257,
+          "total_tokens": 11020,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 10763
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": true,
+          "top3_recall": 1.0,
+          "exact_root_set": true,
+          "false_positives": 0,
+          "evidence_precision": 1.0,
+          "evidence_recall": 1.0,
+          "evidence_true_positive": 2,
+          "evidence_predicted": 2,
+          "evidence_gold": 2
+        }
+      },
+      "multi": {
+        "strategy": "multi",
+        "selected_route": "multi",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [
+            "slow_database_query"
+          ],
+          "evidence_by_root": {
+            "slow_database_query": [
+              "metrics:8a63321bad18bd79cf35",
+              "traces:4ffc3d0bcdef84fe99ef"
+            ]
+          },
+          "evidence_ids": [
+            "metrics:8a63321bad18bd79cf35",
+            "traces:4ffc3d0bcdef84fe99ef"
+          ],
+          "withheld_claims": [],
+          "status": "concluded"
+        },
+        "duration_ms": 3202.17,
+        "model_calls": 5,
+        "provider_rate_estimate_usd": 0.0048723,
+        "usage": {
+          "prompt_tokens": 12977,
+          "completion_tokens": 816,
+          "total_tokens": 13793
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": true,
+          "top3_recall": 1.0,
+          "exact_root_set": true,
+          "false_positives": 0,
+          "evidence_precision": 1.0,
+          "evidence_recall": 1.0,
+          "evidence_true_positive": 2,
+          "evidence_predicted": 2,
+          "evidence_gold": 2
+        }
+      },
+      "auto": {
+        "strategy": "auto",
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "prediction": {
+          "root_causes": [
+            "slow_database_query"
+          ],
+          "evidence_by_root": {
+            "slow_database_query": [
+              "traces:4ffc3d0bcdef84fe99ef",
+              "metrics:8a63321bad18bd79cf35"
+            ]
+          },
+          "evidence_ids": [
+            "traces:324060c4835ca27a5f34",
+            "traces:8fb2be8043d3ee83c9d9",
+            "traces:7865de487fa0e15ed998",
+            "logs:4845655f7b7184ed2730",
+            "traces:e726d44f997c3f6a32e6",
+            "metrics:08bbbbad9f2ab3b350a3",
+            "metrics:0c8d24d99a532538fbb6",
+            "metrics:1d084ebea58cbe892732",
+            "metrics:457d317a0af1e9c278e5",
+            "metrics:5b5fb8eb79c03c1c1d32",
+            "metrics:66b45264665d4bfb7df7",
+            "metrics:6f6d0b17cf2cdb06d9c6",
+            "metrics:835d37521718f9869979",
+            "metrics:a13dd9a9a636ae82dd23",
+            "metrics:b868523baa4a5db0a9b3",
+            "metrics:e9e841828db838a7e783",
+            "metrics:f115ee4a1369e2b044f1",
+            "metrics:19be073eb516a204ce55",
+            "metrics:4107787a9e0b7509982d",
+            "metrics:41becf36585c0d554aa3",
+            "metrics:5546b50fc856658bb20c",
+            "metrics:80ab64defd4dbba8e692",
+            "metrics:b0e3f8018cd90f25b60d",
+            "metrics:bb02e765c48806471f4f",
+            "metrics:c3e9dd2a602c6090887d",
+            "metrics:c8267d8c82f4aa28046e",
+            "metrics:daeb9fd43303da6eb63e",
+            "metrics:dc64234675b66989460a",
+            "metrics:ec6cac3a532939ab10ad",
+            "metrics:14f98ca839806d4b5cd7",
+            "metrics:3596c5fc62e8fe8a68ca",
+            "metrics:36f5b6a7b264fa523e2d",
+            "metrics:43bcfaa17aa9448197f6",
+            "metrics:51f2e3f65208a6a67628",
+            "metrics:583da3d1f793f0d27d84",
+            "metrics:7a7441514a243a322232",
+            "metrics:979c4673ea1c31847999",
+            "metrics:a551e27aa07717a0f70d",
+            "metrics:b9ec4d7a5120b9a8d24a",
+            "metrics:d1eb1423431165eec485",
+            "metrics:fb2d8ab696ad372b8429",
+            "metrics:024b671ebc814c8de947",
+            "metrics:02a9a570ef221e3f6514",
+            "metrics:125ec6de08ce9d47566c",
+            "metrics:37b42ec8ab33cb56edad",
+            "metrics:4e1863e154feaf207eb2",
+            "metrics:6913365ca8f11bf2c931",
+            "metrics:6e31b37eab94888fd2f2",
+            "metrics:8baadeb89af6667f5cf5",
+            "metrics:d1bce6deda48ccdd0942",
+            "2e18842b-6dcf-4236-a60a-304537970dd1",
+            "traces:c2cf4964718ede6a0b69",
+            "traces:f3b104cfce4919374414",
+            "traces:4ffc3d0bcdef84fe99ef",
+            "traces:683b960e22a2dfb3d24f",
+            "logs:30df94a183d600295df2",
+            "traces:3b28088da03c41c016f7",
+            "metrics:1accfe91278f3cc7024f",
+            "metrics:38958886dc40d1327dab",
+            "metrics:529609df2bc18935edd6",
+            "metrics:a33505a525d3258b87c3",
+            "metrics:b273ead5be1dc91f8102",
+            "metrics:c1e6d480ea357d0b2964",
+            "metrics:e4db481975f9f9a5506b",
+            "metrics:f0dc12c670617e719eb2",
+            "metrics:f810a9fd2194438c80e3",
+            "metrics:0d7b5907ddf93f246834",
+            "metrics:129c63d05b3ca2cb8c2b",
+            "metrics:1e026d2cb54753cf3f0b",
+            "metrics:366a50bb47244a80b649",
+            "metrics:89354f00f2edf0855ff5",
+            "metrics:8a63321bad18bd79cf35",
+            "metrics:d0a97eaba9c53c2f0fab",
+            "metrics:d45ef504c34cf018feae",
+            "metrics:dafedcc792a4a2d2c488",
+            "metrics:e56d30df2c0e7f9ca5fd",
+            "metrics:f3df38791134e3fc86db",
+            "metrics:fdd476acee82f6574b90"
+          ],
+          "withheld_claims": [],
+          "status": "concluded"
+        },
+        "duration_ms": 0.04,
+        "model_calls": 0,
+        "provider_rate_estimate_usd": 0.0,
+        "usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0
+        },
+        "failures": [],
+        "error_trace": [],
+        "metrics": {
+          "top1": true,
+          "top3_recall": 1.0,
+          "exact_root_set": true,
+          "false_positives": 0,
+          "evidence_precision": 0.02564102564102564,
+          "evidence_recall": 1.0,
+          "evidence_true_positive": 2,
+          "evidence_predicted": 78,
+          "evidence_gold": 2
+        }
+      }
+    },
+    "truth": {
+      "root_causes": [
+        "slow_database_query"
+      ],
+      "gold_evidence_count": 2
+    }
+  }
+}

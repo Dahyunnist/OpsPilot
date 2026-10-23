@@ -1,0 +1,19 @@
+{
+  "case_id": "op1-vertical-slow-sql-20261023-01",
+  "timeline": {
+    "fault_response_error_type": null,
+    "recovery_response_status": 200,
+    "fault_window_end": "2026-10-23T12:32:38.3859434Z",
+    "recovery_request_duration_ms": 29.9,
+    "recovery_request_order_id": "op1-vertical-slow-sql-20261023-01-recovery",
+    "fault_response_status": 200,
+    "fault_request_order_id": "op1-vertical-slow-sql-20261023-01-fault",
+    "recovery_started": "2026-10-23T12:32:41.3993535Z",
+    "fault_request_completed": "2026-10-23T12:32:34.3620511Z",
+    "recovery_response_error_type": null,
+    "fault_request_duration_ms": 1586.6,
+    "recovery_request_completed": "2026-10-23T12:32:41.4294182Z",
+    "fault_window_start": "2026-10-23T12:32:32.6774733Z"
+  },
+  "scenario": "slow_sql"
+}

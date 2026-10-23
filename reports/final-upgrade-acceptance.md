@@ -3,7 +3,8 @@
 - 日期：2026-10-23
 - 工作树：`E:\job\opspilot`
 - 冻结集：未重跑旧六案例；旧六次 Multi 错误根因仍不可恢复。
-- 本次授权新模型请求：7 次。运行前 worst-case 预留 `$0.038859`，实际账本峰值增加 `$0.01365257`；累计 `$0.45150090 / $0.50`，总余额 `$0.04849910`。单例硬上限 `$0.04`，累计硬闸 `$0.47784833`，未触及任一上限。
+- 依赖超时对照曾发 7 次请求：运行前 worst-case 预留 `$0.038859`，实际账本峰值增加 `$0.01365257`；当时累计 `$0.45150090`。单例硬上限 `$0.04`、累计硬闸 `$0.47784833` 均未触及。
+- 后续 OP-1 slow SQL 垂直切片花费估算 `$0.01244600`；最新账本峰值 `$0.46394690 / $0.50`，余额 `$0.03605310`。两轮垂直评估均在预留及累计硬闸内。
 - Docker：Engine `29.1.3`。本机有 `python:3.11-slim` 服务镜像，无 `python:3.12-slim`。此前 Hub 认证超时；本轮不拉取。六案例服务烟测沿用已验证 Python 3.11 边界；本次容器启动使用本地镜像且已清理，`docker compose ps --all` 为空。
 
 ## 路线验收
@@ -27,6 +28,10 @@
 
 独立 oracle 来自本地注入故障 `dependency_timeout`，根因为 `payment_dependency_timeout`；金证据是 orders `TimeoutError` 日志与 payment/charge 慢 trace。rules、single、multi 本例都命中根因。single 和 multi 各引用 2 条 oracle 证据，precision/recall 均为 1.0；rules 引用 69 条，precision 为 0.029、recall 为 1.0。本例只证明本场景端到端行为，不说明泛化或策略增益。模型请求、脱敏原始响应、重试、费用和逐例证据见 [结构化评测结果](upgrade-live-dev-evaluation.json) 与 [调用轨迹](upgrade-live-dev-trace.jsonl)。较早开发窗口的 `$0.0045072` 诊断亦保留；旧冻结六例未重跑。
 
+## 后续 OP-1 slow SQL 垂直切片
+
+后续在真实服务执行健康 baseline → `pg_sleep(1.5)` → 恢复，并完成 rules/single/Multi/auto 对照。四路均命中此例独立 oracle；Multi 没有相对 single 的命中增益。时间线、独立问题、逐路 precision/recall、成本和复现步骤见[OP-1 垂直切片学习记录](../docs/learning/OP1-vertical-slice.md)。该实验不扩增同模板 JSON、不访问生产系统，也不代表泛化。
+
 ## 可复现检查
 
 ```powershell
@@ -38,4 +43,4 @@ docker image ls --format '{{.Repository}}:{{.Tag}}' python
 docker compose -f lab\compose.yaml ps --all
 ```
 
-结果：`91 passed, 14 subtests passed`；测试宿主 `.venv` 为 Python 3.14.5，编译和 diff 检查通过；容器列表为空。没有 Python 3.12 本地解释器或镜像，正式 Python 3.12 仍未验证。不要用 `evaluate-all.ps1` 重放旧冻结集；不要用 `docker pull` 重试已超时的认证。
+结果：`95 passed, 14 subtests passed`；测试宿主 `.venv` 为 Python 3.14.5，编译和 diff 检查通过；容器列表为空。没有 Python 3.12 本地解释器或镜像，正式 Python 3.12 仍未验证。不要用 `evaluate-all.ps1` 重放旧冻结集；不要用 `docker pull` 重试已超时的认证。
