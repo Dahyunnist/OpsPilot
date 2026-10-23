@@ -46,7 +46,9 @@ PAYMENT_FAILURES_REMAINING = 3
 
 if OTLP:
     provider = TracerProvider(resource=Resource.create({"service.name": SERVICE, "service.version": VERSION}))
-    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=f"{OTLP.rstrip('/')}/v1/traces")))
+    provider.add_span_processor(BatchSpanProcessor(
+        OTLPSpanExporter(endpoint=f"{OTLP.rstrip('/')}/v1/traces"), schedule_delay_millis=500,
+    ))
     trace.set_tracer_provider(provider)
 TRACER = trace.get_tracer("opspilot.lab")
 
