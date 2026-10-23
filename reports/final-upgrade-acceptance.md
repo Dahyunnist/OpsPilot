@@ -3,7 +3,7 @@
 - 日期：2026-10-23
 - 工作树：`E:\job\opspilot`
 - 冻结集：未重跑旧六案例；旧六次 Multi 错误根因仍不可恢复。
-- 新模型请求：0。账本峰值维持 `$0.43784833 / $0.50`，剩余 `$0.06215167`。
+- 本次授权新模型请求：7 次。运行前 worst-case 预留 `$0.038859`，实际账本峰值增加 `$0.01365257`；累计 `$0.45150090 / $0.50`，总余额 `$0.04849910`。单例硬上限 `$0.04`，累计硬闸 `$0.47784833`，未触及任一上限。
 - Docker：Engine `29.1.3`。本机有 `python:3.11-slim` 服务镜像，无 `python:3.12-slim`。此前 Hub 认证超时；本轮不拉取。六案例服务烟测沿用已验证 Python 3.11 边界；本次容器启动使用本地镜像且已清理，`docker compose ps --all` 为空。
 
 ## 路线验收
@@ -21,9 +21,11 @@
 
 新窗口 `upgrade-live-dev-20261023-01` 使用本地依赖超时故障和唯一订单 ID。时间窗为 `2026-10-23T10:24:21.7375823Z` 至 `2026-10-23T10:24:30.2287796Z`。只读采到 60 metrics、4 logs、4 traces、1 deployment。详见 [窗口记录](upgrade-live-dev-window.json)。
 
-调用前用真实窗口、`.env` 的 `LLM_MAX_COMPLETION_TOKENS=1024` 和 `RunBudget` 公式离线估算 `single + multi` 最坏费用。包括单 Agent、4 个来源专家、最高 4 次专家截断重试和裁决，共 10 次请求，预留 `$0.038859`。该数高于单场景 `$0.01` 上限，因此没有调用模型；单 Agent 单次请求本身预留 `$0.0114399`。即使总预算尚余 `$0.06215167`，也不突破本场景上限。
+调用前用真实窗口、`.env` 的 `LLM_MAX_COMPLETION_TOKENS=1024` 和 `RunBudget` 公式离线估算 `single + multi` 最坏费用。包括单 Agent、4 个来源专家、4 次专家截断重试和裁决，共 10 次尝试，最坏预留 `$0.038859`。在单例 `$0.04` 和累计 `$0.50` 硬闸内执行；每次调用先由 RunBudget 加锁预留，单例最多 10 次尝试。
 
-因此，本轮提供新的服务端到端遥测证据和离线预算/故障注入证据，不提供新模型输出证据。较早开发窗口曾花费 `$0.0045072`，其中 Multi 在 128 completion tokens、`finish_reason=length` 下失败；该样本不能代表冻结旧六例，也不能证明模型修正后的恢复率。
+实际发出 7 次请求：rules 0、single 1、multi 6。一次 specialist 首次输出在 320 tokens 截断，分类为 `truncated_json`；预算由 320 提高到 512 后成功。其余请求完成；无 fallback 或未处理模型错误。账本对截断请求按完整预留计费，其余按 provider usage 估算。实际单例峰值估算 `$0.01365257`，低于 `$0.04`；累计峰值 `$0.45150090 / $0.50`，剩余 `$0.04849910`。
+
+独立 oracle 来自本地注入故障 `dependency_timeout`，根因为 `payment_dependency_timeout`；金证据是 orders `TimeoutError` 日志与 payment/charge 慢 trace。rules、single、multi 本例都命中根因。single 和 multi 各引用 2 条 oracle 证据，precision/recall 均为 1.0；rules 引用 69 条，precision 为 0.029、recall 为 1.0。本例只证明本场景端到端行为，不说明泛化或策略增益。模型请求、脱敏原始响应、重试、费用和逐例证据见 [结构化评测结果](upgrade-live-dev-evaluation.json) 与 [调用轨迹](upgrade-live-dev-trace.jsonl)。较早开发窗口的 `$0.0045072` 诊断亦保留；旧冻结六例未重跑。
 
 ## 可复现检查
 

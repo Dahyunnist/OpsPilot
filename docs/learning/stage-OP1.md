@@ -33,4 +33,4 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 2026-10-23 收尾复核：Docker Engine 可用。Python 3.11 Compose override 下六个服务故障场景烟测通过，日志、部署、指标和 trace 均采集成功；结果见 [Docker 烟测](../../reports/docker-smoke.md)。Python 3.12 镜像不在本机，且此前 Docker Hub 认证请求超时；正式镜像仍未验证。
 
-随后新增一个非冻结开发窗口，真实服务请求与遥测采集成功；这不是六案例重新评测。该窗口只用于检查截断诊断费用闸，模型请求因预估超限而跳过，见[最终升级验收](../../reports/final-upgrade-acceptance.md)。
+随后在一个非冻结开发窗口完成 rules、single、Multi 真实模型对照。Multi 一个 specialist 首次截断后，在 512-token 重试中成功；总调用费率估算 `$0.01365257`。这不是六案例重新评测或泛化证据，见[最终升级验收](../../reports/final-upgrade-acceptance.md)。
