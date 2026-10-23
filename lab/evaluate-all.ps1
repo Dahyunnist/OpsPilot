@@ -4,6 +4,9 @@ $truth = Get-Content -LiteralPath (Join-Path $PSScriptRoot "scenarios/truth.json
 $runScript = Join-Path $PSScriptRoot "run-scenario.ps1"
 $python = Join-Path $root ".venv\Scripts\python.exe"
 if (-not (Test-Path -LiteralPath $python)) { throw "Run .\scripts\setup.ps1 first." }
+$preflight = Join-Path $root "scripts/docker-preflight.ps1"
+& $preflight -RunSmoke
+if ($LASTEXITCODE -ne 0) { throw "Docker preflight or six-scenario smoke failed; paid strategy evaluation was skipped." }
 $reportPaths = @()
 
 foreach ($case in $truth.cases) {

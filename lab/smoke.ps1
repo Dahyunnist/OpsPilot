@@ -34,8 +34,10 @@ foreach ($case in $truth.cases) {
     if (-not $mustSucceed -and $status -lt 400) { throw "Expected injected failure: $($case.case_id); got HTTP $status" }
     Start-Sleep -Seconds 3
 
-    $logs = Invoke-RestMethod -Uri "http://127.0.0.1:18081/logs?limit=1000" -TimeoutSec 3
-    $deployments = Invoke-RestMethod -Uri "http://127.0.0.1:18080/deployments?limit=100" -TimeoutSec 3
+    $windowStart = [DateTime]::UtcNow.AddMinutes(-5).ToString("o")
+    $windowEnd = [DateTime]::UtcNow.AddMinutes(1).ToString("o")
+    $logs = Invoke-RestMethod -Uri "http://127.0.0.1:18081/logs?start=$([uri]::EscapeDataString($windowStart))&end=$([uri]::EscapeDataString($windowEnd))&limit=1000" -TimeoutSec 3
+    $deployments = Invoke-RestMethod -Uri "http://127.0.0.1:18080/deployments?start=$([uri]::EscapeDataString($windowStart))&end=$([uri]::EscapeDataString($windowEnd))&limit=100" -TimeoutSec 3
     $metrics = Invoke-RestMethod -Uri "http://127.0.0.1:19090/api/v1/query?query=opspilot_http_requests_total" -TimeoutSec 3
     $traces = Invoke-RestMethod -Uri "http://127.0.0.1:16686/api/traces?service=orders&limit=100" -TimeoutSec 3
     if ($logs.count -lt 1 -or $deployments.count -lt 1 -or $metrics.status -ne "success" -or $traces.data.Count -lt 1) {
@@ -47,8 +49,10 @@ foreach ($case in $truth.cases) {
     if ($case.fault -eq "retry_storm" -and @($logs.records | Where-Object { $_.message -eq "payment attempt failed" }).Count -lt 3) {
         throw "Retry amplification was not reproduced: $($case.case_id)"
     }
-    if ($case.fault -eq "bad_release" -and -not ($deployments.records | Where-Object { $_.service -eq "orders" -and $_.version -eq "v2" })) {
-        throw "Release observation was missing: $($case.case_id)"
+    $expectedVersion = if ($case.fault -eq "bad_release") { "v2" } else { "v1" }
+    $latestOrdersDeployment = $deployments.records | Where-Object { $_.service -eq "orders" } | Sort-Object timestamp | Select-Object -Last 1
+    if (-not $latestOrdersDeployment -or $latestOrdersDeployment.version -ne $expectedVersion) {
+        throw "Expected orders $expectedVersion deployment observation: $($case.case_id)"
     }
     $observed += [pscustomobject]@{ case_id = $case.case_id; status = $status; order_log_records = $logs.count; deployment_records = $deployments.count; trace_count = $traces.data.Count; prometheus_series = $metrics.data.result.Count }
 }

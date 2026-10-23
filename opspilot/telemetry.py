@@ -94,15 +94,18 @@ class LabTelemetry:
             service = metric.get("service")
             version = metric.get("version")
             for stamp, value in series.get("values", []):
+                instant = datetime.fromtimestamp(float(stamp), timezone.utc)
+                if not lower <= instant <= upper:
+                    continue
                 row = {"name": name, "service": service, "version": version, "value": value}
                 records.append({"record_id": _record_id("metrics", [metric, stamp, value]),
-                    "timestamp": datetime.fromtimestamp(float(stamp), timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "timestamp": instant.isoformat().replace("+00:00", "Z"),
                     "source": "metrics", "service": service, "trace_id": None, "attributes": row, "raw": row})
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
         return {"source": "metrics", "query": {"start": start, "end": end, "limit": limit, "step_seconds": step}, "records": records[:limit]}
 
     def logs(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
-        self._bounds(start, end, limit)
+        lower, upper, limit = self._bounds(start, end, limit)
         records = []
         per_service = max(1, min(1000, limit))
         for service, base in self.services.items():
@@ -110,7 +113,13 @@ class LabTelemetry:
             for row in response.get("records", [])[:per_service]:
                 if not isinstance(row, dict) or not isinstance(row.get("timestamp"), str):
                     continue
-                records.append({"record_id": _record_id("logs", row), "timestamp": row["timestamp"],
+                try:
+                    instant = _instant(row["timestamp"])
+                except ValueError:
+                    continue
+                if not lower <= instant <= upper:
+                    continue
+                records.append({"record_id": _record_id("logs", row), "timestamp": instant.isoformat().replace("+00:00", "Z"),
                     "source": "logs", "service": service, "trace_id": row.get("trace_id"),
                     "attributes": {key: value for key, value in row.items() if key not in {"timestamp", "message"}},
                     "raw": row})
@@ -119,11 +128,13 @@ class LabTelemetry:
 
     def deployments(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         self._bounds(start, end, limit)
-        response = self._get(self.gateway, "/deployments", {"limit": limit})
+        response = self._get(self.gateway, "/deployments", {"start": start, "end": end, "limit": limit})
         lower, upper = _instant(start), _instant(end)
         rows = []
         source_order = []
         for row in response.get("records", [])[:limit]:
+            if not isinstance(row, dict):
+                continue
             try:
                 instant = _instant(row.get("timestamp"))
             except ValueError:
@@ -141,7 +152,7 @@ class LabTelemetry:
 
     def traces(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         lower, upper, limit = self._bounds(start, end, limit)
-        records = []
+        records_by_id = {}
         for service in SERVICES:
             response = self._get(self.jaeger, "/api/traces", {
                 "service": service, "start": int(lower.timestamp() * 1_000_000),
@@ -156,9 +167,11 @@ class LabTelemetry:
                     tags = {tag.get("key"): tag.get("value") for tag in span.get("tags", []) if isinstance(tag, dict)}
                     raw = {"trace_id": trace_id, "span_id": span.get("spanID"), "parent_span_id": next((ref.get("spanID") for ref in span.get("references", []) if ref.get("refType") == "CHILD_OF"), None),
                         "operation": span.get("operationName"), "duration_us": span.get("duration"), "service": process.get("serviceName"), "attributes": tags}
-                    records.append({"record_id": _record_id("traces", raw), "timestamp": timestamp,
+                    normalized = {"record_id": _record_id("traces", raw), "timestamp": timestamp,
                         "source": "traces", "service": process.get("serviceName", service), "trace_id": trace_id,
-                        "attributes": raw, "raw": raw})
+                        "attributes": raw, "raw": raw}
+                    records_by_id.setdefault(normalized["record_id"], normalized)
+        records = list(records_by_id.values())
         records = [row for row in records if lower <= _instant(row["timestamp"]) <= upper]
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
         return {"source": "traces", "query": {"start": start, "end": end, "limit": limit}, "records": records[:limit]}

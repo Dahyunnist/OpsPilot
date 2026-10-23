@@ -63,6 +63,12 @@ def _gold_evidence(roots: list[str], source_results: dict[str, dict[str, Any]]) 
 
 def evaluate_case(case_id: str, start: str, end: str, strategies: tuple[str, ...],
                   budget_limit: float, cost_ledger: Path, token_budget: int) -> dict[str, Any]:
+    if not strategies or any(strategy not in STRATEGIES for strategy in strategies):
+        raise ValueError("strategies must be selected from rules, single, multi, auto")
+    if not 64 <= token_budget <= 8192:
+        raise ValueError("token budget must be between 64 and 8192")
+    if ("multi" in strategies or "auto" in strategies) and token_budget < 2048:
+        raise ValueError("multi-agent evaluation needs at least 2048 route tokens")
     truth_by_id = load_truth()
     if case_id not in truth_by_id:
         raise ValueError("unknown frozen lab case")
@@ -78,6 +84,11 @@ def evaluate_case(case_id: str, start: str, end: str, strategies: tuple[str, ...
             source_results[source] = {"records": [], "warnings": ["source_query_failed"]}
 
     needs_model = any(strategy in {"single", "multi", "auto"} for strategy in strategies)
+    if needs_model:
+        incomplete = [source for source in ("metrics", "logs", "traces", "deployments")
+            if failures.get(source) or not source_results.get(source, {}).get("records")]
+        if incomplete:
+            raise RuntimeError("live Docker baseline incomplete; model requests skipped; sources: " + ", ".join(incomplete))
     model = None
     budget = None
     if needs_model:

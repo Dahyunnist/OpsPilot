@@ -57,6 +57,24 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+def parse_utc(value: str) -> datetime:
+    if not value:
+        raise ValueError("start and end are required")
+    instant = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if instant.tzinfo is None:
+        raise ValueError("timestamps must include a timezone")
+    return instant.astimezone(timezone.utc)
+
+
+def in_window(timestamp: str, start: str, end: str) -> bool:
+    lower, upper = parse_utc(start), parse_utc(end)
+    try:
+        value = parse_utc(timestamp)
+    except (TypeError, ValueError):
+        return False
+    return lower <= value <= upper
+
+
 def emit(level: str, message: str, **fields: Any) -> None:
     span = trace.get_current_span().get_span_context()
     item = {
@@ -176,13 +194,15 @@ class Handler(BaseHTTPRequestHandler):
                 limit = int(query.get("limit", ["100"])[0])
                 if not 1 <= limit <= 1000:
                     raise ValueError
+                start, end = query.get("start", [""])[0], query.get("end", [""])[0]
+                if parse_utc(end) <= parse_utc(start):
+                    raise ValueError
             except ValueError:
-                self.send_json(400, {"error": "limit must be between 1 and 1000"})
+                self.send_json(400, {"error": "start/end timezone and limit 1..1000 are required"})
                 return
-            start, end = query.get("start", [None])[0], query.get("end", [None])[0]
             with LOCK:
                 rows = list(LOGS)
-            rows = [row for row in rows if (start is None or row["timestamp"] >= start) and (end is None or row["timestamp"] <= end)]
+            rows = [row for row in rows if in_window(row["timestamp"], start, end)]
             self.send_json(200, {"records": rows[-limit:], "count": min(limit, len(rows))})
             return
         if path.path == "/deployments" and SERVICE == "gateway":
@@ -191,14 +211,18 @@ class Handler(BaseHTTPRequestHandler):
                 limit = int(query.get("limit", ["100"])[0])
                 if not 1 <= limit <= 1000:
                     raise ValueError
+                start, end = query.get("start", [""])[0], query.get("end", [""])[0]
+                if parse_utc(end) <= parse_utc(start):
+                    raise ValueError
             except ValueError:
-                self.send_json(400, {"error": "limit must be between 1 and 1000"})
+                self.send_json(400, {"error": "start/end timezone and limit 1..1000 are required"})
                 return
             try:
                 with open(DEPLOYMENT_FILE, encoding="utf-8") as stream:
                     rows = [json.loads(line) for line in stream if line.strip()]
             except FileNotFoundError:
                 rows = []
+            rows = [row for row in rows if isinstance(row, dict) and in_window(row.get("timestamp", ""), start, end)]
             self.send_json(200, {"records": rows[-limit:], "count": min(limit, len(rows))})
             return
         if path.path == "/ready":
