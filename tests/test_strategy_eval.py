@@ -124,6 +124,30 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertIsNone(multi["metrics"]["exact_root_set"])
         self.assertEqual(len(model.calls), 2)
 
+    def test_truncated_specialists_get_one_budgeted_retry_then_fallback(self) -> None:
+        class TruncatedExperts(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                if system.startswith("You are an independent "):
+                    raise ModelError("truncated", category="response_schema", code="truncated_json",
+                        retryable=True, finish_reason="length", completion_tokens=budget,
+                        completion_token_budget=budget)
+                return super().complete(system, user, budget)
+
+        model = TruncatedExperts()
+        budgets = []
+
+        def gate(operation, instance, system, user, budget):
+            budgets.append(budget)
+            return operation(instance, system, user, budget)
+
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model, gate, ("multi",))
+        multi = report["strategies"]["multi"]
+        self.assertEqual(sorted(budgets), [320, 320, 512, 512])
+        self.assertEqual(multi["model_calls"], 4)
+        self.assertEqual(multi["fallback_route"], "rules")
+        self.assertEqual(multi["evaluation_status"], "failed")
+        self.assertTrue(all(trace["code"] == "truncated_json" for trace in multi["error_trace"]))
+
     def test_summary_excludes_failed_partial_predictions_from_performance(self) -> None:
         def row(*, failed: bool, exact: bool, duration: int) -> dict:
             return {"duration_ms": duration, "model_calls": 1, "provider_rate_estimate_usd": 0.1,

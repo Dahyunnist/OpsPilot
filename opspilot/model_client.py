@@ -38,13 +38,14 @@ def redact(value: Any) -> Any:
 class ModelError(RuntimeError):
     def __init__(self, message: str, *, category: str = "unknown", code: str | int | None = None,
                  retryable: bool = False, finish_reason: str | None = None,
-                 completion_tokens: int | None = None) -> None:
+                 completion_tokens: int | None = None, completion_token_budget: int | None = None) -> None:
         super().__init__(message)
         self.category = category
         self.code = code
         self.retryable = retryable
         self.finish_reason = finish_reason
         self.completion_tokens = completion_tokens
+        self.completion_token_budget = completion_token_budget
 
     def diagnostic(self) -> dict[str, Any]:
         trace = {"category": self.category, "code": self.code, "retryable": self.retryable}
@@ -54,6 +55,8 @@ class ModelError(RuntimeError):
             trace["finish_reason"] = self.finish_reason[:40]
         if self.completion_tokens is not None:
             trace["completion_tokens"] = max(0, self.completion_tokens)
+        if self.completion_token_budget is not None:
+            trace["completion_token_budget"] = max(0, self.completion_token_budget)
         return trace
 
 
@@ -109,9 +112,12 @@ class ChatModel:
             finish = first_choice.get("finish_reason", "unknown") if isinstance(first_choice, dict) else "unknown"
             usage = result.get("usage", {}) if isinstance(result, dict) else {}
             completion_tokens = usage.get("completion_tokens", "unknown") if isinstance(usage, dict) else "unknown"
+            truncated = finish == "length"
             raise ModelError(f"model returned invalid JSON response (finish={finish}, completion_tokens={completion_tokens})",
-                category="response_schema", code="invalid_json_content", finish_reason=str(finish),
-                completion_tokens=completion_tokens if isinstance(completion_tokens, int) else None) from exc
+                category="response_schema", code="truncated_json" if truncated else "invalid_json_content",
+                retryable=truncated, finish_reason=str(finish),
+                completion_tokens=completion_tokens if isinstance(completion_tokens, int) else None,
+                completion_token_budget=cap) from exc
         if not isinstance(parsed, dict):
             raise ModelError("model returned JSON that was not an object", category="response_schema",
                 code="expected_object")

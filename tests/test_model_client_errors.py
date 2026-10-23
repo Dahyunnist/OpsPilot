@@ -56,16 +56,33 @@ class ModelClientErrorTests(unittest.TestCase):
 
     def test_invalid_schema_trace_keeps_finish_metadata_not_content(self) -> None:
         payload = {"choices": [{"message": {"content": "sensitive-non-json-content"},
-            "finish_reason": "length"}], "usage": {"completion_tokens": 64}}
+            "finish_reason": "stop"}], "usage": {"completion_tokens": 64}}
         with patch("opspilot.model_client.urllib.request.urlopen", return_value=Response(payload)):
             with self.assertRaises(ModelError) as caught:
                 self.model.complete("system", "user", 128)
         diagnostic = caught.exception.diagnostic()
         self.assertEqual(diagnostic["category"], "response_schema")
         self.assertEqual(diagnostic["code"], "invalid_json_content")
-        self.assertEqual(diagnostic["finish_reason"], "length")
+        self.assertEqual(diagnostic["finish_reason"], "stop")
         self.assertEqual(diagnostic["completion_tokens"], 64)
+        self.assertEqual(diagnostic["completion_token_budget"], 128)
         self.assertNotIn("sensitive-non-json-content", json.dumps(diagnostic))
+
+    def test_truncated_json_has_distinct_retryable_code_and_full_json_succeeds(self) -> None:
+        truncated = {"choices": [{"message": {"content": '{"root_causes":['}, "finish_reason": "length"}],
+            "usage": {"completion_tokens": 128}}
+        with patch("opspilot.model_client.urllib.request.urlopen", return_value=Response(truncated)):
+            with self.assertRaises(ModelError) as caught:
+                self.model.complete("system", "user", 128)
+        self.assertEqual(caught.exception.code, "truncated_json")
+        self.assertTrue(caught.exception.retryable)
+        self.assertEqual(caught.exception.diagnostic()["completion_token_budget"], 128)
+
+        complete = {"choices": [{"message": {"content": '{"root_causes":[]}'}, "finish_reason": "stop"}],
+            "usage": {"completion_tokens": 4}}
+        with patch("opspilot.model_client.urllib.request.urlopen", return_value=Response(complete)):
+            result = self.model.complete("system", "user", 128)
+        self.assertEqual(result["data"], {"root_causes": []})
 
     def test_non_object_json_is_classified_without_retaining_provider_content(self) -> None:
         payload = {"choices": [{"message": {"content": "[]"}, "finish_reason": "stop"}], "usage": {}}

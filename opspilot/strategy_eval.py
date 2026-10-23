@@ -107,8 +107,18 @@ def _ground_prediction(data: dict[str, Any], live_report: dict[str, Any]) -> dic
 def _model_complete(model: ChatModel, call_gate: Callable[..., dict[str, Any]],
                     system: str, payload: dict[str, Any], token_budget: int) -> dict[str, Any]:
     user = json.dumps(redact(payload), ensure_ascii=False, separators=(",", ":"))
-    return call_gate(lambda instance, prompt, content, budget: instance.complete(prompt, content, budget),
-        model, system, user, token_budget)
+    operation = lambda instance, prompt, content, budget: instance.complete(prompt, content, budget)
+    try:
+        return call_gate(operation, model, system, user, token_budget)
+    except ModelError as exc:
+        # One bounded retry only for a provider-confirmed length truncation.
+        # Each attempt passes through call_gate, so the ledger reserves it separately.
+        if exc.code != "truncated_json" or not exc.retryable or token_budget >= 512:
+            raise
+        retry_budget = min(512, max(token_budget + 64, token_budget * 2), model.max_tokens)
+        if retry_budget <= token_budget:
+            raise
+        return call_gate(operation, model, system, user, retry_budget)
 
 
 def _single(live_report: dict[str, Any], records: list[dict[str, Any]], model: ChatModel,
