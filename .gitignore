@@ -18,5 +18,6 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 var/
+lab/telemetry/
 reports/*raw*.jsonl
 reports/*ledger*.jsonl

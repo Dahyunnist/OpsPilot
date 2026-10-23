@@ -1,0 +1,147 @@
+name: opspilot-lab
+
+services:
+  gateway:
+    build: ./service
+    environment:
+      SERVICE_NAME: gateway
+      SERVICE_VERSION: ${LAB_GATEWAY_VERSION:-v1}
+      PORT: "8080"
+      ORDERS_URL: http://orders:8080
+      INVENTORY_URL: http://inventory:8080
+      PAYMENT_URL: http://payment:8080
+      DB_HOST: postgres
+      DB_NAME: opspilot
+      DB_USER: opspilot
+      DB_PASSWORD: local-only
+      REDIS_HOST: redis
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      DEPLOYMENT_FILE: /telemetry/deployments.jsonl
+    volumes:
+      - ./telemetry:/telemetry:ro
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      orders:
+        condition: service_started
+      jaeger:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+    networks: [backend]
+
+  orders:
+    build: ./service
+    environment:
+      SERVICE_NAME: orders
+      SERVICE_VERSION: ${LAB_ORDERS_VERSION:-v1}
+      PORT: "8080"
+      INVENTORY_URL: ${LAB_INVENTORY_URL:-http://inventory:8080}
+      PAYMENT_URL: http://payment:8080
+      DB_HOST: postgres
+      DB_NAME: opspilot
+      DB_USER: opspilot
+      DB_PASSWORD: local-only
+      REDIS_HOST: redis
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      LAB_FAULT: ${LAB_FAULT:-none}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [backend]
+    ports:
+      - "127.0.0.1:18081:8080"
+
+  inventory:
+    build: ./service
+    environment:
+      SERVICE_NAME: inventory
+      SERVICE_VERSION: v1
+      PORT: "8080"
+      DB_HOST: postgres
+      DB_NAME: opspilot
+      DB_USER: opspilot
+      DB_PASSWORD: local-only
+      REDIS_HOST: redis
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [backend]
+    ports:
+      - "127.0.0.1:18082:8080"
+
+  payment:
+    build: ./service
+    environment:
+      SERVICE_NAME: payment
+      SERVICE_VERSION: v1
+      PORT: "8080"
+      LAB_FAULT: ${LAB_FAULT:-none}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    networks: [backend]
+    ports:
+      - "127.0.0.1:18083:8080"
+
+  postgres:
+    image: postgres:16-alpine
+    command: ["postgres", "-c", "max_connections=20", "-c", "log_min_duration_statement=0"]
+    environment:
+      POSTGRES_DB: opspilot
+      POSTGRES_USER: opspilot
+      POSTGRES_PASSWORD: local-only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opspilot -d opspilot"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    networks: [backend]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    networks: [backend]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.138.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./otel/collector.yaml:/etc/otelcol/config.yaml:ro"]
+    ports:
+      - "127.0.0.1:14318:4318"
+    networks: [backend]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:16686:16686"
+    networks: [backend]
+
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
+    volumes: ["./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports:
+      - "127.0.0.1:19090:9090"
+    networks: [backend]
+
+networks:
+  backend: {}
+
+volumes:
+  pgdata: {}
+  redisdata: {}

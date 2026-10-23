@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 2s
+scrape_configs:
+  - job_name: opspilot-services
+    metrics_path: /metrics
+    static_configs:
+      - targets: [gateway:8080, orders:8080, inventory:8080, payment:8080]

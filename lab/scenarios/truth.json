@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "cases": [
+    {"case_id": "lab-pool-01", "fault": "db_pool_exhaustion", "root_causes": ["database_pool_exhaustion"], "must_observe": ["orders_db_errors", "db_session_pressure"]},
+    {"case_id": "lab-dependency-01", "fault": "dependency_timeout", "root_causes": ["payment_dependency_timeout"], "must_observe": ["payment_latency", "orders_timeout"]},
+    {"case_id": "lab-release-01", "fault": "bad_release", "root_causes": ["invalid_release_configuration"], "must_observe": ["orders_v2", "inventory_connection_errors"]},
+    {"case_id": "lab-sql-01", "fault": "slow_sql", "root_causes": ["slow_database_query"], "must_observe": ["postgres_slow_query", "orders_latency"]},
+    {"case_id": "lab-retry-01", "fault": "retry_storm", "root_causes": ["retry_amplification"], "must_observe": ["payment_attempts", "orders_retry_logs"]},
+    {"case_id": "lab-double-01", "fault": "double_root", "root_causes": ["slow_database_query", "payment_dependency_timeout"], "must_observe": ["postgres_slow_query", "payment_latency", "orders_timeout"]}
+  ]
+}

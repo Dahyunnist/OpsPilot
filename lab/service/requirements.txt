@@ -1,0 +1,5 @@
+psycopg[binary]==3.2.12
+redis==6.4.0
+opentelemetry-api==1.38.0
+opentelemetry-sdk==1.38.0
+opentelemetry-exporter-otlp-proto-http==1.38.0
