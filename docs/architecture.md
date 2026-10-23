@@ -41,6 +41,8 @@ flowchart TD
 
 OP-1 的真实服务演练由本机 Docker Compose 运行：gateway → orders → inventory/payment；PostgreSQL 与 Redis 提供依赖。Prometheus 抓指标，服务以 OTLP 将 trace 发给 Collector 和 Jaeger，结构化日志由只读 HTTP 查询。OP-2 live MCP 只调用 loopback 上的 GET 接口，提供时间窗和数量上限；它不含注入或清理操作。
 
+OP-4 路径止于本机：人工 CLI 确认 → 限时 HMAC 票据 → 测试环境 dry-run → 本地审计。模拟器没有真实服务执行器；模拟 rollback 的健康检查不会访问业务系统。
+
 检查点和审计文件只保存在本机 `var/`。MCP 服务只读本地合成数据；批准动作只进入模拟器。
 
 `auto` 只在多个根因各自获得至少两个独立来源的强证据时调用单 Agent；其他情况保持规则结论或安全弃答。多 Agent 保留显式调用，用于人工要求独立专家交叉质询的跨团队争议。复杂集验证与测试没有测出多 Agent 相对单 Agent 的根因或引用收益，因此它不在自动路由里。

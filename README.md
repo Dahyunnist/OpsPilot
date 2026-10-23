@@ -50,6 +50,10 @@ python -m opspilot simulate-action config-01 --approval approve --event-id demo-
 
 两种决定都只记入本地审计。批准结果标为 `simulated_execution`，不会连接或修改外部系统。相同事件 ID 重复提交会返回 `duplicate_ignored`。
 
+## OP-4 限时批准与修复 dry-run
+
+新版本地安全演练仅接受 `test` 环境，且只允许服务重启或版本回滚模拟。批准需人工在 CLI 输入 `APPROVE <case-id>`；签名票据 30–300 秒过期、绑定环境/动作/服务、一次使用。`agent` 角色无批准权限。dry-run 输出本地审计、模拟回滚和模拟验证，不连 Docker、MCP 或业务 API；实际回滚状态永远标记为“未验证”。命令和安全边界见 `docs/learning/stage-OP4.md`。
+
 ## MCP 只读服务
 
 ```powershell
@@ -115,6 +119,7 @@ python -m venv .venv
 - `docs/learning/stage-OP1.md`：本地微服务故障实验台、重放方式与验证边界。
 - `docs/learning/stage-OP2.md`：只读真实遥测适配、因果证据账本和弃答边界。
 - `docs/learning/stage-OP3.md`：四路策略对照、模型费用闸和指标口径。
+- `docs/learning/stage-OP4.md`：一次性人工批准、环境/权限拒绝和模拟回滚边界。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。

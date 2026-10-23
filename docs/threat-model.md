@@ -5,7 +5,9 @@
 - incident 数据、假设结论、查询轨迹、审批决定和审计记录。
 - 项目只使用本地合成数据；不读取生产凭证，不连接生产系统。
 - MCP 服务只暴露日志和追踪查询工具，查询必须带 incident、UTC 时间窗和行数上限。
+- live telemetry MCP 只允许 loopback 上的只读 GET 查询；不提供故障注入、批准票据签发或动作执行工具。
 - 所有建议动作都标记 `requires_approval=true`，批准后也只写本地审计事件，不调用系统写 API。
+- OP-4 签名批准仅授权 `test` 环境中的模拟器。真实业务环境、写 API、Docker 控制或生产凭证均不在动作路径中。
 
 ## 威胁与控制
 
@@ -26,6 +28,8 @@
 3. 明确拒绝审批后，审计状态必须为 `rejected_no_execution`，且 `executed=false`。
 4. 同一事件 ID 最多产生一个审批决策记录。
 5. 查询异常不得伪装成成功的空结果。
+6. 过期、重放、环境不匹配、签名篡改或越权角色必须拒绝 dry-run 并记入本地审计。
+7. dry-run 必须报告 `external_system_calls=0`、`external_writes=0`；模拟回滚不能标为真实验证成功。
 
 ## A2A 原型边界
 
