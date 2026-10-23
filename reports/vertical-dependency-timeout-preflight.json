@@ -1,0 +1,108 @@
+{
+  "case_id": "op1-vertical-dependency-timeout-20261023-01",
+  "scenario": "dependency_timeout",
+  "window": {
+    "fault_response_error_type": "HttpResponseException",
+    "recovery_request_duration_ms": 35.5,
+    "fault_request_completed": "2026-10-23T13:12:11.3212599Z",
+    "fault_order_id": "01f068f1-7fa1-41c5-9c78-6343282723f0",
+    "baseline_response_status": 200,
+    "recovery_response_status": 200,
+    "assessment_window": {
+      "start": "2026-10-23T13:12:03.5963872Z",
+      "end": "2026-10-23T13:12:15.3319245Z"
+    },
+    "fault_request_duration_ms": 528.7,
+    "fault_response_status": 502,
+    "baseline_order_id": "ec7b3af3-640f-4f28-a755-c81262a0803b",
+    "fault_window_start": "2026-10-23T13:12:10.7570982Z",
+    "assessment_start": "2026-10-23T13:12:03.5963872Z",
+    "fault_window_end": "2026-10-23T13:12:15.3319245Z",
+    "baseline_request_duration_ms": 83.2,
+    "recovery_order_id": "c4cc505f-f396-4513-afaf-6131bb4f36a9"
+  },
+  "assessment_window": {
+    "start": "2026-10-23T13:12:03.5963872Z",
+    "end": "2026-10-23T13:12:15.3319245Z"
+  },
+  "source_counts": {
+    "metrics": 57,
+    "logs": 7,
+    "traces": 8,
+    "deployments": 1
+  },
+  "source_failures": {},
+  "model": {
+    "id": "deepseek-v4-flash",
+    "max_completion_tokens": 256
+  },
+  "preflight": {
+    "attempts": [
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.0017415
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0007794
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.000933
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.001248
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0014016
+      },
+      {
+        "route": "adjudicator",
+        "attempt": "initial",
+        "reserve_usd": 0.0006618
+      },
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.0017415
+      }
+    ],
+    "planned_request_attempts": 7,
+    "worst_case_usd": 0.0085068,
+    "prior_peak_usd": 0.4716161,
+    "remaining_usd": 0.0283839,
+    "cumulative_cap_usd": 0.5,
+    "all_requests_pre_reserved": true
+  },
+  "independent_oracle": {
+    "root_causes": [
+      "payment_dependency_timeout"
+    ],
+    "affected_services": [
+      "gateway",
+      "orders",
+      "payment"
+    ],
+    "independent_questions": [
+      "Which dependency caused checkout failure? Cite independent service evidence.",
+      "Does payment latency or database pool pressure explain the failed checkout? Cite evidence that distinguishes them."
+    ],
+    "gold_evidence_ids": [
+      "logs:3ec0d99a0dd306824126",
+      "traces:05fef0d96ac00829992c"
+    ],
+    "gold_evidence_rules": [
+      "orders payment attempt failed with TimeoutError log",
+      "payment POST /charge trace duration_us >= 1000000"
+    ]
+  },
+  "snapshot_file": "reports\\vertical-dependency-timeout-snapshot.json",
+  "status": "preflight_only"
+}

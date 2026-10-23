@@ -1,0 +1,25 @@
+{
+  "scenario": "db_pool_exhaustion",
+  "case_id": "op1-vertical-db-pool-exhaustion-20261023-01",
+  "trial_id": "611b0e13-9a29-4d2e-807f-fe9420d8627d",
+  "timeline": {
+    "fault_response_status": 502,
+    "recovery_response_status": 200,
+    "fault_window_end": "2026-10-23T13:11:19.3885106Z",
+    "recovery_request_duration_ms": 37.9,
+    "fault_request_duration_ms": 137.4,
+    "baseline_response_status": 200,
+    "baseline_order_id": "590b9d15-d12e-4258-a348-4de61da3228f",
+    "fault_order_id": "c5427e5b-2653-4b61-9f4d-6a280a95303d",
+    "recovery_order_id": "a715e873-8a9a-4628-a682-037bf58cbd53",
+    "assessment_start": "2026-10-23T13:11:06.8812711Z",
+    "fault_response_error_type": "HttpResponseException",
+    "fault_request_completed": "2026-10-23T13:11:15.3770379Z",
+    "baseline_request_duration_ms": 100.6,
+    "assessment_window": {
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "start": "2026-10-23T13:11:06.8812711Z"
+    },
+    "fault_window_start": "2026-10-23T13:11:15.2307995Z"
+  }
+}

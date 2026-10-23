@@ -1,0 +1,114 @@
+{
+  "case_id": "op1-vertical-db-pool-exhaustion-20261023-01",
+  "scenario": "db_pool_exhaustion",
+  "window": {
+    "fault_response_status": 502,
+    "recovery_response_status": 200,
+    "fault_window_end": "2026-10-23T13:11:19.3885106Z",
+    "recovery_request_duration_ms": 37.9,
+    "fault_request_duration_ms": 137.4,
+    "baseline_response_status": 200,
+    "baseline_order_id": "590b9d15-d12e-4258-a348-4de61da3228f",
+    "fault_order_id": "c5427e5b-2653-4b61-9f4d-6a280a95303d",
+    "recovery_order_id": "a715e873-8a9a-4628-a682-037bf58cbd53",
+    "assessment_start": "2026-10-23T13:11:06.8812711Z",
+    "fault_response_error_type": "HttpResponseException",
+    "fault_request_completed": "2026-10-23T13:11:15.3770379Z",
+    "baseline_request_duration_ms": 100.6,
+    "assessment_window": {
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "start": "2026-10-23T13:11:06.8812711Z"
+    },
+    "fault_window_start": "2026-10-23T13:11:15.2307995Z"
+  },
+  "assessment_window": {
+    "start": "2026-10-23T13:11:06.8812711Z",
+    "end": "2026-10-23T13:11:19.3885106Z"
+  },
+  "source_counts": {
+    "metrics": 63,
+    "logs": 5,
+    "traces": 6,
+    "deployments": 1
+  },
+  "source_failures": {},
+  "model": {
+    "id": "deepseek-v4-flash",
+    "max_completion_tokens": 256
+  },
+  "preflight": {
+    "attempts": [
+      {
+        "route": "single",
+        "attempt": "initial",
+        "reserve_usd": 0.001836
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0007371
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0008907
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0006342
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.0007878
+      },
+      {
+        "route": "expert",
+        "attempt": "initial",
+        "reserve_usd": 0.0011604
+      },
+      {
+        "route": "expert",
+        "attempt": "one_truncation_retry",
+        "reserve_usd": 0.001314
+      },
+      {
+        "route": "adjudicator",
+        "attempt": "initial",
+        "reserve_usd": 0.0006993
+      }
+    ],
+    "planned_request_attempts": 8,
+    "worst_case_usd": 0.0080595,
+    "prior_peak_usd": 0.4716161,
+    "remaining_usd": 0.0283839,
+    "cumulative_cap_usd": 0.5,
+    "all_requests_pre_reserved": true
+  },
+  "independent_oracle": {
+    "root_causes": [
+      "database_pool_exhaustion"
+    ],
+    "affected_services": [
+      "gateway",
+      "orders",
+      "postgres"
+    ],
+    "independent_questions": [
+      "What constrained checkout progress, and which independent signals support it?",
+      "Does evidence indicate database connection pressure or a slow query? Cite evidence that distinguishes them."
+    ],
+    "gold_evidence_ids": [
+      "logs:ea41abe5ffa31dfe00bb",
+      "metrics:46fd4cc2e6874182aa1c",
+      "traces:c2b60b8f3dc1b7370653"
+    ],
+    "gold_evidence_rules": [
+      "orders database sessions remain occupied log",
+      "orders POST /orders trace duration_us >= 5000000"
+    ]
+  },
+  "snapshot_file": "reports\\vertical-db-pool-exhaustion-snapshot.json",
+  "status": "preflight_only"
+}

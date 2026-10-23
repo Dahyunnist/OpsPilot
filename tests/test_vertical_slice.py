@@ -49,7 +49,7 @@ class VerticalSliceTests(unittest.TestCase):
                 "timestamp": "2026-10-23T10:00:00Z", "attributes": {"operation": "postgres.query", "duration_us": 1500000}, "raw": {}}]},
             "deployments": {"records": []},
         }
-        rows = preflight(self.case["case_id"], "2026-10-23T10:00:00Z", "2026-10-23T10:01:00Z", sources, 512)
+        rows = preflight(self.case["case_id"], "2026-10-23T10:00:00Z", "2026-10-23T10:01:00Z", sources, "slow_sql", 512)
         serialized = json.dumps(rows, ensure_ascii=False)
         self.assertNotIn(self.case["case_id"], serialized)
         self.assertNotIn("slow_sql", serialized)

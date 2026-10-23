@@ -50,3 +50,14 @@ Case `op1-vertical-slow-sql-20261023-01`。故障窗 `2026-10-23T12:40:37.772636
 - [`api-cost-ledger.jsonl`](../../reports/api-cost-ledger.jsonl)：逐请求预留与累计费用估算。
 
 完整回归：`95 passed, 14 subtests passed`；`compileall` 与 `git diff --check` 通过。测试宿主 Python 3.14.5。Docker 本地实验服务运行 Python 3.11.17；正式 `python:3.12-slim` 镜像未验证，之前 Docker Hub 认证超时，本阶段没有重试拉取。
+
+## 扩展：连接池耗尽与支付依赖超时
+
+两例使用 `lab/run-op1-case.ps1` 注入真实服务，并在重启恢复前冻结无真值 telemetry。输入快照仅含 metrics/logs/traces/deployments；注入器 manifest 只由评分器读取。故障窗分别由 orders OperationalError/`too many clients already` 与 payment/charge 2.0 秒 trace、orders TimeoutError 支持。恢复 checkout 均 200。
+
+| 案例 | Rules | Single | Always-multi | Auto | 费用峰值 |
+|---|---|---|---|---|---:|
+| 连接池耗尽 | 未命中，证据 P=.222 R=.667 | 未命中，证据 P=0 R=0 | 未命中，证据 P=0 R=0 | 未命中，证据 P=.222 R=.667 | `$0.00310078` |
+| 支付依赖超时 | 未命中，证据 P=.167 R=.5 | 未命中，证据 P=0 R=0 | 未命中，证据 P=0 R=0 | 调用失败 `ConnectionResetError` | `$0.00361314` |
+
+两例模型输出均为空根因；single/multi 没有根因命中。失败轨迹保留在 evaluation JSON 与账本。真实模型能力未改善；不得将单例正确结果外推。最坏请求预留合计 `$0.0165663`；实际账本由 `$0.47161610` 增至 `$0.47833002 / $0.50`，余 `$0.02166998`。

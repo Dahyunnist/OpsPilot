@@ -44,3 +44,5 @@ docker compose -f lab\compose.yaml ps --all
 ```
 
 结果：`95 passed, 14 subtests passed`；测试宿主 `.venv` 为 Python 3.14.5，编译和 diff 检查通过；容器列表为空。没有 Python 3.12 本地解释器或镜像，正式 Python 3.12 仍未验证。不要用 `evaluate-all.ps1` 重放旧冻结集；不要用 `docker pull` 重试已超时的认证。
+
+OP-1 扩展两例评测账本累计峰值为 `.47833002 / .50`，剩余 `.02166998`；连接池耗尽与支付依赖超时的逐路失败详见 [垂直切片记录](../docs/learning/OP1-vertical-slice.md)。

@@ -32,15 +32,22 @@ def load_case(path: Path) -> dict[str, Any]:
         raise ValueError("invalid vertical-slice case manifest")
     injection = case.get("injection", {})
     oracle = case.get("oracle", {})
-    if injection.get("fault") != "slow_sql" or injection.get("service") != "orders":
-        raise ValueError("case must use the reviewed orders slow_sql injection")
-    if oracle.get("root_causes") != ["slow_database_query"]:
-        raise ValueError("unsupported independent oracle root cause")
+    allowed = {
+        "slow_sql": "slow_database_query",
+        "dependency_timeout": "payment_dependency_timeout",
+        "db_pool_exhaustion": "database_pool_exhaustion",
+    }
+    fault = injection.get("fault")
+    if fault not in allowed or injection.get("service") != "orders":
+        raise ValueError("case must use a reviewed orders fault injection")
+    if oracle.get("root_causes") != [allowed[fault]]:
+        raise ValueError("fault and independent oracle root cause do not match")
     return case
 
 
 def independent_gold(case: dict[str, Any], source_results: dict[str, dict[str, Any]]) -> set[str]:
     """Score only after evaluation from objective trace/metric predicates."""
+    fault = case["injection"]["fault"]
     roots = case["oracle"]["root_causes"]
     gold: set[str] = set()
     for row in source_results.get("traces", {}).get("records", []):
@@ -53,6 +60,28 @@ def independent_gold(case: dict[str, Any], source_results: dict[str, dict[str, A
         if "slow_database_query" in roots and row.get("service") == "orders" \
                 and "duration_ms_sum" in str(attrs.get("name", "")) \
                 and float(attrs.get("value") or 0) >= 1200:
+            gold.add(row["record_id"])
+        if fault == "db_pool_exhaustion" and row.get("service") == "orders" \
+                and attrs.get("name") == "opspilot_http_errors_total" \
+                and float(attrs.get("value") or 0) > 0:
+            gold.add(row["record_id"])
+    for row in source_results.get("logs", {}).get("records", []):
+        attrs = row.get("attributes", {})
+        message = row.get("raw", {}).get("message")
+        if fault == "dependency_timeout" and row.get("service") == "orders" \
+                and message == "payment attempt failed" and attrs.get("error_type") in {"TimeoutError", "URLError"}:
+            gold.add(row["record_id"])
+        if fault == "db_pool_exhaustion" and row.get("service") == "orders" \
+                and message == "request failed" and attrs.get("error_type") == "OperationalError":
+            gold.add(row["record_id"])
+    for row in source_results.get("traces", {}).get("records", []):
+        attrs = row.get("attributes", {})
+        if fault == "dependency_timeout" and row.get("service") == "payment" \
+                and attrs.get("operation") == "payment/charge" and int(attrs.get("duration_us") or 0) >= 1_000_000:
+            gold.add(row["record_id"])
+        if fault == "db_pool_exhaustion" and row.get("service") == "orders" \
+                and attrs.get("operation") == "orders/orders" \
+                and "too many clients" in str(attrs.get("attributes", {}).get("otel.status_description", "")).lower():
             gold.add(row["record_id"])
     return gold
 
@@ -70,13 +99,60 @@ def collect_window(start: str, end: str, telemetry: LabTelemetry | None = None, 
     return source_results, failures
 
 
+def compact_for_investigation(source_results: dict[str, dict[str, Any]], fault: str) -> dict[str, dict[str, Any]]:
+    """Keep first/peak metrics and warning signals from checkout's dependency path."""
+    compact = {name: dict(payload) for name, payload in source_results.items()}
+    metrics = source_results.get("metrics", {})
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in metrics.get("records", []):
+        attrs = row.get("attributes", {})
+        allowed_services = {"orders"} if fault == "db_pool_exhaustion" else set()
+        if row.get("service") not in allowed_services or attrs.get("name") not in {
+                "opspilot_http_errors_total", "opspilot_http_duration_ms_sum"}:
+            continue
+        key = (str(row.get("service")), str(attrs.get("name")), str(attrs.get("version")))
+        groups.setdefault(key, []).append(row)
+    selected: dict[str, dict[str, Any]] = {}
+    for rows in groups.values():
+        rows.sort(key=lambda row: (row.get("timestamp", ""), row.get("record_id", "")))
+        selected[rows[0]["record_id"]] = rows[0]
+        peak = max(rows, key=lambda row: float(row.get("attributes", {}).get("value") or 0))
+        selected[peak["record_id"]] = peak
+    compact.setdefault("metrics", {})["records"] = sorted(selected.values(), key=lambda row: (row.get("timestamp", ""), row.get("record_id", "")))
+    compact.setdefault("logs", {})["records"] = [row for row in source_results.get("logs", {}).get("records", [])
+        if row.get("attributes", {}).get("severity") in {"warning", "error"}]
+    compact.setdefault("traces", {})["records"] = [row for row in source_results.get("traces", {}).get("records", [])
+        if row.get("service") in {"gateway", "orders", "payment"}]
+    compact.setdefault("deployments", {})["records"] = []
+    for source in ("metrics", "logs", "traces"):
+        for row in compact[source]["records"]:
+            attrs = row.get("attributes", {})
+            if source == "logs":
+                raw = row.get("raw", {})
+                row["raw"] = {key: value for key, value in raw.items() if key in {
+                    "severity", "message", "service", "service_version", "trace_id", "span_id",
+                    "path", "status", "error_type", "occupied_sessions"}}
+                row.pop("attributes", None)
+            elif source == "traces":
+                tags = attrs.get("attributes", {})
+                row["attributes"] = {key: attrs[key] for key in ("operation", "duration_us", "parent_span_id", "span_id") if key in attrs}
+                for key in ("error", "http.route", "http.response.status_code", "otel.status_code", "otel.status_description"):
+                    if key in tags:
+                        row["attributes"][key] = tags[key]
+                row.pop("raw", None)
+            elif source == "metrics":
+                attrs.pop("service", None)
+                row.pop("raw", None)
+    return compact
+
+
 def _reserve(system: str, user: str, max_tokens: int, token_budget: int) -> float:
     output_cap = min(max_tokens, max(64, token_budget))
     input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
     return (input_reserve * 0.30 + output_cap * 1.20) / 1_000_000
 
 
-def preflight(case_id: str, start: str, end: str, source_results: dict[str, dict[str, Any]],
+def preflight(case_id: str, start: str, end: str, source_results: dict[str, dict[str, Any]], fault: str,
               max_tokens: int, token_budget: int = 2048) -> list[dict[str, Any]]:
     requests: list[dict[str, Any]] = []
 
@@ -92,6 +168,8 @@ def preflight(case_id: str, start: str, end: str, source_results: dict[str, dict
             "root_causes": [], "evidence_by_root": {}, "uncertainty": "offline cost preflight"}
         return {"data": data, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
+    source_results = compact_for_investigation(source_results, fault)
+    token_budget = 128
     evaluate_snapshot(case_id, start, end, source_results, EstimateModel(max_tokens), no_api_gate,
         strategies=("rules", "single", "multi", "auto"), token_budget=token_budget)
     planned: list[dict[str, Any]] = []
@@ -108,7 +186,8 @@ def preflight(case_id: str, start: str, end: str, source_results: dict[str, dict
 
 def evaluate(case_path: Path, window_path: Path, output_path: Path, snapshot_path: Path,
              *, execute: bool, max_total_usd: float, max_completion_tokens: int | None,
-             cost_ledger: Path, telemetry_limit: int = 1000) -> dict[str, Any]:
+             cost_ledger: Path, telemetry_limit: int = 1000,
+             input_snapshot: Path | None = None) -> dict[str, Any]:
     case = load_case(case_path)
     window = json.loads(window_path.read_text(encoding="utf-8-sig"))
     if window.get("case_id") != case["case_id"] or window.get("scenario") != case["injection"]["fault"]:
@@ -130,7 +209,11 @@ def evaluate(case_path: Path, window_path: Path, output_path: Path, snapshot_pat
     if not 0 < max_total_usd <= MAX_CUMULATIVE_USD:
         raise ValueError("cumulative cost cap must be between zero and $0.50")
     probe = RunBudget(max_total_usd, cost_ledger, model.model)
-    source_results, source_failures = collect_window(assessment_start, assessment_end, limit=telemetry_limit)
+    if input_snapshot:
+        source_results = json.loads(input_snapshot.read_text(encoding="utf-8-sig"))
+        source_failures = {}
+    else:
+        source_results, source_failures = collect_window(assessment_start, assessment_end, limit=telemetry_limit)
     source_counts = {name: len(result.get("records", [])) for name, result in source_results.items()}
     snapshot_path.parent.mkdir(parents=True, exist_ok=True)
     snapshot_path.write_text(json.dumps(source_results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -138,7 +221,7 @@ def evaluate(case_path: Path, window_path: Path, output_path: Path, snapshot_pat
         if source_failures.get(name) or not source_counts.get(name)]
     gold = independent_gold(case, source_results)
     plan = preflight(case["case_id"], assessment_start, assessment_end,
-        source_results, model.max_tokens)
+        source_results, case["injection"]["fault"], model.max_tokens)
     worst_case = sum(item["reserve_usd"] for item in plan)
     base = {"case_id": case["case_id"], "scenario": case["injection"]["fault"],
         "window": timeline, "assessment_window": {"start": assessment_start, "end": assessment_end},
@@ -177,8 +260,9 @@ def evaluate(case_path: Path, window_path: Path, output_path: Path, snapshot_pat
                 attempts_started += 1
             return budget.call(operation, instance, system, user, token_budget)
 
+        model_results = compact_for_investigation(source_results, case["injection"]["fault"])
         raw = evaluate_snapshot(case["case_id"], assessment_start, assessment_end,
-            source_results, model, bounded_gate, strategies=("rules", "single", "multi", "auto"), token_budget=2048)
+            model_results, model, bounded_gate, strategies=("rules", "single", "multi", "auto"), token_budget=640)
         scored = score_case(raw, case["oracle"]["root_causes"], gold)
         actual_peak = round(budget.spent_usd, 8)
         cumulative = round(budget.prior_spent_usd + budget.spent_usd, 8)
@@ -206,6 +290,7 @@ def main() -> int:
     parser.add_argument("--window-file", type=Path, default=DEFAULT_WINDOW)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--snapshot-output", type=Path, default=DEFAULT_SNAPSHOT)
+    parser.add_argument("--input-snapshot", type=Path, help="use a truth-free snapshot frozen before service recovery")
     parser.add_argument("--cost-ledger", type=Path, default=ROOT / "reports" / "api-cost-ledger.jsonl")
     parser.add_argument("--max-total-usd", type=float, default=MAX_CUMULATIVE_USD)
     parser.add_argument("--max-completion-tokens", type=int)
@@ -216,7 +301,7 @@ def main() -> int:
         result = evaluate(args.case_file, args.window_file, args.output, args.snapshot_output,
             execute=args.execute, max_total_usd=args.max_total_usd,
             max_completion_tokens=args.max_completion_tokens, cost_ledger=args.cost_ledger,
-            telemetry_limit=args.telemetry_limit)
+            telemetry_limit=args.telemetry_limit, input_snapshot=args.input_snapshot)
     except (OSError, ValueError, RuntimeError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2

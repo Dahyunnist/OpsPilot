@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "case_id": "op1-vertical-dependency-timeout-20261023-01",
+  "injection": {"fault": "dependency_timeout", "service": "orders", "operation": "payment.charge"},
+  "oracle": {
+    "root_causes": ["payment_dependency_timeout"],
+    "affected_services": ["gateway", "orders", "payment"],
+    "independent_questions": [
+      "Which dependency caused checkout failure? Cite independent service evidence.",
+      "Does payment latency or database pool pressure explain the failed checkout? Cite evidence that distinguishes them."
+    ],
+    "gold_evidence_rules": ["orders payment attempt failed with TimeoutError log", "payment POST /charge trace duration_us >= 1000000"]
+  }
+}

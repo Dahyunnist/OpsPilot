@@ -1,0 +1,25 @@
+{
+  "timeline": {
+    "fault_response_error_type": "HttpResponseException",
+    "recovery_request_duration_ms": 35.5,
+    "fault_request_completed": "2026-10-23T13:12:11.3212599Z",
+    "fault_order_id": "01f068f1-7fa1-41c5-9c78-6343282723f0",
+    "baseline_response_status": 200,
+    "recovery_response_status": 200,
+    "assessment_window": {
+      "start": "2026-10-23T13:12:03.5963872Z",
+      "end": "2026-10-23T13:12:15.3319245Z"
+    },
+    "fault_request_duration_ms": 528.7,
+    "fault_response_status": 502,
+    "baseline_order_id": "ec7b3af3-640f-4f28-a755-c81262a0803b",
+    "fault_window_start": "2026-10-23T13:12:10.7570982Z",
+    "assessment_start": "2026-10-23T13:12:03.5963872Z",
+    "fault_window_end": "2026-10-23T13:12:15.3319245Z",
+    "baseline_request_duration_ms": 83.2,
+    "recovery_order_id": "c4cc505f-f396-4513-afaf-6131bb4f36a9"
+  },
+  "scenario": "dependency_timeout",
+  "case_id": "op1-vertical-dependency-timeout-20261023-01",
+  "trial_id": "f0bceb17-6606-4378-b189-851feb33bc64"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "case_id": "op1-vertical-db-pool-exhaustion-20261023-01",
+  "injection": {"fault": "db_pool_exhaustion", "service": "orders", "operation": "postgres.connect"},
+  "oracle": {
+    "root_causes": ["database_pool_exhaustion"],
+    "affected_services": ["gateway", "orders", "postgres"],
+    "independent_questions": [
+      "What constrained checkout progress, and which independent signals support it?",
+      "Does evidence indicate database connection pressure or a slow query? Cite evidence that distinguishes them."
+    ],
+    "gold_evidence_rules": ["orders database sessions remain occupied log", "orders POST /orders trace duration_us >= 5000000"]
+  }
+}
