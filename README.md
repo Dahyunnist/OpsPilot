@@ -14,6 +14,8 @@ python scripts/generate_dataset.py
 
 脚本固定随机种子 `20261019`，生成 `data/incidents.jsonl`。文件包含 6 个已标注故障案例（每类 2 个）和 2 个证据不足案例。根因标签保存在独立的 `data/labels.json`，供评测读取；调查工具不应把标签作为输入。
 
+incident JSONL 每个非空行都必须是对象，并包含唯一字符串 `incident_id`；格式错误会报告行号。
+
 重复生成后，数据内容和 SHA-256 文件哈希应完全一致。脚本以退出码 1 报告数据验证失败。
 
 ## 数据边界

@@ -26,8 +26,10 @@ def load_incidents(path: Path) -> dict[str, dict[str, Any]]:
                 incident = json.loads(line)
             except json.JSONDecodeError as exc:
                 raise ValueError(f"invalid JSON on line {line_number}: {exc}") from exc
+            if not isinstance(incident, dict):
+                raise ValueError(f"expected JSON object on line {line_number}")
             incident_id = incident.get("incident_id")
-            if not incident_id or incident_id in incidents:
+            if not isinstance(incident_id, str) or not incident_id or incident_id in incidents:
                 raise ValueError(f"missing or duplicate incident_id on line {line_number}")
             incidents[incident_id] = incident
     return incidents

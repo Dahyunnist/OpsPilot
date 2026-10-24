@@ -1,4 +1,5 @@
 import json
+from tempfile import TemporaryDirectory
 import unittest
 from pathlib import Path
 
@@ -49,6 +50,14 @@ class InvestigationTests(unittest.TestCase):
             query_source(self.incidents["pool-01"], "metrics", max_rows=0)
         with self.assertRaises(FileNotFoundError):
             load_incidents(ROOT / "data" / "missing.jsonl")
+
+    def test_non_object_jsonl_rows_report_their_line(self):
+        for value in ("[]", "null", '"incident"', "42"):
+            with self.subTest(value=value), TemporaryDirectory() as directory:
+                path = Path(directory) / "incidents.jsonl"
+                path.write_text('{"incident_id":"valid"}\n' + value + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "expected JSON object on line 2"):
+                    load_incidents(path)
 
 
 if __name__ == "__main__":
