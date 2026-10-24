@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "benchmark": "op2_model_paired_subset",
+  "model": "deepseek-v4-flash",
+  "max_completion_tokens": 512,
+  "strategies": [
+    "rules",
+    "single",
+    "multi",
+    "auto"
+  ],
+  "cases": [
+    {
+      "id": "normal_slow_sql",
+      "fault": "slow_sql",
+      "snapshot": "reports/op2-normal_slow_sql-snapshot.json",
+      "sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "root_causes": [
+        "slow_database_query"
+      ],
+      "removed_gold_ids": [],
+      "independent_questions": [
+        "Which operation dominates checkout latency, and what source evidence supports that conclusion?",
+        "Does the trace support a database delay or a payment dependency timeout? Cite evidence for both the conclusion and the distinction."
+      ],
+      "attempts": 5,
+      "worst_case_usd": 0.006207
+    },
+    {
+      "id": "missing_pool_evidence",
+      "fault": "db_pool_exhaustion",
+      "snapshot": "reports/op2-missing_pool_evidence-snapshot.json",
+      "sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "root_causes": [
+        "database_pool_exhaustion"
+      ],
+      "removed_gold_ids": [
+        "logs:ea41abe5ffa31dfe00bb",
+        "metrics:46fd4cc2e6874182aa1c",
+        "traces:c2b60b8f3dc1b7370653"
+      ],
+      "independent_questions": [
+        "What constrained checkout progress, and which independent signals support it?",
+        "Does evidence indicate database connection pressure or a slow query? Cite evidence that distinguishes them."
+      ],
+      "attempts": 9,
+      "worst_case_usd": 0.0083088
+    },
+    {
+      "id": "contradictory_payment",
+      "fault": "dependency_timeout",
+      "snapshot": "reports/op2-contradictory_payment-snapshot.json",
+      "sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "root_causes": [
+        "payment_dependency_timeout"
+      ],
+      "removed_gold_ids": [],
+      "independent_questions": [
+        "Which dependency caused checkout failure? Cite independent service evidence.",
+        "Does payment latency or database pool pressure explain the failed checkout? Cite evidence that distinguishes them."
+      ],
+      "attempts": 7,
+      "worst_case_usd": 0.0085068
+    }
+  ],
+  "total_worst_case_usd": 0.0230226,
+  "ledger_peak_usd": 0.47833002,
+  "cap_usd": 0.6,
+  "available_usd": 0.12166998,
+  "calls_made": 0
+}

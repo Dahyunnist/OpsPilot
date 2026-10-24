@@ -1,0 +1,1551 @@
+{
+  "metrics": {
+    "source": "metrics",
+    "query": {
+      "start": "2026-10-23T13:11:06.8812711Z",
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "limit": 1000,
+      "step_seconds": 2
+    },
+    "records": [
+      {
+        "record_id": "metrics:077d7a44aa0067f25224",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:0fa814538bd26689b005",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "4"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "4"
+        }
+      },
+      {
+        "record_id": "metrics:100f28f2be282d9d9179",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:1e6c1b4ef2eb47273451",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:53e112f85c41a0cc51a6",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "3"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "3"
+        }
+      },
+      {
+        "record_id": "metrics:5d66e3a9ca33f98334d3",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:72f767dc098151bb3787",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:88e250cdbbaa82f79560",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "35"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "35"
+        }
+      },
+      {
+        "record_id": "metrics:a7ff02161cee886c505d",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "27"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "27"
+        }
+      },
+      {
+        "record_id": "metrics:ad59ee6e3979d3c3bafc",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        }
+      },
+      {
+        "record_id": "metrics:bca953e9668f7076075f",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:cabeb9fb6615a0237361",
+        "timestamp": "2026-10-23T13:11:08.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:042bac9ad56385ab77f0",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:1807370f8689358a536f",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "4"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "4"
+        }
+      },
+      {
+        "record_id": "metrics:31bc79574af58747c693",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:3867b243a765b80a0bce",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        }
+      },
+      {
+        "record_id": "metrics:4c8a3fca310dfb55830d",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "63"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "63"
+        }
+      },
+      {
+        "record_id": "metrics:8137dbb44a6c7ec6b9bd",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        }
+      },
+      {
+        "record_id": "metrics:8ee41a3bfa0735c36662",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:bdf4fcc9c1a3d22ec71a",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:c6d2358693c607a0b487",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:cc617138a4050a936d8c",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:d1030e45cc7ea21c8bfc",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:d3055a4de211fe5f963d",
+        "timestamp": "2026-10-23T13:11:10.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:29df17ad39a95f39fd7b",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:39858b616846ef0ebf03",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:3c9b9f247060c0b2f656",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:549da0299639dce75f32",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        }
+      },
+      {
+        "record_id": "metrics:625a1c72ca05374fe611",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:85d9d0170f27d10fb588",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:9db42ff8483889c78da1",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:a456fa5ed98cc10fb812",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        }
+      },
+      {
+        "record_id": "metrics:bcd5a6cfdcca31b7f3db",
+        "timestamp": "2026-10-23T13:11:12.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "63"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "63"
+        }
+      },
+      {
+        "record_id": "metrics:45633cea7a2c0c5f5ccb",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:53efd5d805173d9a03e0",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        }
+      },
+      {
+        "record_id": "metrics:7a8ef11310dd52b593cf",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:8bbcbe34d35bc340511c",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:940adfdcd1542118f6cb",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:c242a12845a0f82ea721",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "75"
+        }
+      },
+      {
+        "record_id": "metrics:c697589ef8447c144cd1",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:e56f47201f12a79388fa",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:f4ff00053203012eb17f",
+        "timestamp": "2026-10-23T13:11:14.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:0d99c4d53b731229da0c",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:1565d20be1460f6c1ee0",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:2373d30270441575d0f6",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "183"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "183"
+        }
+      },
+      {
+        "record_id": "metrics:5650e2b0bee1772cf308",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:8bad889c429ae542646a",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "2"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "2"
+        }
+      },
+      {
+        "record_id": "metrics:9a381b148699629e8b9d",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        }
+      },
+      {
+        "record_id": "metrics:ab718456cb9773ee310b",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:b75b296fd0620e96838a",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:b9e20abe18384002f6a5",
+        "timestamp": "2026-10-23T13:11:16.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:014a0e5c21046ded35f1",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "orders",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:139d9b2f6275c2fa34be",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:22bd2e73c553d9907770",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "1"
+        }
+      },
+      {
+        "record_id": "metrics:3b247eef284e3da58ca8",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "inventory",
+          "version": "v1",
+          "value": "22"
+        }
+      },
+      {
+        "record_id": "metrics:7732b612b31e7efab70c",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "2"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "gateway",
+          "version": "v1",
+          "value": "2"
+        }
+      },
+      {
+        "record_id": "metrics:857d6429d42b46694d96",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "104"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "orders",
+          "version": "v1",
+          "value": "104"
+        }
+      },
+      {
+        "record_id": "metrics:8c6d6fe1944a095e649c",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "gateway",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "183"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "gateway",
+          "version": "v1",
+          "value": "183"
+        }
+      },
+      {
+        "record_id": "metrics:c3e96050651bfafb48f7",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:eba211fffab92d3a0668",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_duration_ms_sum",
+          "service": "payment",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:f4354e08b86f884b34e9",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        },
+        "raw": {
+          "name": "opspilot_http_errors_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "0"
+        }
+      },
+      {
+        "record_id": "metrics:fdbf57e2ec86e29b4a93",
+        "timestamp": "2026-10-23T13:11:18.881000Z",
+        "source": "metrics",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        },
+        "raw": {
+          "name": "opspilot_http_requests_total",
+          "service": "inventory",
+          "version": "v1",
+          "value": "1"
+        }
+      }
+    ]
+  },
+  "logs": {
+    "source": "logs",
+    "query": {
+      "start": "2026-10-23T13:11:06.8812711Z",
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "limit": 1000
+    },
+    "records": [
+      {
+        "record_id": "logs:3ac1b3600ce8c7ff0ae5",
+        "timestamp": "2026-10-23T13:11:06.972000Z",
+        "source": "logs",
+        "service": "inventory",
+        "trace_id": null,
+        "attributes": {
+          "severity": "info",
+          "service": "inventory",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "path": "/reserve",
+          "status": 200
+        },
+        "raw": {
+          "timestamp": "2026-10-23T13:11:06.972Z",
+          "severity": "info",
+          "message": "request completed",
+          "service": "inventory",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "path": "/reserve",
+          "status": 200
+        }
+      },
+      {
+        "record_id": "logs:129174f5cc1897bf627e",
+        "timestamp": "2026-10-23T13:11:13.650000Z",
+        "source": "logs",
+        "service": "payment",
+        "trace_id": null,
+        "attributes": {
+          "severity": "info",
+          "service": "payment",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "listen_port": 8080
+        },
+        "raw": {
+          "timestamp": "2026-10-23T13:11:13.650Z",
+          "severity": "info",
+          "message": "service started",
+          "service": "payment",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "listen_port": 8080
+        }
+      },
+      {
+        "record_id": "logs:4805680fc050b3684ebe",
+        "timestamp": "2026-10-23T13:11:14.220000Z",
+        "source": "logs",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "severity": "info",
+          "service": "orders",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "listen_port": 8080
+        },
+        "raw": {
+          "timestamp": "2026-10-23T13:11:14.220Z",
+          "severity": "info",
+          "message": "service started",
+          "service": "orders",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "listen_port": 8080
+        }
+      },
+      {
+        "record_id": "logs:413166cbfeed338d0305",
+        "timestamp": "2026-10-23T13:11:15.389000Z",
+        "source": "logs",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "severity": "warning",
+          "service": "orders",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "occupied_sessions": 20
+        },
+        "raw": {
+          "timestamp": "2026-10-23T13:11:15.389Z",
+          "severity": "warning",
+          "message": "database sessions remain occupied",
+          "service": "orders",
+          "service_version": "v1",
+          "trace_id": null,
+          "span_id": null,
+          "occupied_sessions": 20
+        }
+      }
+    ]
+  },
+  "traces": {
+    "source": "traces",
+    "query": {
+      "start": "2026-10-23T13:11:06.8812711Z",
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "limit": 1000
+    },
+    "records": [
+      {
+        "record_id": "traces:7e8fb5db0064825e7521",
+        "timestamp": "2026-10-23T13:11:06.913569Z",
+        "source": "traces",
+        "service": "gateway",
+        "trace_id": "df7363af0015c2e84955cf15189368eb",
+        "attributes": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "d34436058b191395",
+          "parent_span_id": null,
+          "operation": "gateway/checkout",
+          "duration_us": 66090,
+          "service": "gateway",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/checkout",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "gateway",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        },
+        "raw": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "d34436058b191395",
+          "parent_span_id": null,
+          "operation": "gateway/checkout",
+          "duration_us": 66090,
+          "service": "gateway",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/checkout",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "gateway",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        }
+      },
+      {
+        "record_id": "traces:e0af4965e3c1666c9d47",
+        "timestamp": "2026-10-23T13:11:06.919337Z",
+        "source": "traces",
+        "service": "orders",
+        "trace_id": "df7363af0015c2e84955cf15189368eb",
+        "attributes": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "219996c26ec5c07f",
+          "parent_span_id": "d34436058b191395",
+          "operation": "orders/orders",
+          "duration_us": 59794,
+          "service": "orders",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/orders",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "orders",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        },
+        "raw": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "219996c26ec5c07f",
+          "parent_span_id": "d34436058b191395",
+          "operation": "orders/orders",
+          "duration_us": 59794,
+          "service": "orders",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/orders",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "orders",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        }
+      },
+      {
+        "record_id": "traces:5b9fbc3ceeca584262e0",
+        "timestamp": "2026-10-23T13:11:06.954059Z",
+        "source": "traces",
+        "service": "inventory",
+        "trace_id": "df7363af0015c2e84955cf15189368eb",
+        "attributes": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "a0ef6fd02510491f",
+          "parent_span_id": "219996c26ec5c07f",
+          "operation": "inventory/reserve",
+          "duration_us": 18494,
+          "service": "inventory",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/reserve",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "inventory",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        },
+        "raw": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "a0ef6fd02510491f",
+          "parent_span_id": "219996c26ec5c07f",
+          "operation": "inventory/reserve",
+          "duration_us": 18494,
+          "service": "inventory",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/reserve",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "inventory",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        }
+      },
+      {
+        "record_id": "traces:9f1be370eaa1a307e90f",
+        "timestamp": "2026-10-23T13:11:06.978736Z",
+        "source": "traces",
+        "service": "payment",
+        "trace_id": "df7363af0015c2e84955cf15189368eb",
+        "attributes": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "18512592e9b11f52",
+          "parent_span_id": "219996c26ec5c07f",
+          "operation": "payment/charge",
+          "duration_us": 42,
+          "service": "payment",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/charge",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "payment",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        },
+        "raw": {
+          "trace_id": "df7363af0015c2e84955cf15189368eb",
+          "span_id": "18512592e9b11f52",
+          "parent_span_id": "219996c26ec5c07f",
+          "operation": "payment/charge",
+          "duration_us": 42,
+          "service": "payment",
+          "attributes": {
+            "http.request.method": "POST",
+            "http.response.status_code": 200,
+            "http.route": "/charge",
+            "otel.scope.name": "opspilot.lab",
+            "service.name": "payment",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        }
+      },
+      {
+        "record_id": "traces:c27f1329e50567f3b82c",
+        "timestamp": "2026-10-23T13:11:15.286359Z",
+        "source": "traces",
+        "service": "gateway",
+        "trace_id": "dfc3fa553278d563411cb02e5352f723",
+        "attributes": {
+          "trace_id": "dfc3fa553278d563411cb02e5352f723",
+          "span_id": "299f381108bfdb87",
+          "parent_span_id": null,
+          "operation": "gateway/checkout",
+          "duration_us": 108378,
+          "service": "gateway",
+          "attributes": {
+            "error": true,
+            "http.request.method": "POST",
+            "http.route": "/checkout",
+            "otel.scope.name": "opspilot.lab",
+            "otel.status_code": "ERROR",
+            "otel.status_description": "HTTPError: HTTP Error 500: Internal Server Error",
+            "service.name": "gateway",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        },
+        "raw": {
+          "trace_id": "dfc3fa553278d563411cb02e5352f723",
+          "span_id": "299f381108bfdb87",
+          "parent_span_id": null,
+          "operation": "gateway/checkout",
+          "duration_us": 108378,
+          "service": "gateway",
+          "attributes": {
+            "error": true,
+            "http.request.method": "POST",
+            "http.route": "/checkout",
+            "otel.scope.name": "opspilot.lab",
+            "otel.status_code": "ERROR",
+            "otel.status_description": "HTTPError: HTTP Error 500: Internal Server Error",
+            "service.name": "gateway",
+            "service.version": "v1",
+            "span.kind": "internal"
+          }
+        }
+      }
+    ]
+  },
+  "deployments": {
+    "source": "deployments",
+    "query": {
+      "start": "2026-10-23T13:11:06.8812711Z",
+      "end": "2026-10-23T13:11:19.3885106Z",
+      "limit": 1000
+    },
+    "records": [
+      {
+        "record_id": "ea30c36c-da45-42fa-a5be-89d579d79fed",
+        "timestamp": "2026-10-23T13:11:15.230799Z",
+        "source": "deployments",
+        "service": "orders",
+        "trace_id": null,
+        "attributes": {
+          "version": "v1",
+          "record_id": "ea30c36c-da45-42fa-a5be-89d579d79fed",
+          "service": "orders"
+        },
+        "raw": {
+          "version": "v1",
+          "record_id": "ea30c36c-da45-42fa-a5be-89d579d79fed",
+          "service": "orders",
+          "timestamp": "2026-10-23T13:11:15.2307995Z"
+        }
+      }
+    ],
+    "warnings": []
+  }
+}
