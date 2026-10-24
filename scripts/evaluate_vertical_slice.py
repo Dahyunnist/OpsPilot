@@ -22,7 +22,7 @@ DEFAULT_CASE = ROOT / "lab" / "scenarios" / "vertical-slow-sql.json"
 DEFAULT_WINDOW = ROOT / "reports" / "vertical-slow-sql-window.json"
 DEFAULT_OUTPUT = ROOT / "reports" / "vertical-slow-sql-evaluation.json"
 DEFAULT_SNAPSHOT = ROOT / "reports" / "vertical-slow-sql-snapshot.json"
-MAX_CUMULATIVE_USD = 0.50
+MAX_CUMULATIVE_USD = 0.60
 MAX_ROUTE_BUDGET = 8192
 
 
@@ -207,7 +207,7 @@ def evaluate(case_path: Path, window_path: Path, output_path: Path, snapshot_pat
     if model.model != "deepseek-v4-flash":
         raise ValueError("configured model differs from fixed evaluation model")
     if not 0 < max_total_usd <= MAX_CUMULATIVE_USD:
-        raise ValueError("cumulative cost cap must be between zero and $0.50")
+        raise ValueError("cumulative cost cap must be between zero and $0.60")
     probe = RunBudget(max_total_usd, cost_ledger, model.model)
     if input_snapshot:
         source_results = json.loads(input_snapshot.read_text(encoding="utf-8-sig"))

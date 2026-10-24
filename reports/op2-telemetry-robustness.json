@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "benchmark": "op2_telemetry_robustness",
+  "source_cases": ["slow_sql", "db_pool_exhaustion", "dependency_timeout"],
+  "variants": [
+    {"id": "complete", "transform": "identity"},
+    {"id": "missing_logs_traces", "transform": "empty_logs_and_traces", "expected_behavior": "abstain_without_cross_source_support"},
+    {"id": "out_of_order", "transform": "reverse_records_per_source", "expected_behavior": "same_roots_as_complete"},
+    {"id": "clock_drift", "transform": "shift_same_trace_log_10_seconds", "expected_behavior": "emit_source_clock_drift_warning"},
+    {"id": "contradictory_payment", "transform": "retain_fast_and_slow_payment_spans", "expected_behavior": "abstain_from_payment_timeout"}
+  ],
+  "truth_location": "test expectations only; never included in source snapshots or model payloads",
+  "model_calls": 0
+}

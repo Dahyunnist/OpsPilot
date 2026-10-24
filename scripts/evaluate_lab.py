@@ -19,7 +19,7 @@ from scripts.evaluate_agents import RunBudget
 
 TRUTH_PATH = ROOT / "lab" / "scenarios" / "truth.json"
 FIXED_MODEL = "deepseek-v4-flash"
-MAX_CUMULATIVE_USD = 0.50
+MAX_CUMULATIVE_USD = 0.60
 
 
 def load_truth() -> dict[str, dict[str, Any]]:
@@ -97,7 +97,7 @@ def evaluate_case(case_id: str, start: str, end: str, strategies: tuple[str, ...
         if model.model != FIXED_MODEL:
             raise ValueError(f"fixed model is {FIXED_MODEL}; configured model differs")
         if budget_limit <= 0 or budget_limit > MAX_CUMULATIVE_USD:
-            raise ValueError("cumulative budget cannot exceed $0.50")
+            raise ValueError("cumulative budget cannot exceed $0.60")
         budget = RunBudget(budget_limit, cost_ledger, model.model)
 
     call_gate = budget.call if budget else None
