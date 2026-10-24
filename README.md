@@ -35,6 +35,18 @@ python -m opspilot investigate pool-01 --mode auto
 
 默认检查点写入 `var/state/<incident_id>.json`，查询与审批审计写入 `var/audit.jsonl`。这些运行文件已加入 Git 忽略规则。
 
+## 本地核心验收
+
+配置依赖后，可用以下命令验证规则调查主流程与完整测试：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m opspilot investigate pool-01 --no-state
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+规则调查不需要模型密钥；模型模式需要在本地 `.env` 配置服务凭据。当前收敛验收记录见 `docs/learning/OP2-telemetry-robustness.md`。
+
 多 Agent 模式需要 `.env` 设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。专家按来源隔离证据上下文，进行独立推断；交叉质询与裁决由额外模型调用完成。规则模式仍是离线基线。详见 `docs/learning/stage-S5.md`。
 
 首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。密钥只放在本地 `.env`，不要提交。
