@@ -25,7 +25,10 @@ class OfficialSdkInteropTests(unittest.IsolatedAsyncioTestCase):
             return {"accepted": payload.get("probe")}
 
         with A2AServer(delayed_handler) as server:
-            async with httpx.AsyncClient(timeout=3) as http_client:
+            # This client calls a local loopback server; environment proxies must not intercept it.
+            # The resolver and SDK share this client; keep loopback traffic out of environment proxies.
+            async with httpx.AsyncClient(timeout=3, trust_env=False) as http_client:
+                self.assertFalse(http_client._trust_env)
                 card = await A2ACardResolver(http_client, server.url.rstrip("/")).get_agent_card()
                 client = ClientFactory(ClientConfig(
                     streaming=False,
