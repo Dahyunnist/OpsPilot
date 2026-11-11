@@ -1,4 +1,6 @@
-from scripts.print_host_acceptance import render
+from pathlib import Path
+
+from scripts.print_host_acceptance import ROOT, render
 
 
 def test_host_checklist_covers_all_truth_cases_ports_and_cleanup_without_execution():
@@ -10,3 +12,11 @@ def test_host_checklist_covers_all_truth_cases_ports_and_cleanup_without_executi
     for value in ("18080", "18081", "18082", "18083", "19090", "16686", "lab\\stop.ps1", "ps --all"):
         assert value in text
     assert "不调用模型" in text and "不删除数据卷" in text
+
+
+def test_dependency_timeout_host_card_uses_real_read_only_endpoints_and_cleanup():
+    text = (ROOT / 'docs/learning/op1-dependency-timeout-host-card.md').read_text(encoding='utf-8')
+    for fragment in ('-Scenario dependency_timeout', '18081/logs?', '18080/deployments?', '18090/api/v1/query?', '16686/api/traces?', 'lab\\stop.ps1', 'ps --all', 'truth.json'):
+        assert fragment in text
+    assert '不表示场景已运行' in text
+
