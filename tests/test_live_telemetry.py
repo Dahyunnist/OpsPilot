@@ -188,6 +188,19 @@ class LiveTelemetryTests(unittest.TestCase):
         }))
         self.assertEqual(release["root_causes"], ["invalid_release_configuration"])
 
+    def test_bad_release_live_evidence_links_deployment_version_and_dns_failure_log(self) -> None:
+        empty = {"records": []}
+        release = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty,
+            "logs": {"records": [record("logs", "dns-fail", "2026-11-11T14:06:22Z", service="orders",
+                attributes={"error_type": "URLError"}, raw={"service_version": "v2", "severity": "error",
+                "message": "inventory-v2: No address associated with hostname"})]},
+            "traces": empty,
+            "deployments": {"records": [record("deployments", "release-v2", "2026-11-11T13:47:23Z",
+                service="orders", attributes={"version": "v2"})]},
+        }))
+        self.assertEqual(release["root_causes"], ["invalid_release_configuration"])
+
         slow = investigate_live(START, END, telemetry=FakeTelemetry({
             "metrics": {"records": [
                 record("metrics", "duration-before", "2026-10-23T10:01:00Z", service="orders",
