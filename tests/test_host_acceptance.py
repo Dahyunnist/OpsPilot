@@ -16,7 +16,8 @@ def test_host_checklist_covers_all_truth_cases_ports_and_cleanup_without_executi
 
 def test_dependency_timeout_host_card_uses_real_read_only_endpoints_and_cleanup():
     text = (ROOT / 'docs/learning/op1-dependency-timeout-host-card.md').read_text(encoding='utf-8')
-    for fragment in ('-Scenario dependency_timeout', '18081/logs?', '18080/deployments?', '18090/api/v1/query?', '16686/api/traces?', 'lab\\stop.ps1', 'ps --all', 'truth.json'):
+    for fragment in ('-Scenario dependency_timeout', '18081/logs?', '18080/deployments?', '19090/api/v1/query?', '16686/api/traces?', 'lab\\stop.ps1', 'ps --all', 'truth.json'):
         assert fragment in text
     assert '不表示场景已运行' in text
+
 
