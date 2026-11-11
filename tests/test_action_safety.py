@@ -65,6 +65,15 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(len(self.events()), 2)
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
+    def test_approval_is_bound_to_exact_action_and_target(self) -> None:
+        approval = self.approval(action="restart_service", target="orders", role="operator")
+        altered_action = dict(approval, action="rollback_release", role="release_manager")
+        altered_target = dict(approval, target="payment")
+        for field, altered in (("action", altered_action), ("target", altered_target)):
+            with self.subTest(field=field), self.assertRaisesRegex(ActionRejected, "approval_signature_invalid"):
+                execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+
     def test_agent_or_wrong_role_cannot_escalate_action_scope(self) -> None:
         with self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
             self.approval(role="agent")
