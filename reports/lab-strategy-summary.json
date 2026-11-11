@@ -25,7 +25,8 @@
       "provider_rate_estimate_usd": 0.0,
       "cost_per_exact_success_usd": 0.0,
       "p95_latency_ms": 0.01,
-      "failures": []
+      "failures": [],
+      "failure_rate": 0.0
     },
     "single": {
       "cases": 6,
@@ -41,7 +42,8 @@
       "provider_rate_estimate_usd": 0.0215496,
       "cost_per_exact_success_usd": 0.0107748,
       "p95_latency_ms": 3496.21,
-      "failures": []
+      "failures": [],
+      "failure_rate": 0.0
     },
     "multi": {
       "cases": 6,
@@ -94,7 +96,8 @@
             "ModelError"
           ]
         }
-      ]
+      ],
+      "failure_rate": 1.0
     },
     "auto": {
       "cases": 6,
@@ -110,7 +113,8 @@
       "provider_rate_estimate_usd": 0.0008478,
       "cost_per_exact_success_usd": 0.00021195,
       "p95_latency_ms": 2686.12,
-      "failures": []
+      "failures": [],
+      "failure_rate": 0.0
     }
   },
   "cumulative_peak_budget_usd": 0.43334113,
@@ -157,5 +161,7 @@
       }
     ],
     "auto": []
-  }
+  },
+  "evidence_kind": "historical_fixed_snapshot",
+  "live_experiment": false
 }
