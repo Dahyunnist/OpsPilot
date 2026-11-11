@@ -11,6 +11,13 @@ $fault = [string]$case.injection.fault
 if ($case.injection.service -ne "orders" -or $fault -notin @("dependency_timeout", "db_pool_exhaustion")) {
     throw "Only reviewed orders dependency_timeout and db_pool_exhaustion cases are allowed."
 }
+$null = Get-Command docker -ErrorAction Stop
+docker info --format "{{.ServerVersion}}" | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Docker daemon unavailable; no services were started." }
+foreach ($port in @(18080, 18081, 18082, 18083, 14318, 16686, 19090)) {
+    $listener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue
+    if ($listener) { throw "Required lab port $port is already in use; no services were started." }
+}
 $images = @(
     "opspilot-lab-gateway:latest", "opspilot-lab-orders:latest", "opspilot-lab-inventory:latest", "opspilot-lab-payment:latest",
     "postgres:16-alpine", "redis:7-alpine", "otel/opentelemetry-collector-contrib:0.138.0",

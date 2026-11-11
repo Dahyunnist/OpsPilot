@@ -40,6 +40,21 @@ class LabManifestTests(unittest.TestCase):
         self.assertNotIn("truth.json", compose)
         self.assertIn("LAB_FAULT: ${LAB_FAULT:-none}", compose)
 
+    def test_live_telemetry_sources_do_not_read_truth_manifest(self) -> None:
+        for name in ("telemetry.py", "live_investigation.py", "mcp_servers.py"):
+            source = (ROOT / "opspilot" / name).read_text(encoding="utf-8")
+            self.assertNotIn("scenarios/truth.json", source)
+            self.assertNotIn("lab/scenarios/truth.json", source)
+
+    def test_release_fault_fixture_has_evidence_contract(self) -> None:
+        truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
+        release = next(case for case in truth["cases"] if case["fault"] == "bad_release")
+        self.assertEqual(["invalid_release_configuration"], release["root_causes"])
+        self.assertEqual({"orders_v2", "inventory_connection_errors"}, set(release["must_observe"]))
+        source = (ROOT / "opspilot" / "live_investigation.py").read_text(encoding="utf-8")
+        self.assertIn('"invalid_release_configuration"', source)
+        self.assertIn("orders v2", source)
+
 
 if __name__ == "__main__":
     unittest.main()
