@@ -100,6 +100,14 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(len(first), 32)
         self.assertEqual(first, load_or_create_key(key_path))
 
+    def test_corrupt_ledger_fails_closed_without_overwriting_it(self) -> None:
+        corrupted = b'{"event_type":"incomplete"\n'
+        self.ledger.write_bytes(corrupted)
+        with self.assertRaisesRegex(ActionRejected, "action_ledger_unreadable"):
+            execute_dry_run(self.approval(), key=self.key, environment="test",
+                ledger_path=self.ledger, now=NOW)
+        self.assertEqual(self.ledger.read_bytes(), corrupted)
+
     def test_simulator_has_no_network_or_process_execution_dependency(self) -> None:
         source = Path(__file__).resolve().parents[1] / "opspilot" / "action_safety.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))
