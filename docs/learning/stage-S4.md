@@ -77,3 +77,9 @@
 ## 未覆盖边界
 
 固定集只有 8 例且根因类型仅三类，不能外推真实准确率。规则评测不能代替盲测、概率校准或模型评测。运行脚本适用于本机演示，不是生产部署包；没有真实遥测、认证、并发审计存储或外部修复接口。
+
+## S4 固定合成报告复验（2026-11-12）
+
+新增 `tests/test_s4_report_contract.py` 校验既有 `reports/evaluation.json`：固定 8 案例、每例两次、6 个可判定根因、2 个证据不足弃答、32/32 有效引用；与 logs-only 基线比较为 4/6。报告声明 `synthetic_s0_s4_deterministic_rules`，不代表模型或生产表现。失败保留在原报告中，本次只读复验，不运行模型。
+
+定向测试 `tests/test_s4_report_contract.py tests/test_s4.py`：`2 passed in 0.14s`。
