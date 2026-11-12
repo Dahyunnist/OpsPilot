@@ -314,9 +314,15 @@ class Handler(BaseHTTPRequestHandler):
                 emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__)
                 if attempt + 1 == retries:
                     raise RuntimeError("payment attempts exhausted")
+        if FAULT == "duplicate_delivery":
+            emit("error", "duplicate delivery replayed payment", order_id=order_id)
+            payment = json_call(f"{PAYMENT_URL}/charge", {"order_id": order_id, "delivery_replay": True})
         return {"order_id": order_id, "inventory": inventory.get("reserved", False), "payment": payment.get("charged", False)}
 
     def reserve_inventory(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if FAULT == "stale_inventory":
+            emit("warning", "inventory stale replica response", remaining=20)
+            return {"reserved": True, "remaining": 20, "replica_stale": True}
         if FAULT == "inventory_latency":
             time.sleep(0.8)
         sku = str(payload.get("sku", "demo-1"))
