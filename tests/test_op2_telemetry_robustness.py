@@ -42,6 +42,14 @@ class TelemetryRobustnessTests(unittest.TestCase):
                 missing["traces"]["records"] = []
                 self.assertNotIn(root, inspect(missing, window)["root_causes"])
 
+    def test_all_sources_missing_abstains_and_preserves_failure_warning(self):
+        sources, window = self.load("dependency_timeout")
+        missing = {name: {"records": [], "warnings": []} for name in sources}
+        report = inspect(missing, window)
+        self.assertEqual([], report["root_causes"])
+        self.assertIn("abstain", report["confidence"])
+        self.assertEqual([], report["quality"]["warnings"])
+
     def test_out_of_order_records_are_order_independent(self):
         for case in CASES:
             with self.subTest(case=case):
