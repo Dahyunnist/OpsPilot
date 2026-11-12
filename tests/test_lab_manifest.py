@@ -33,6 +33,11 @@ class LabManifestTests(unittest.TestCase):
         source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
         self.assertIn('FAULT == "inventory_latency"', source)
         self.assertIn('FAULT == "payment_reject"', source)
+        self.assertIn('time.sleep(0.8)', source)
+        self.assertIn('ResponseError(503, "synthetic payment rejection")', source)
+        runner = (ROOT / "lab" / "run-scenario.ps1").read_text(encoding="utf-8")
+        self.assertIn('"inventory_latency"', runner)
+        self.assertIn('"payment_reject"', runner)
 
     def test_service_has_no_network_fault_control_route(self) -> None:
         source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
