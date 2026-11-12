@@ -298,6 +298,9 @@ class Handler(BaseHTTPRequestHandler):
         with db_connect() as connection:
             connection.execute("INSERT INTO orders (order_id, sku, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (order_id, "demo-1", 1))
         if REDIS_HOST:
+            if FAULT == "redis_unavailable":
+                emit("error", "cache connection failed", error_type="ConnectionError")
+                raise redis.ConnectionError("synthetic redis unavailable")
             redis.Redis(host=REDIS_HOST, socket_connect_timeout=1).set(f"order:{order_id}", "accepted", ex=3600)
         try:
             inventory = json_call(f"{INVENTORY_URL}/reserve", {"order_id": order_id}, timeout=0.5)
@@ -320,6 +323,9 @@ class Handler(BaseHTTPRequestHandler):
         return {"order_id": order_id, "inventory": inventory.get("reserved", False), "payment": payment.get("charged", False)}
 
     def reserve_inventory(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if FAULT == "inventory_depleted":
+            emit("warning", "inventory exhausted", remaining=0)
+            return {"reserved": False, "remaining": 0}
         if FAULT == "stale_inventory":
             emit("warning", "inventory stale replica response", remaining=20)
             return {"reserved": True, "remaining": 20, "replica_stale": True}

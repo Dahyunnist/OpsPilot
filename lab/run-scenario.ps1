@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("db_pool_exhaustion", "dependency_timeout", "bad_release", "slow_sql", "retry_storm", "double_root", "inventory_latency", "payment_reject", "stale_inventory", "duplicate_delivery")]
+    [ValidateSet("db_pool_exhaustion", "dependency_timeout", "bad_release", "slow_sql", "retry_storm", "double_root", "inventory_latency", "payment_reject", "stale_inventory", "duplicate_delivery", "redis_unavailable", "inventory_depleted")]
     [string] $Scenario
 )
 

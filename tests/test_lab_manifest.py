@@ -15,8 +15,8 @@ class LabManifestTests(unittest.TestCase):
         truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
         cases = truth["cases"]
         mechanisms = {case["fault"] for case in cases}
-        self.assertEqual(len(cases), 10)
-        self.assertEqual(len(mechanisms), 10)
+        self.assertEqual(len(cases), 12)
+        self.assertEqual(len(mechanisms), 12)
         case_ids = {case["case_id"] for case in cases}
         self.assertEqual(len(case_ids), len(cases))
         self.assertEqual(case_ids, {case["case_id"] for case in truth["cases"]})
@@ -43,6 +43,11 @@ class LabManifestTests(unittest.TestCase):
         self.assertIn("duplicate delivery replayed payment", source)
         self.assertIn('"stale_inventory"', runner)
         self.assertIn('"duplicate_delivery"', runner)
+        self.assertIn('FAULT == "redis_unavailable"', source)
+        self.assertIn('FAULT == "inventory_depleted"', source)
+        self.assertIn("synthetic redis unavailable", source)
+        self.assertIn('"redis_unavailable"', runner)
+        self.assertIn('"inventory_depleted"', runner)
 
     def test_service_has_no_network_fault_control_route(self) -> None:
         source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
