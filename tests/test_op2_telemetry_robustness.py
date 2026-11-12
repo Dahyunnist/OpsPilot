@@ -50,6 +50,31 @@ class TelemetryRobustnessTests(unittest.TestCase):
         self.assertIn("abstain", report["confidence"])
         self.assertEqual([], report["quality"]["warnings"])
 
+    def test_partial_trace_service_failure_preserves_records_and_marks_partial_source(self):
+        sources, window = self.load("dependency_timeout")
+        partial = copy.deepcopy(sources)
+        partial["traces"]["failed_services"] = {"payment": "TimeoutError"}
+        partial["traces"]["warnings"] = ["partial_service_unavailable"]
+        report = inspect(partial, window)
+        self.assertEqual("partial", report["source_status"]["traces"])
+        self.assertEqual({"traces": {"payment": "TimeoutError"}}, report["partial_failures"])
+        self.assertIn("one_or_more_sources_unavailable", report["quality"]["warnings"])
+        available_trace_ids = {row["record_id"] for row in partial["traces"]["records"]}
+        cited_trace_ids = {ref["record_id"] for ref in report["evidence_refs"] if ref["source"] == "traces"}
+        self.assertLessEqual(cited_trace_ids, available_trace_ids)
+
+    def test_all_trace_services_failed_marks_error_and_does_not_claim_root_cause(self):
+        sources, window = self.load("dependency_timeout")
+        missing = copy.deepcopy(sources)
+        missing["traces"]["records"] = []
+        missing["traces"]["failed_services"] = {service: "TimeoutError"
+            for service in ("gateway", "orders", "inventory", "payment")}
+        missing["traces"]["warnings"] = ["partial_service_unavailable"]
+        report = inspect(missing, window)
+        self.assertEqual("error", report["source_status"]["traces"])
+        self.assertEqual([], report["root_causes"])
+        self.assertEqual(missing["traces"]["failed_services"], report["partial_failures"]["traces"])
+
     def test_evidence_references_point_to_records_present_in_fixture(self):
         sources, window = self.load("slow_sql")
         report = inspect(sources, window)

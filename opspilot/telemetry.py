@@ -54,6 +54,7 @@ class LabTelemetry:
             name: _safe_base(configured.get(name, os.getenv(f"OPSPILOT_LAB_{name.upper()}_URL", f"http://127.0.0.1:{18081 + index}")), name)
             for index, name in enumerate(SERVICES[1:])
         }
+        self.log_services = {"gateway": self.gateway, **self.services}
         self.timeout_seconds = min(10.0, max(0.2, float(timeout_seconds)))
 
     def _get(self, base: str, path: str, query: dict[str, Any]) -> dict[str, Any]:
@@ -107,10 +108,19 @@ class LabTelemetry:
     def logs(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         lower, upper, limit = self._bounds(start, end, limit)
         records = []
+        failed_services: dict[str, str] = {}
         per_service = max(1, min(1000, limit))
-        for service, base in self.services.items():
-            response = self._get(base, "/logs", {"start": start, "end": end, "limit": per_service})
-            for row in response.get("records", [])[:per_service]:
+        for service, base in self.log_services.items():
+            try:
+                response = self._get(base, "/logs", {"start": start, "end": end, "limit": per_service})
+            except (OSError, ValueError) as exc:
+                failed_services[service] = type(exc).__name__
+                continue
+            rows = response.get("records", [])
+            if not isinstance(rows, list):
+                failed_services[service] = "InvalidRecords"
+                continue
+            for row in rows:
                 if not isinstance(row, dict) or not isinstance(row.get("timestamp"), str):
                     continue
                 try:
@@ -119,12 +129,14 @@ class LabTelemetry:
                     continue
                 if not lower <= instant <= upper:
                     continue
-                records.append({"record_id": _record_id("logs", row), "timestamp": instant.isoformat().replace("+00:00", "Z"),
+                records.append({"record_id": _record_id("logs", {"source_service": service, "record": row}), "timestamp": instant.isoformat().replace("+00:00", "Z"),
                     "source": "logs", "service": service, "trace_id": row.get("trace_id"),
                     "attributes": {key: value for key, value in row.items() if key not in {"timestamp", "message"}},
                     "raw": row})
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
-        return {"source": "logs", "query": {"start": start, "end": end, "limit": limit}, "records": records[:limit]}
+        warnings = ["partial_service_unavailable"] if failed_services else []
+        return {"source": "logs", "query": {"start": start, "end": end, "limit": limit},
+            "records": records[:limit], "warnings": warnings, "failed_services": failed_services}
 
     def deployments(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         self._bounds(start, end, limit)
@@ -132,7 +144,7 @@ class LabTelemetry:
         lower, upper = _instant(start), _instant(end)
         rows = []
         source_order = []
-        for row in response.get("records", [])[:limit]:
+        for row in response.get("records", []):
             if not isinstance(row, dict):
                 continue
             try:
@@ -153,19 +165,43 @@ class LabTelemetry:
     def traces(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         lower, upper, limit = self._bounds(start, end, limit)
         records_by_id = {}
+        failed_services: dict[str, str] = {}
         for service in SERVICES:
-            response = self._get(self.jaeger, "/api/traces", {
-                "service": service, "start": int(lower.timestamp() * 1_000_000),
-                "end": int(upper.timestamp() * 1_000_000), "limit": limit,
-            })
-            for trace_row in response.get("data", []):
+            try:
+                response = self._get(self.jaeger, "/api/traces", {
+                    "service": service, "start": int(lower.timestamp() * 1_000_000),
+                    "end": int(upper.timestamp() * 1_000_000), "limit": limit,
+                })
+            except (OSError, ValueError) as exc:
+                failed_services[service] = type(exc).__name__
+                continue
+            trace_rows = response.get("data", [])
+            if not isinstance(trace_rows, list):
+                failed_services[service] = "InvalidTraceData"
+                continue
+            for trace_row in trace_rows:
+                if not isinstance(trace_row, dict):
+                    continue
                 trace_id = trace_row.get("traceID")
                 processes = trace_row.get("processes", {})
-                for span in trace_row.get("spans", []):
-                    timestamp = datetime.fromtimestamp(span["startTime"] / 1_000_000, timezone.utc).isoformat().replace("+00:00", "Z")
+                spans = trace_row.get("spans", [])
+                if not isinstance(processes, dict) or not isinstance(spans, list):
+                    continue
+                for span in spans:
+                    if not isinstance(span, dict):
+                        continue
+                    try:
+                        timestamp = datetime.fromtimestamp(float(span["startTime"]) / 1_000_000, timezone.utc).isoformat().replace("+00:00", "Z")
+                    except (KeyError, TypeError, ValueError, OverflowError, OSError):
+                        continue
                     process = processes.get(span.get("processID"), {})
-                    tags = {tag.get("key"): tag.get("value") for tag in span.get("tags", []) if isinstance(tag, dict)}
-                    raw = {"trace_id": trace_id, "span_id": span.get("spanID"), "parent_span_id": next((ref.get("spanID") for ref in span.get("references", []) if ref.get("refType") == "CHILD_OF"), None),
+                    if not isinstance(process, dict):
+                        process = {}
+                    tags_rows = span.get("tags", [])
+                    refs = span.get("references", [])
+                    tags = {tag.get("key"): tag.get("value") for tag in tags_rows if isinstance(tag, dict)} if isinstance(tags_rows, list) else {}
+                    parent_span_id = next((ref.get("spanID") for ref in refs if isinstance(ref, dict) and ref.get("refType") == "CHILD_OF"), None) if isinstance(refs, list) else None
+                    raw = {"trace_id": trace_id, "span_id": span.get("spanID"), "parent_span_id": parent_span_id,
                         "operation": span.get("operationName"), "duration_us": span.get("duration"), "service": process.get("serviceName"), "attributes": tags}
                     normalized = {"record_id": _record_id("traces", raw), "timestamp": timestamp,
                         "source": "traces", "service": process.get("serviceName", service), "trace_id": trace_id,
@@ -174,4 +210,6 @@ class LabTelemetry:
         records = list(records_by_id.values())
         records = [row for row in records if lower <= _instant(row["timestamp"]) <= upper]
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
-        return {"source": "traces", "query": {"start": start, "end": end, "limit": limit}, "records": records[:limit]}
+        warnings = ["partial_service_unavailable"] if failed_services else []
+        return {"source": "traces", "query": {"start": start, "end": end, "limit": limit},
+            "records": records[:limit], "warnings": warnings, "failed_services": failed_services}

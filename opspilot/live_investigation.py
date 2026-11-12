@@ -58,7 +58,10 @@ def investigate_live(start: str, end: str, limit: int = 100,
 
     records = [record for result in source_results.values() for record in result.get("records", [])]
     records.sort(key=lambda record: (record.get("timestamp", ""), record.get("record_id", "")))
-    source_status = {source: ("error" if source in failures else "ok" if result.get("records") else "empty")
+    partial_failures = {source: result["failed_services"] for source, result in source_results.items()
+        if isinstance(result.get("failed_services"), dict) and result["failed_services"]}
+    source_status = {source: ("error" if source in failures or (result.get("failed_services") and not result.get("records"))
+        else "partial" if result.get("failed_services") else "ok" if result.get("records") else "empty")
         for source, result in source_results.items()}
     source_status.update({source: "error" for source in failures})
 
@@ -201,7 +204,7 @@ def investigate_live(start: str, end: str, limit: int = 100,
     sufficient = bool(claimed)
 
     warnings = []
-    if failures:
+    if failures or partial_failures:
         warnings.append("one_or_more_sources_unavailable")
     if missing_trace_logs or (request_delta > 0 and not trace_ids):
         warnings.append("missing_trace_context")
@@ -224,5 +227,5 @@ def investigate_live(start: str, end: str, limit: int = 100,
             for row in hypotheses for against_item in row["against"]],
         "quality": {"missing_trace_log_records": len(missing_trace_logs), "trace_coverage_ratio_approx": trace_coverage,
             "same_trace_clock_skews": same_trace_skews, "warnings": list(dict.fromkeys(warnings))},
-        "failures": failures,
+        "failures": failures, "partial_failures": partial_failures,
     }

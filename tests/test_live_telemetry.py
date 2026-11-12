@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import unittest
+from urllib.error import URLError
 from urllib.parse import parse_qs, urlsplit
 from unittest.mock import patch
 
@@ -74,11 +75,37 @@ class LiveTelemetryTests(unittest.TestCase):
 
         row = {"timestamp": "2026-10-23T10:05:00Z", "message": "request completed", "trace_id": "abc"}
         adapter = LabTelemetry()
-        with patch("opspilot.telemetry.urlopen", side_effect=[Response({"records": [row] * 2}) for _ in range(3)]) as opened:
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response({"records": [row] * 2}) for _ in range(4)]) as opened:
             result = adapter.logs(START, END, 4)
         self.assertEqual(len(result["records"]), 4)
-        self.assertEqual(opened.call_count, 3)
+        self.assertEqual(opened.call_count, 4)
         self.assertTrue(all(call.args[0].method == "GET" for call in opened.call_args_list))
+        self.assertTrue(any("127.0.0.1:18080/logs?" in call.args[0].full_url for call in opened.call_args_list))
+
+    def test_log_adapter_keeps_healthy_services_when_one_endpoint_fails(self) -> None:
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps({"records": [
+                {"timestamp": "2026-10-23T10:05:00Z", "message": "request completed"}]}).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response(), URLError("offline"), Response()]):
+            result = LabTelemetry().logs(START, END, 10)
+        self.assertEqual({row["service"] for row in result["records"]}, {"gateway", "orders", "payment"})
+        self.assertEqual(result["failed_services"], {"inventory": "URLError"})
+        self.assertIn("partial_service_unavailable", result["warnings"])
+
+    def test_log_record_ids_include_source_service(self) -> None:
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps({"records": [
+                {"timestamp": "2026-10-23T10:05:00Z", "message": "same event"}]}).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response(), Response(), Response()]):
+            result = LabTelemetry().logs(START, END, 4)
+        self.assertEqual({row["service"] for row in result["records"]}, {"gateway", "orders", "inventory", "payment"})
+        self.assertEqual(len({row["record_id"] for row in result["records"]}), 4)
 
     def test_log_adapter_rejects_records_outside_requested_window(self) -> None:
         class Response:
@@ -91,9 +118,23 @@ class LiveTelemetryTests(unittest.TestCase):
                 {"timestamp": "not-a-date", "message": "invalid"},
             ]}).encode()
 
-        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response(), Response()]):
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response(), Response(), Response()]):
             result = LabTelemetry().logs(START, END, 10)
         self.assertEqual({row["raw"]["message"] for row in result["records"]}, {"inside"})
+
+    def test_log_adapter_filters_window_before_applying_global_limit(self) -> None:
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps({"records": [
+                {"timestamp": "2026-10-23T09:59:59Z", "message": "outside"},
+                {"timestamp": "2026-10-23T10:05:00Z", "message": "inside"}]}).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response(), Response(), Response()]):
+            result = LabTelemetry().logs(START, END, 1)
+        self.assertEqual(len(result["records"]), 1)
+        self.assertEqual(result["records"][0]["raw"]["message"], "inside")
+        self.assertTrue(result["records"][0]["record_id"].startswith("logs:"))
 
     def test_jaeger_span_mapping_preserves_parent_and_deduplicates_trace_queries(self) -> None:
         lower = datetime.fromisoformat(START.replace("Z", "+00:00"))
@@ -122,6 +163,52 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertEqual(orders["attributes"]["span_id"], "o1")
         self.assertEqual(orders["attributes"]["parent_span_id"], "g1")
         self.assertEqual(orders["attributes"]["duration_us"], 30000)
+
+    def test_jaeger_keeps_valid_spans_when_one_service_fails_and_drops_malformed_span(self) -> None:
+        start_us = int(datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() * 1_000_000) + 1_000_000
+        payload = {"data": [{"traceID": "c" * 32, "processes": {"orders": {"serviceName": "orders"}},
+            "spans": [{"spanID": "valid", "processID": "orders", "operationName": "orders/orders",
+                "startTime": start_us, "duration": 10, "tags": [], "references": []},
+                {"spanID": "bad", "processID": "orders", "operationName": "broken", "tags": []}]}]}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), URLError("offline"), Response(), Response()]) as opened:
+            result = LabTelemetry().traces(START, END, 10)
+        self.assertEqual(opened.call_count, 4)
+        self.assertEqual([row["attributes"]["span_id"] for row in result["records"]], ["valid"])
+        self.assertEqual(result["failed_services"], {"orders": "URLError"})
+        self.assertIn("partial_service_unavailable", result["warnings"])
+        self.assertTrue(result["records"][0]["record_id"].startswith("traces:"))
+
+    def test_jaeger_query_uses_window_and_caps_global_result_after_filtering(self) -> None:
+        lower = int(datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() * 1_000_000)
+        payload = {"data": [{"traceID": "d" * 32, "processes": {"orders": {"serviceName": "orders"}},
+            "spans": [{"spanID": "outside", "processID": "orders", "operationName": "old",
+                "startTime": lower - 1_000_000, "duration": 10},
+                {"spanID": "inside", "processID": "orders", "operationName": "current",
+                    "startTime": lower + 1_000_000, "duration": 10},
+                {"spanID": "late", "processID": "orders", "operationName": "future",
+                    "startTime": lower + 601_000_000, "duration": 10}]}]}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response() for _ in range(4)]) as opened:
+            result = LabTelemetry().traces(START, END, 1)
+        self.assertEqual(len(result["records"]), 1)
+        self.assertEqual(result["records"][0]["attributes"]["span_id"], "inside")
+        self.assertTrue(result["records"][0]["record_id"].startswith("traces:"))
+        for call in opened.call_args_list:
+            params = parse_qs(urlsplit(call.args[0].full_url).query)
+            self.assertEqual(params["start"], [str(lower)])
+            self.assertEqual(params["end"], [str(lower + 600_000_000)])
+            self.assertEqual(params["limit"], ["1"])
 
     def test_pool_claim_needs_cross_source_evidence_and_cites_every_record(self) -> None:
         metrics = [
@@ -282,6 +369,23 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertEqual(params["end"], [END])
         self.assertIn("source_order_out_of_order", result["warnings"])
         self.assertEqual([row["record_id"] for row in result["records"]], ["early", "late"])
+
+    def test_deployment_adapter_filters_window_before_applying_limit(self) -> None:
+        payload = {"records": [
+            {"record_id": "outside", "timestamp": "2026-10-23T09:59:59Z", "service": "orders"},
+            {"record_id": "inside", "timestamp": "2026-10-23T10:05:00Z", "service": "orders"},
+        ]}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", return_value=Response()) as opened:
+            result = LabTelemetry().deployments(START, END, 1)
+        params = parse_qs(urlsplit(opened.call_args.args[0].full_url).query)
+        self.assertEqual(params["limit"], ["1"])
+        self.assertEqual([row["record_id"] for row in result["records"]], ["inside"])
 
 
 if __name__ == "__main__":
