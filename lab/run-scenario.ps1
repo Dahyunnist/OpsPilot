@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("db_pool_exhaustion", "dependency_timeout", "bad_release", "slow_sql", "retry_storm", "double_root", "inventory_latency", "payment_reject", "stale_inventory", "duplicate_delivery", "redis_unavailable", "inventory_depleted")]
+    [ValidateSet("none", "db_pool_exhaustion", "dependency_timeout", "bad_release", "slow_sql", "retry_storm", "double_root", "inventory_latency", "payment_reject", "stale_inventory", "duplicate_delivery", "redis_unavailable", "inventory_depleted")]
     [string] $Scenario
 )
 
@@ -21,6 +21,31 @@ if ($LASTEXITCODE -ne 0) { throw "Compose failed to start the lab." }
 
 docker compose @composeFiles exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
 if ($LASTEXITCODE -ne 0) { throw "Could not reset deterministic lab state." }
+
+function Wait-LabReady([int]$TimeoutSeconds = 60) {
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    $urls = @(
+        "http://127.0.0.1:18080/health",
+        "http://127.0.0.1:18081/health",
+        "http://127.0.0.1:18082/health",
+        "http://127.0.0.1:18083/ready"
+    )
+    while ([DateTime]::UtcNow -lt $deadline) {
+        try {
+            foreach ($url in $urls) {
+                $remaining = ($deadline - [DateTime]::UtcNow).TotalSeconds
+                if ($remaining -le 0) { break }
+                $requestTimeout = [Math]::Max(1, [Math]::Min(2, [int][Math]::Ceiling($remaining)))
+                Invoke-RestMethod -Uri $url -TimeoutSec $requestTimeout | Out-Null
+            }
+            if ([DateTime]::UtcNow -lt $deadline) { return }
+            break
+        } catch { Start-Sleep -Seconds 1 }
+    }
+    throw "Lab services did not become ready within $TimeoutSeconds seconds."
+}
+
+Wait-LabReady
 
 $deployment = @{
     record_id = [guid]::NewGuid().ToString()

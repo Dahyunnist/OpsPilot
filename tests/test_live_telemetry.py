@@ -201,6 +201,21 @@ class LiveTelemetryTests(unittest.TestCase):
         }))
         self.assertEqual(release["root_causes"], ["invalid_release_configuration"])
 
+        structured = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty,
+            "logs": {"records": [record("logs", "dns-structured", "2026-10-23T10:06:22Z", service="orders",
+                attributes={"error_type": "URLError", "dependency_host": "inventory-v2",
+                    "error_reason": "No address associated with hostname"}, raw={"service_version": "v2",
+                    "severity": "error", "message": "inventory dependency failed",
+                    "error_type": "URLError", "dependency_host": "inventory-v2",
+                    "error_reason": "No address associated with hostname"})]},
+            "traces": empty,
+            "deployments": {"records": [record("deployments", "release-v2", "2026-10-23T10:04:23Z",
+                service="orders", attributes={"version": "v2"})]},
+        }))
+        hypothesis = next(item for item in structured["hypotheses"] if item["id"] == "invalid_release_configuration")
+        self.assertTrue(any(item["record_id"] == "dns-structured" for item in hypothesis["support"]))
+
         slow = investigate_live(START, END, telemetry=FakeTelemetry({
             "metrics": {"records": [
                 record("metrics", "duration-before", "2026-10-23T10:01:00Z", service="orders",

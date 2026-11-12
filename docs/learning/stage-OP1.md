@@ -37,6 +37,10 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 后续完成 [slow SQL 实时垂直切片](OP1-vertical-slice.md)：采集健康基线，注入 `pg_sleep(1.5)`，用 metrics/trace 交叉定位，再关闭注入并验证恢复。该切片冻结了时间线、oracle、独立问题和四路指标；不扩增合成 JSON。
 
-十二场景宿主矩阵由 `lab/run-host-matrix.ps1` 执行，结果写入 `reports/op1-host-matrix.json`；需用户本机启动 Docker Desktop 后运行。该 runner 会逐场调用 `run-scenario.ps1`，后者执行 `docker compose up --build`；运行前确认镜像构建条件、七个映射端口空闲，并预留矩阵运行时间。矩阵采用独立 Compose project，结束时停止该 project，不删除数据卷。
+十二场景宿主矩阵由 `lab/run-host-matrix.ps1` 执行，结果写入 `reports/op1-host-matrix.json`；需用户本机启动 Docker Desktop 后运行。启动前检查 Engine、七个映射端口、Compose 配置及渲染后的全部服务镜像和 Dockerfile 基础镜像；缺镜像时拒绝运行、不自动拉取。该 runner 先跑 `none` 正常基线，再跑十二个故障；每次启动后最多等待 60 秒，检查 gateway/orders/inventory health 与 payment ready，再发 checkout，排除服务启动竞争。runner 会逐场调用 `run-scenario.ps1`，后者执行 `docker compose up --build`；预检通过后仍需预留矩阵构建与运行时间。矩阵采用独立 Compose project，结束时停止该 project，不删除数据卷。
+
+矩阵在每个故障窗口内用 gateway `127.0.0.1:18080/deployments` 取 orders 发布记录，用 orders `127.0.0.1:18081/logs` 取日志；二者共享同一实际 UTC `start/end` 窗口。`bad_release` 最多轮询日志 10 秒，等待下游 DNS 错误记录落盘。`18081` 是 orders 服务，`/deployments` 只由 gateway 提供，访问 `18081/deployments` 会得到 404。结果保留部署记录及版本是否匹配。正常基线要求 HTTP 200 和 v1 发布记录；`bad_release` 接受 gateway 的 502/504 上游失败状态，并要求 v2 发布记录及 inventory-v2 DNS 故障日志。
+
+用户宿主回传中 gateway HTTP 504、orders `inventory-v2` DNS 失败和 BrokenPipe，与配置故障一致；BrokenPipe 可能是 gateway 超时后下游才结束请求的次生现象。旧 gateway 对 orders 等待上限为 3 秒，可能早于下游 DNS 错误完成。现在上限改为 10 秒；orders 在 inventory 请求失败时也会记录脱敏后的目标 hostname 和错误原因。启动流程先做有界 readiness；目的是让下游失败先返回，避免过早断开连接。该解释基于源码和用户日志，修复效果仍需宿主复跑确认。故意错误的 `inventory-v2` 仍保留为 bad_release 注入。
 
 2026-11-12 执行环境前置检查：七个映射端口均空闲，但本执行环境无法连接 Docker Desktop Linux Engine，镜像状态无法读取；矩阵未启动、未注入故障、未生成 live 证据。用户此前提供的 Docker 版本输出显示其桌面 Engine 可运行；两者是不同执行环境，不能互相代替。

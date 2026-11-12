@@ -36,6 +36,7 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
 REDIS_HOST = os.environ.get("REDIS_HOST", "")
 INVENTORY_URL = os.environ.get("INVENTORY_URL", "http://inventory:8080")
 PAYMENT_URL = os.environ.get("PAYMENT_URL", "http://payment:8080")
+ORDERS_REQUEST_TIMEOUT_SECONDS = 10.0
 ORDERS_URL = os.environ.get("ORDERS_URL", "http://orders:8080")
 LOCK = threading.Lock()
 LOGS: deque[dict[str, Any]] = deque(maxlen=5000)
@@ -247,7 +248,7 @@ class Handler(BaseHTTPRequestHandler):
                 span.set_attribute("http.request.method", "POST")
                 span.set_attribute("http.route", urlsplit(self.path).path)
                 if SERVICE == "gateway" and urlsplit(self.path).path == "/checkout":
-                    result = json_call(f"{ORDERS_URL}/orders", payload, timeout=3.0)
+                    result = json_call(f"{ORDERS_URL}/orders", payload, timeout=ORDERS_REQUEST_TIMEOUT_SECONDS)
                 elif SERVICE == "orders" and urlsplit(self.path).path == "/orders":
                     result = self.place_order(payload)
                 elif SERVICE == "inventory" and urlsplit(self.path).path == "/reserve":
@@ -305,6 +306,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             inventory = json_call(f"{INVENTORY_URL}/reserve", {"order_id": order_id}, timeout=0.5)
         except (TimeoutError, URLError) as exc:
+            reason = getattr(exc, "reason", exc)
+            emit("error", "inventory dependency failed", error_type=type(exc).__name__,
+                dependency_host=urlsplit(INVENTORY_URL).hostname, error_reason=str(reason)[:160])
             raise RuntimeError("inventory dependency failed") from exc
         retries = 4 if FAULT == "retry_storm" else 1
         payment: dict[str, Any] = {}

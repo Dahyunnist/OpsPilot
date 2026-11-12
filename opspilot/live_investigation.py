@@ -92,6 +92,8 @@ def investigate_live(start: str, end: str, limit: int = 100,
                 retry_logs[row["trace_id"]].append(row)
             if row.get("service") == "orders" and "payment attempt failed" in message and attrs.get("error_type") == "TimeoutError":
                 support("payment_dependency_timeout", row, "orders payment call exceeded its client timeout")
+            if row.get("service") == "orders" and attrs.get("dependency_host") == "inventory-v2" and attrs.get("error_type") == "URLError":
+                support("invalid_release_configuration", row, "orders inventory hostname is not a configured Compose service")
             if row.get("service") == "orders" and str(attrs.get("error_type", "")).lower() in {"operationalerror", "interfaceerror"}:
                 support("database_pool_exhaustion", row, "orders database request returned a connection error")
         if row["source"] == "traces":
