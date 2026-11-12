@@ -13,13 +13,13 @@ python -m opspilot.action_cli approve --case-id lab-release-01 --action rollback
 python -m opspilot.action_cli dry-run --approval-file var/action-approvals/<approval-id>.json --environment test --dry-run
 ```
 
-Dry-run 仅写本地审计。报告固定 `external_system_calls=0`、`external_writes=0`。回滚结果与健康检查都标为模拟；不访问 Docker、MCP、生产 API 或业务系统。
+Dry-run 只在本地模拟并写本地审计；不会对业务系统执行写入。报告固定 `external_system_calls=0`、`external_writes=0`。回滚结果与健康检查都标为模拟；不访问 Docker、MCP、生产 API 或业务系统。
 
 ## 攻击测试
 
 回归覆盖过期批准、票据重放、production 环境错配、签名篡改、agent 角色越权、错误角色与 production 票据签发。测试验证拒绝原因留在本地审计，且没有外部调用。live MCP 工具清单只含查询与调查工具；没有签发或执行动作工具。
 
-损坏的审计 JSONL 也会 fail closed：执行器拒绝 dry-run，不覆盖或追加损坏账本。该保护由离线回归验证。
+签名批准链测试建议与批准的动作/目标一致，再核对批准 ID 与 `dry_run_completed` 审计记录。这里没有单独的人工复核状态或业务执行步骤。损坏的审计 JSONL 也会 fail closed：执行器拒绝 dry-run，不覆盖或追加损坏账本。上述保护由离线回归验证。
 
 ## 限制
 
