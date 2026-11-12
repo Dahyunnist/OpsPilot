@@ -6,6 +6,8 @@
     {"case_id": "lab-release-01", "fault": "bad_release", "root_causes": ["invalid_release_configuration"], "must_observe": ["orders_v2", "inventory_connection_errors"]},
     {"case_id": "lab-sql-01", "fault": "slow_sql", "root_causes": ["slow_database_query"], "must_observe": ["postgres_slow_query", "orders_latency"]},
     {"case_id": "lab-retry-01", "fault": "retry_storm", "root_causes": ["retry_amplification"], "must_observe": ["payment_attempts", "orders_retry_logs"]},
-    {"case_id": "lab-double-01", "fault": "double_root", "root_causes": ["slow_database_query", "payment_dependency_timeout"], "must_observe": ["postgres_slow_query", "payment_latency", "orders_timeout"]}
+    {"case_id": "lab-double-01", "fault": "double_root", "root_causes": ["slow_database_query", "payment_dependency_timeout"], "must_observe": ["postgres_slow_query", "payment_latency", "orders_timeout"]},
+    {"case_id": "lab-inventory-latency-01", "fault": "inventory_latency", "root_causes": ["inventory_dependency_latency"], "must_observe": ["inventory_duration", "orders_latency"]},
+    {"case_id": "lab-payment-reject-01", "fault": "payment_reject", "root_causes": ["payment_service_rejection"], "must_observe": ["payment_503", "orders_payment_attempt_failure"]}
   ]
 }

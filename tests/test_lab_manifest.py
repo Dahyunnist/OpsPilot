@@ -15,13 +15,24 @@ class LabManifestTests(unittest.TestCase):
         truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
         cases = truth["cases"]
         mechanisms = {case["fault"] for case in cases}
-        self.assertEqual(len(cases), 6)
-        self.assertEqual(len(mechanisms), 6)
-        self.assertEqual(len({case["case_id"] for case in cases}), 6)
+        self.assertEqual(len(cases), 8)
+        self.assertEqual(len(mechanisms), 8)
+        case_ids = {case["case_id"] for case in cases}
+        self.assertEqual(len(case_ids), len(cases))
+        self.assertEqual(case_ids, {case["case_id"] for case in truth["cases"]})
         self.assertTrue(any(len(case["root_causes"]) > 1 for case in cases))
         for case in cases:
             self.assertTrue(case["must_observe"])
             self.assertTrue(case["root_causes"])
+
+    def test_new_fault_mechanisms_have_distinct_injection_and_truth_signals(self) -> None:
+        truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
+        cases = {case["fault"]: case for case in truth["cases"]}
+        self.assertEqual(["inventory_dependency_latency"], cases["inventory_latency"]["root_causes"])
+        self.assertEqual(["payment_service_rejection"], cases["payment_reject"]["root_causes"])
+        source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
+        self.assertIn('FAULT == "inventory_latency"', source)
+        self.assertIn('FAULT == "payment_reject"', source)
 
     def test_service_has_no_network_fault_control_route(self) -> None:
         source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")

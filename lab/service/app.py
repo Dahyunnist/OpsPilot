@@ -317,6 +317,8 @@ class Handler(BaseHTTPRequestHandler):
         return {"order_id": order_id, "inventory": inventory.get("reserved", False), "payment": payment.get("charged", False)}
 
     def reserve_inventory(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if FAULT == "inventory_latency":
+            time.sleep(0.8)
         sku = str(payload.get("sku", "demo-1"))
         with db_connect() as connection:
             row = connection.execute("UPDATE inventory SET available=available-1 WHERE sku=%s AND available>0 RETURNING available", (sku,)).fetchone()
@@ -324,6 +326,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def charge(self, payload: dict[str, Any]) -> dict[str, Any]:
         global PAYMENT_FAILURES_REMAINING
+        if FAULT == "payment_reject":
+            raise ResponseError(503, "synthetic payment rejection")
         if FAULT in {"dependency_timeout", "double_root"}:
             time.sleep(2.0)
         if FAULT == "retry_storm":
