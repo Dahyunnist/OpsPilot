@@ -12,3 +12,7 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "volume_deletion=$false" in script
     assert "-v" not in script and "docker volume rm" not in script
     assert truth.count('"case_id"') == 12
+    stage_doc = (ROOT / "docs/learning/stage-OP1.md").read_text(encoding="utf-8")
+    assert "当前列出十二个" in stage_doc
+    assert "run-host-matrix.ps1" in stage_doc and "docker compose up --build" in stage_doc
+    assert "本执行环境无法连接 Docker Desktop Linux Engine" in stage_doc
