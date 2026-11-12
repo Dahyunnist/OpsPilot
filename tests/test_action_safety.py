@@ -74,6 +74,18 @@ class ActionSafetyTests(unittest.TestCase):
                 execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
+    def test_recommendation_approval_dry_run_and_review_state_chain(self) -> None:
+        recommendation = {"case_id": "lab-release-01", "action": "rollback_release", "target": "orders"}
+        approval = self.approval(case_id=recommendation["case_id"], action=recommendation["action"],
+            target=recommendation["target"], role="release_manager")
+        self.assertEqual((recommendation["action"], recommendation["target"]), (approval["action"], approval["target"]))
+        result = execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+        self.assertEqual("simulated_execution", result["status"])
+        self.assertFalse(result["rollback_verification"]["real_environment_verified"])
+        self.assertEqual(0, result["external_system_calls"])
+        self.assertEqual(0, result["external_writes"])
+        self.assertEqual("dry_run_completed", self.events()[0]["event_type"])
+
     def test_agent_or_wrong_role_cannot_escalate_action_scope(self) -> None:
         with self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
             self.approval(role="agent")
