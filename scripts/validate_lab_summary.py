@@ -40,6 +40,24 @@ def validate(summary_path: Path, reports_dir: Path) -> list[str]:
                 errors.append(f"{strategy}: invalid failure_rate")
     if summary.get("evidence_kind") != "historical_fixed_snapshot" or summary.get("live_experiment") is not False:
         errors.append("summary must be labeled historical and non-live")
+    # Always-multi must not receive a quality score when every saved run failed.
+    multi = metrics.get("multi", {})
+    multi_failures = [
+        case.get("case_id") for case in cases
+        if case.get("strategies", {}).get("multi", {}).get("evaluation_status") == "failed"
+    ]
+    if len(multi_failures) != len(cases) or multi.get("failed_cases") != len(cases):
+        errors.append("multi: expected every fixed case to be failed")
+    for field in ("top1_rate", "mean_top3_recall", "false_positives", "evidence_precision", "evidence_recall", "cost_per_exact_success_usd"):
+        if multi.get(field) is not None:
+            errors.append(f"multi: {field} must be null when all cases failed")
+    if multi.get("failures") != summary.get("failure_cases", {}).get("multi"):
+        errors.append("multi: failure samples differ from summary failure_cases")
+    if [row.get("case_id") for row in multi.get("failures", [])] != multi_failures:
+        errors.append("multi: failure samples differ from failed raw cases")
+    # Auto evidence is limited to the six checked-in raw reports; it is not a live matrix.
+    if metrics.get("auto", {}).get("cases") != len(cases) or summary.get("live_experiment") is not False:
+        errors.append("auto: sample scope must match historical fixed cases")
     return errors
 
 
