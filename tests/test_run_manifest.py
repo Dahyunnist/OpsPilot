@@ -13,7 +13,7 @@ def valid_manifest():
         "runtime_digest": "python-3.14", "max_steps": 12, "max_tokens": 35000,
         "scorer_sha": "e" * 64, "gold_source": "independent", "cost_usd_estimate": None,
         "started_at": "2026-11-11T00:00:00Z", "ended_at": "2026-11-11T00:01:00+00:00",
-        "status": "completed",
+        "status": "completed", "run_id": "run-s4-synthetic-v1", "trace_id": "trace-s4-synthetic-v1",
     }
 
 
@@ -48,6 +48,15 @@ class RunManifestTests(unittest.TestCase):
     def test_max_tokens_budget_is_not_sensitive_data(self):
         manifest = valid_manifest()
         self.assertEqual([], validate_run_manifest(manifest))
+
+    def test_events_require_standard_type_and_trace_context(self):
+        manifest = valid_manifest()
+        manifest["events"] = [{"event_type": "retry", "run_id": "r1", "trace_id": "t1", "span_id": "s1"}]
+        self.assertEqual([], validate_run_manifest(manifest))
+        manifest["events"] = [{"event_type": "mystery", "run_id": "r1"}]
+        errors = validate_run_manifest(manifest)
+        self.assertIn("event has unsupported event_type", errors)
+        self.assertIn("event requires run_id, trace_id, and span_id", errors)
 
 
 if __name__ == "__main__":

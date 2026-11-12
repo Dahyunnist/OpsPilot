@@ -12,11 +12,13 @@ REQUIRED = {
     "split", "model_id", "prompt_sha", "tool_schema_sha", "runtime_digest",
     "max_steps", "max_tokens", "scorer_sha", "gold_source", "cost_usd_estimate",
     "started_at", "ended_at", "status",
+    "run_id", "trace_id",
 }
 SENSITIVE_KEYS = re.compile(r"(api.?key|secret|password|token|private.?key|chain.?of.?thought|raw.?prompt)", re.I)
 SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
 SHA256 = re.compile(r"^[0-9a-f]{64}$", re.I)
 STATUSES = {"completed", "failed", "cancelled", "budget_exceeded"}
+EVENT_TYPES = {"timeout", "retry", "budget_exceeded", "unsafe_action_blocked", "cancel", "checkpoint_resume"}
 
 
 def validate_run_manifest(value: Any) -> list[str]:
@@ -51,6 +53,18 @@ def validate_run_manifest(value: Any) -> list[str]:
             errors.append("ended_at must not precede started_at")
     if "status" in value and value["status"] not in STATUSES:
         errors.append("status is not supported")
+    for field in ("run_id", "trace_id"):
+        if field in value and (not isinstance(value[field], str) or not value[field].strip()):
+            errors.append(f"{field} must be a non-empty string")
+    if "events" in value:
+        if not isinstance(value["events"], list):
+            errors.append("events must be a list")
+        else:
+            for event in value["events"]:
+                if not isinstance(event, dict) or event.get("event_type") not in EVENT_TYPES:
+                    errors.append("event has unsupported event_type")
+                if not isinstance(event, dict) or not event.get("run_id") or not event.get("trace_id") or not event.get("span_id"):
+                    errors.append("event requires run_id, trace_id, and span_id")
     for field in ("max_steps", "max_tokens"):
         if field in value and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
             errors.append(f"{field} must be a positive integer")
