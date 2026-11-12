@@ -59,6 +59,30 @@ class TelemetryRobustnessTests(unittest.TestCase):
         self.assertTrue(cited)
         self.assertLessEqual(cited, available)
 
+    def test_request_delta_without_spans_warns_sampling_bias_and_abstains(self):
+        sources, window = self.load("dependency_timeout")
+        sparse = copy.deepcopy(sources)
+        sparse["traces"]["records"] = []
+        sparse["metrics"]["records"].extend([
+            {"record_id": "metrics:request-start", "source": "metrics", "service": "orders",
+             "timestamp": window["fault_window_start"], "attributes": {"name": "opspilot_http_requests_total", "value": 0, "version": "v1"}, "raw": {}},
+            {"record_id": "metrics:request-end", "source": "metrics", "service": "orders",
+             "timestamp": window["fault_window_end"], "attributes": {"name": "opspilot_http_requests_total", "value": 10, "version": "v1"}, "raw": {}},
+        ])
+        report = inspect(sparse, window)
+        self.assertIn("possible_trace_sampling_bias", report["quality"]["warnings"])
+        self.assertNotIn("payment_dependency_timeout", report["root_causes"])
+        self.assertEqual("abstain", report["confidence"])
+
+    def test_logs_without_trace_id_are_flagged_and_not_used_as_causal_link(self):
+        sources, window = self.load("dependency_timeout")
+        missing_ids = copy.deepcopy(sources)
+        for row in missing_ids["logs"]["records"]:
+            row["trace_id"] = None
+        report = inspect(missing_ids, window)
+        self.assertIn("missing_trace_context", report["quality"]["warnings"])
+        self.assertTrue(all(ref["record_id"] for ref in report["evidence_refs"]))
+
     def test_out_of_order_records_are_order_independent(self):
         for case in CASES:
             with self.subTest(case=case):
