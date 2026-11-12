@@ -50,6 +50,15 @@ class TelemetryRobustnessTests(unittest.TestCase):
         self.assertIn("abstain", report["confidence"])
         self.assertEqual([], report["quality"]["warnings"])
 
+    def test_evidence_references_point_to_records_present_in_fixture(self):
+        sources, window = self.load("slow_sql")
+        report = inspect(sources, window)
+        available = {(source, row["record_id"])
+                     for source, result in sources.items() for row in result.get("records", [])}
+        cited = {(ref["source"], ref["record_id"]) for ref in report["evidence_refs"]}
+        self.assertTrue(cited)
+        self.assertLessEqual(cited, available)
+
     def test_out_of_order_records_are_order_independent(self):
         for case in CASES:
             with self.subTest(case=case):
