@@ -49,6 +49,10 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 离线静态与 PowerShell 合约测试不代表宿主矩阵已运行。
 
+2026-11-13 宿主最终矩阵通过，项目 `opspilot-matrix-ed1798ae`：正常对照通过，12/12 故障案例通过；所有案例均观测到日志和 trace，`cleanup.empty=true`、`stop_exit=0`，未删除卷。运行窗口 07:08:20–07:10:46 UTC，约 2 分 26 秒。验证代码提交 `967a4ec`。Docker CLI Client `29.1.3`；实验服务使用 `python:3.12-slim` / Python 3.12。Docker Engine Server 版本未写入宿主报告，当前执行环境也无权读取，故不推测。完整合成实验报告见 [最终宿主矩阵](../../reports/op1-host-matrix.json)。该矩阵只证明此固定本机合成环境和本次窗口，不代表生产系统、模型 Agent 诊断准确性或泛化能力。
+
+失败迭代留档：首次收紧后 0/12；随后补足逐项映射后 4/12；修复 inventory 故障环境注入与 trace 等待后 6/12；延长 `inventory_latency` 的订单依赖超时后 12/12。各次完整报告分别见 `op1-host-matrix-039e015c-failed.json`、`op1-host-matrix-12a19a4f-failed.json`、`op1-host-matrix-52df8c65-failed.json` 和 `op1-host-matrix-e5a90baa-11of12.json`。
+
 2026-11-13 宿主矩阵首次运行：正常基线通过；12 个故障案例均未通过完整验收，尽管 HTTP/部署检查通过。报告见 [首次失败矩阵](../../reports/op1-host-matrix-039e015c-failed.json)。主要缺口是 Jaeger 查询未等待异步导出，且案例窗口回看 2 秒会混入前一案例发布记录。已将窗口起点改为注入前即时刻，并增加当前订单 trace 最多 10 秒轮询。此次执行环境无法连接宿主 Docker Desktop，因此修复后的矩阵尚未复跑；不得视为通过。
 
 后续宿主复跑 4/12 案例通过，8/12 失败。报告现保存 `query_scope`、`raw_matches`；此次发现轮询在任一 trace 出现时提前结束，未等齐场景要求的子 span。现在轮询直到所有 `must_observe` 日志/trace 信号出现或 10 秒上限，并在每案保存去敏窗口日志与 span 摘要。修复仍待用户宿主复跑确认。

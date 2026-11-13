@@ -1,0 +1,5224 @@
+{
+  "cases": [
+    {
+      "case_id": "lab-pool-01",
+      "scenario": "db_pool_exhaustion",
+      "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+      "start": "2026-11-13T07:08:20.9940212Z",
+      "end": "2026-11-13T07:08:32.5402863Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:08:30.084Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:30.94Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "database sessions remain occupied",
+          "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:30.943Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "OperationalError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:08:30.043Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:27.211Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "36daab2a-ae6b-42d6-b6d2-df4c8b854168",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:08:30.8227662Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 2,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "orders",
+          "trace_id": "0d3801308edcf78649059fb46d155f22",
+          "span_id": "19a059c73dea0399",
+          "operation": "orders/orders",
+          "start": 1794553710870578,
+          "duration": 72832,
+          "status": null,
+          "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "0d3801308edcf78649059fb46d155f22",
+          "span_id": "76f74e3d43a43f92",
+          "operation": "gateway/checkout",
+          "start": 1794553710858172,
+          "duration": 86967,
+          "status": null,
+          "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "orders_db_errors",
+        "db_session_pressure"
+      ],
+      "signal_results": [
+        {
+          "name": "orders_db_errors",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:30:request failed:matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:30.943Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/orders"
+                },
+                {
+                  "key": "error_type",
+                  "value": "OperationalError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+            "end": "2026-11-13T07:08:32.5402863Z",
+            "start": "2026-11-13T07:08:20.9940212Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:30:request failed:matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:30.943Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/orders"
+                },
+                {
+                  "key": "error_type",
+                  "value": "OperationalError"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "db_session_pressure",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:30:database sessions remain occupied:matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:30.94Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "database sessions remain occupied",
+              "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+            "end": "2026-11-13T07:08:32.5402863Z",
+            "start": "2026-11-13T07:08:20.9940212Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:30:database sessions remain occupied:matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:30.94Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "database sessions remain occupied",
+              "order_id": "matrix-db_pool_exhaustion-4a77cd37-c9dd-4775-b386-160951a2ce27",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-dependency-01",
+      "scenario": "dependency_timeout",
+      "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+      "start": "2026-11-13T07:08:32.710188Z",
+      "end": "2026-11-13T07:08:45.0177635Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 7,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:08:41.685Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:42.9Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+          "span_id": "3e7ac87c0693d80c",
+          "service_version": "v1",
+          "error_type": "TimeoutError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 1,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:42.905Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "RuntimeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:08:41.64Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:42.499Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:08:38.837Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:44.503Z",
+          "service": "payment",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "BrokenPipeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "8fa90433-71cd-4148-af35-98f37cbfe7e6",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:08:42.4638881Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 4,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "inventory",
+          "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+          "span_id": "208db59b891dba44",
+          "operation": "inventory/reserve",
+          "start": 1794553722489805,
+          "duration": 9709,
+          "status": 200,
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+          "span_id": "3e7ac87c0693d80c",
+          "operation": "orders/orders",
+          "start": 1794553722474003,
+          "duration": 431221,
+          "status": null,
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+          "span_id": "734475305ecbc888",
+          "operation": "gateway/checkout",
+          "start": 1794553722464804,
+          "duration": 442549,
+          "status": null,
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+          "span_id": "ed669650b07abebf",
+          "operation": "payment/charge",
+          "start": 1794553722503114,
+          "duration": 2000284,
+          "status": 200,
+          "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "payment_latency",
+        "orders_timeout"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_latency",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "837eb78ec1b69c2ba200b80e6939ccb5:ed669650b07abebf",
+              "service": "payment",
+              "timestamp": null,
+              "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+              "span_id": "ed669650b07abebf",
+              "operation": "payment/charge",
+              "message": null,
+              "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/charge"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+            "end": "2026-11-13T07:08:45.0177635Z",
+            "start": "2026-11-13T07:08:32.710188Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "837eb78ec1b69c2ba200b80e6939ccb5:ed669650b07abebf",
+              "service": "payment",
+              "timestamp": null,
+              "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+              "span_id": "ed669650b07abebf",
+              "operation": "payment/charge",
+              "message": null,
+              "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/charge"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_timeout",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:42:payment attempt failed:matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:42.9Z",
+              "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+              "span_id": "3e7ac87c0693d80c",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "TimeoutError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+            "end": "2026-11-13T07:08:45.0177635Z",
+            "start": "2026-11-13T07:08:32.710188Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:42:payment attempt failed:matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:42.9Z",
+              "trace_id": "837eb78ec1b69c2ba200b80e6939ccb5",
+              "span_id": "3e7ac87c0693d80c",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-dependency_timeout-a6c0641c-f35f-4ab0-80ef-c1ed8f133b57",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "TimeoutError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-release-01",
+      "scenario": "bad_release",
+      "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+      "start": "2026-11-13T07:08:45.1434019Z",
+      "end": "2026-11-13T07:09:00.1073023Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        502,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:08:54.211Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v2",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:59.064Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "inventory dependency failed",
+          "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+          "trace_id": "1faae2be37bc569cca8a25d44cd106bb",
+          "span_id": "77db55390df96a84",
+          "service_version": "v2",
+          "error_type": "URLError",
+          "error_reason": "[Errno -5] No address associated with hostname",
+          "dependency_host": "inventory-v2",
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:59.07Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v2",
+          "error_type": "RuntimeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:08:54.173Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:08:51.383Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "bd83386f-f4f9-4867-8b3d-ae860adae7a9",
+          "version": "v2",
+          "timestamp": "2026-11-13T07:08:55.0304968Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v2",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 2,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "orders",
+          "trace_id": "1faae2be37bc569cca8a25d44cd106bb",
+          "span_id": "77db55390df96a84",
+          "operation": "orders/orders",
+          "start": 1794553735049811,
+          "duration": 4020669,
+          "status": null,
+          "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "1faae2be37bc569cca8a25d44cd106bb",
+          "span_id": "5267b1b2a7055eea",
+          "operation": "gateway/checkout",
+          "start": 1794553735039963,
+          "duration": 4034146,
+          "status": null,
+          "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "orders_v2",
+        "inventory_connection_errors"
+      ],
+      "signal_results": [
+        {
+          "name": "orders_v2",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "deployments",
+              "record_id": "bd83386f-f4f9-4867-8b3d-ae860adae7a9",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:55.0304968Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": null,
+              "order_id": null,
+              "attributes": null
+            }
+          ],
+          "query_scope": {
+            "source": "deployments",
+            "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+            "end": "2026-11-13T07:09:00.1073023Z",
+            "start": "2026-11-13T07:08:45.1434019Z"
+          },
+          "raw_matches": [
+            {
+              "source": "deployments",
+              "record_id": "bd83386f-f4f9-4867-8b3d-ae860adae7a9",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:55.0304968Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": null,
+              "order_id": null,
+              "attributes": null
+            }
+          ]
+        },
+        {
+          "name": "inventory_connection_errors",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:59:inventory dependency failed:matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:59.064Z",
+              "trace_id": "1faae2be37bc569cca8a25d44cd106bb",
+              "span_id": "77db55390df96a84",
+              "operation": null,
+              "message": "inventory dependency failed",
+              "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v2"
+                },
+                {
+                  "key": "error_type",
+                  "value": "URLError"
+                },
+                {
+                  "key": "dependency_host",
+                  "value": "inventory-v2"
+                },
+                {
+                  "key": "error_reason",
+                  "value": "[Errno -5] No address associated with hostname"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+            "end": "2026-11-13T07:09:00.1073023Z",
+            "start": "2026-11-13T07:08:45.1434019Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:08:59:inventory dependency failed:matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:08:59.064Z",
+              "trace_id": "1faae2be37bc569cca8a25d44cd106bb",
+              "span_id": "77db55390df96a84",
+              "operation": null,
+              "message": "inventory dependency failed",
+              "order_id": "matrix-bad_release-68527160-2952-429f-a9a6-af3a70da8fe5",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v2"
+                },
+                {
+                  "key": "error_type",
+                  "value": "URLError"
+                },
+                {
+                  "key": "dependency_host",
+                  "value": "inventory-v2"
+                },
+                {
+                  "key": "error_reason",
+                  "value": "[Errno -5] No address associated with hostname"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-sql-01",
+      "scenario": "slow_sql",
+      "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+      "start": "2026-11-13T07:09:00.1681646Z",
+      "end": "2026-11-13T07:09:13.0476738Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 6,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:09:09.82Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:12.002Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:09.771Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:11.997Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:06.918Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:12.002Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "757f8ed4-2ce4-4fba-a35d-c86da73c8f06",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:09:10.4339635Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 5,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "orders",
+          "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+          "span_id": "72e65d9ae272963d",
+          "operation": "orders/orders",
+          "start": 1794553750458506,
+          "duration": 1543959,
+          "status": 200,
+          "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+          "span_id": "c3b1c711364b25ed",
+          "operation": "payment/charge",
+          "start": 1794553752002118,
+          "duration": 31,
+          "status": 200,
+          "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+          "span_id": "4322ad679401c260",
+          "operation": "gateway/checkout",
+          "start": 1794553750447114,
+          "duration": 1555810,
+          "status": 200,
+          "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+            }
+          ]
+        },
+        {
+          "service": "inventory",
+          "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+          "span_id": "b7720ff84ec5897d",
+          "operation": "inventory/reserve",
+          "start": 1794553751989213,
+          "duration": 8181,
+          "status": 200,
+          "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+          "span_id": "cf376ed9b5b29141",
+          "operation": "postgres.query",
+          "start": 1794553750458553,
+          "duration": 1507666,
+          "status": null,
+          "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+          "attributes": [
+            {
+              "key": "db.system",
+              "value": "postgresql"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "postgres_slow_query",
+        "orders_latency"
+      ],
+      "signal_results": [
+        {
+          "name": "postgres_slow_query",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "74df6e698be0765c084f1de1fa7ca382:cf376ed9b5b29141",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+              "span_id": "cf376ed9b5b29141",
+              "operation": "postgres.query",
+              "message": null,
+              "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+              "attributes": [
+                {
+                  "key": "db.system",
+                  "value": "postgresql"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+            "end": "2026-11-13T07:09:13.0476738Z",
+            "start": "2026-11-13T07:09:00.1681646Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "74df6e698be0765c084f1de1fa7ca382:cf376ed9b5b29141",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+              "span_id": "cf376ed9b5b29141",
+              "operation": "postgres.query",
+              "message": null,
+              "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+              "attributes": [
+                {
+                  "key": "db.system",
+                  "value": "postgresql"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_latency",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "74df6e698be0765c084f1de1fa7ca382:72e65d9ae272963d",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+              "span_id": "72e65d9ae272963d",
+              "operation": "orders/orders",
+              "message": null,
+              "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/orders"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+            "end": "2026-11-13T07:09:13.0476738Z",
+            "start": "2026-11-13T07:09:00.1681646Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "74df6e698be0765c084f1de1fa7ca382:72e65d9ae272963d",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "74df6e698be0765c084f1de1fa7ca382",
+              "span_id": "72e65d9ae272963d",
+              "operation": "orders/orders",
+              "message": null,
+              "order_id": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/orders"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-slow_sql-45f86d85-856c-441c-bb97-f23f6128a990"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-retry-01",
+      "scenario": "retry_storm",
+      "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+      "start": "2026-11-13T07:09:13.15448Z",
+      "end": "2026-11-13T07:09:24.2595241Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 12,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:09:22.279Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.193Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "e584ec898bc567e4",
+          "service_version": "v1",
+          "error_type": "HTTPError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 1,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.194Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "e584ec898bc567e4",
+          "service_version": "v1",
+          "error_type": "HTTPError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 2,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.195Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "e584ec898bc567e4",
+          "service_version": "v1",
+          "error_type": "HTTPError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 3,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.196Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:22.232Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.188Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:19.391Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.192Z",
+          "service": "payment",
+          "severity": "warning",
+          "message": "request returned an error response",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 503,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.194Z",
+          "service": "payment",
+          "severity": "warning",
+          "message": "request returned an error response",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 503,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.195Z",
+          "service": "payment",
+          "severity": "warning",
+          "message": "request returned an error response",
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 503,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:23.196Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "67f94280-aee7-4174-b278-fd729d33ae79",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:09:23.1605666Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 7,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "payment",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "e5514e0761e26a4c",
+          "operation": "payment/charge",
+          "start": 1794553763192262,
+          "duration": 476,
+          "status": null,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "69bf3768da23a2a2",
+          "operation": "payment/charge",
+          "start": 1794553763193810,
+          "duration": 260,
+          "status": null,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "fa41281dd861c403",
+          "operation": "payment/charge",
+          "start": 1794553763195036,
+          "duration": 214,
+          "status": null,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "f77f6c6367a277fd",
+          "operation": "payment/charge",
+          "start": 1794553763196065,
+          "duration": 16,
+          "status": 200,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "efdb7ea3d37c2da4",
+          "operation": "gateway/checkout",
+          "start": 1794553763157205,
+          "duration": 39402,
+          "status": 200,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "inventory",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "21ec55b4fff840b6",
+          "operation": "inventory/reserve",
+          "start": 1794553763182267,
+          "duration": 6018,
+          "status": 200,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+          "span_id": "e584ec898bc567e4",
+          "operation": "orders/orders",
+          "start": 1794553763166242,
+          "duration": 30054,
+          "status": 200,
+          "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "payment_attempts",
+        "orders_retry_logs"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_attempts",
+          "observed": true,
+          "match_count": 3,
+          "minimum_count": 3,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.192Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.194Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.195Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+            "end": "2026-11-13T07:09:24.2595241Z",
+            "start": "2026-11-13T07:09:13.15448Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.192Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.194Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:09:23:request returned an error response:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:09:23.195Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_retry_logs",
+          "observed": true,
+          "match_count": 3,
+          "minimum_count": 3,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.193Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.194Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 2
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.195Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 3
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+            "end": "2026-11-13T07:09:24.2595241Z",
+            "start": "2026-11-13T07:09:13.15448Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.193Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.194Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 2
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:23:payment attempt failed:matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:23.195Z",
+              "trace_id": "b26f3c1128b6ed81b6362078c8e451ae",
+              "span_id": "e584ec898bc567e4",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-41f84d58-06ba-4449-a8f6-162ffa2cfc4e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 3
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-double-01",
+      "scenario": "double_root",
+      "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+      "start": "2026-11-13T07:09:24.4033416Z",
+      "end": "2026-11-13T07:09:38.3883886Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 7,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:09:33.534Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:36.32Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "700b7c9199d6f278",
+          "service_version": "v1",
+          "error_type": "TimeoutError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 1,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:36.346Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "RuntimeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:33.485Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:35.918Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:30.644Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:37.923Z",
+          "service": "payment",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "BrokenPipeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "6a752815-41e4-41e7-ad4a-3a4dd1f94285",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:09:34.2914027Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 5,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "payment",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "1162c23ecd95d1c2",
+          "operation": "payment/charge",
+          "start": 1794553775923202,
+          "duration": 2000406,
+          "status": 200,
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+            }
+          ]
+        },
+        {
+          "service": "inventory",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "6f6aa57eb926c259",
+          "operation": "inventory/reserve",
+          "start": 1794553775909143,
+          "duration": 9150,
+          "status": 200,
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "97fdfc33590aafa0",
+          "operation": "postgres.query",
+          "start": 1794553774374544,
+          "duration": 1510167,
+          "status": null,
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "attributes": [
+            {
+              "key": "db.system",
+              "value": "postgresql"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "700b7c9199d6f278",
+          "operation": "orders/orders",
+          "start": 1794553774374441,
+          "duration": 1972155,
+          "status": null,
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "2f0adc32454ce3007379490088cb6a24",
+          "span_id": "541b2bcbc003f2ff",
+          "operation": "gateway/checkout",
+          "start": 1794553774359188,
+          "duration": 1990251,
+          "status": null,
+          "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "postgres_slow_query",
+        "payment_latency",
+        "orders_timeout"
+      ],
+      "signal_results": [
+        {
+          "name": "postgres_slow_query",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "2f0adc32454ce3007379490088cb6a24:97fdfc33590aafa0",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "97fdfc33590aafa0",
+              "operation": "postgres.query",
+              "message": null,
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "db.system",
+                  "value": "postgresql"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+            "end": "2026-11-13T07:09:38.3883886Z",
+            "start": "2026-11-13T07:09:24.4033416Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "2f0adc32454ce3007379490088cb6a24:97fdfc33590aafa0",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "97fdfc33590aafa0",
+              "operation": "postgres.query",
+              "message": null,
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "db.system",
+                  "value": "postgresql"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "payment_latency",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "2f0adc32454ce3007379490088cb6a24:1162c23ecd95d1c2",
+              "service": "payment",
+              "timestamp": null,
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "1162c23ecd95d1c2",
+              "operation": "payment/charge",
+              "message": null,
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/charge"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+            "end": "2026-11-13T07:09:38.3883886Z",
+            "start": "2026-11-13T07:09:24.4033416Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "2f0adc32454ce3007379490088cb6a24:1162c23ecd95d1c2",
+              "service": "payment",
+              "timestamp": null,
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "1162c23ecd95d1c2",
+              "operation": "payment/charge",
+              "message": null,
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/charge"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_timeout",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:36:payment attempt failed:matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:36.32Z",
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "700b7c9199d6f278",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "TimeoutError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+            "end": "2026-11-13T07:09:38.3883886Z",
+            "start": "2026-11-13T07:09:24.4033416Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:09:36:payment attempt failed:matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:09:36.32Z",
+              "trace_id": "2f0adc32454ce3007379490088cb6a24",
+              "span_id": "700b7c9199d6f278",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-double_root-b793fbeb-ea11-4b78-850a-d78949647577",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "TimeoutError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-inventory-latency-01",
+      "scenario": "inventory_latency",
+      "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+      "start": "2026-11-13T07:09:38.4662554Z",
+      "end": "2026-11-13T07:09:50.6184001Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 6,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:09:47.816Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:49.525Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:47.773Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:49.516Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:44.904Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:09:49.524Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "e99d44c1-3a90-4b81-b2f8-37c6664e1e7c",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:09:48.6633745Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 4,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "inventory",
+          "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+          "span_id": "3d3dbce212e4764a",
+          "operation": "inventory/reserve",
+          "start": 1794553788696164,
+          "duration": 820184,
+          "status": 200,
+          "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+          "span_id": "ddb3b865037b9c35",
+          "operation": "orders/orders",
+          "start": 1794553788653730,
+          "duration": 871420,
+          "status": 200,
+          "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+          "span_id": "ea9534e85d89d157",
+          "operation": "payment/charge",
+          "start": 1794553789524619,
+          "duration": 49,
+          "status": 200,
+          "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+          "span_id": "245bcca7077f62d9",
+          "operation": "gateway/checkout",
+          "start": 1794553788645132,
+          "duration": 880507,
+          "status": 200,
+          "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "inventory_duration",
+        "orders_latency"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_duration",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "71ee3001c420ba080af7eb2aa5f0ef64:3d3dbce212e4764a",
+              "service": "inventory",
+              "timestamp": null,
+              "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+              "span_id": "3d3dbce212e4764a",
+              "operation": "inventory/reserve",
+              "message": null,
+              "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/reserve"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+            "end": "2026-11-13T07:09:50.6184001Z",
+            "start": "2026-11-13T07:09:38.4662554Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "71ee3001c420ba080af7eb2aa5f0ef64:3d3dbce212e4764a",
+              "service": "inventory",
+              "timestamp": null,
+              "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+              "span_id": "3d3dbce212e4764a",
+              "operation": "inventory/reserve",
+              "message": null,
+              "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/reserve"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_latency",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "71ee3001c420ba080af7eb2aa5f0ef64:ddb3b865037b9c35",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+              "span_id": "ddb3b865037b9c35",
+              "operation": "orders/orders",
+              "message": null,
+              "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/orders"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "traces",
+            "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+            "end": "2026-11-13T07:09:50.6184001Z",
+            "start": "2026-11-13T07:09:38.4662554Z"
+          },
+          "raw_matches": [
+            {
+              "source": "traces",
+              "record_id": "71ee3001c420ba080af7eb2aa5f0ef64:ddb3b865037b9c35",
+              "service": "orders",
+              "timestamp": null,
+              "trace_id": "71ee3001c420ba080af7eb2aa5f0ef64",
+              "span_id": "ddb3b865037b9c35",
+              "operation": "orders/orders",
+              "message": null,
+              "order_id": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30",
+              "attributes": [
+                {
+                  "key": "http.request.method",
+                  "value": "POST"
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": 200
+                },
+                {
+                  "key": "http.route",
+                  "value": "/orders"
+                },
+                {
+                  "key": "opspilot.order_id",
+                  "value": "matrix-inventory_latency-03e639f2-7216-4b2a-8ea7-a3b9cf40cd30"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-payment-reject-01",
+      "scenario": "payment_reject",
+      "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+      "start": "2026-11-13T07:09:50.6775963Z",
+      "end": "2026-11-13T07:10:01.4061729Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 7,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:09:59.53Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:00.383Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "payment attempt failed",
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+          "span_id": "32461aa5b37a04b2",
+          "service_version": "v1",
+          "error_type": "HTTPError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": 1,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:00.384Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "RuntimeError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:59.583Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:00.378Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:09:56.69Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:00.382Z",
+          "service": "payment",
+          "severity": "warning",
+          "message": "request returned an error response",
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 503,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "67d0c50d-c81c-4af5-a21b-89e527a19438",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:10:00.3074296Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 4,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "orders",
+          "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+          "span_id": "32461aa5b37a04b2",
+          "operation": "orders/orders",
+          "start": 1794553800356101,
+          "duration": 28143,
+          "status": null,
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e"
+            }
+          ]
+        },
+        {
+          "service": "inventory",
+          "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+          "span_id": "bdc4ef630d68e170",
+          "operation": "inventory/reserve",
+          "start": 1794553800372859,
+          "duration": 5998,
+          "status": 200,
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+          "span_id": "e7455d3502374b5c",
+          "operation": "payment/charge",
+          "start": 1794553800382443,
+          "duration": 473,
+          "status": null,
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+          "span_id": "1dce62dc34225aac",
+          "operation": "gateway/checkout",
+          "start": 1794553800344158,
+          "duration": 41256,
+          "status": null,
+          "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "payment_503",
+        "orders_payment_attempt_failure"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_503",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:10:00:request returned an error response:matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:10:00.382Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+            "end": "2026-11-13T07:10:01.4061729Z",
+            "start": "2026-11-13T07:09:50.6775963Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 07:10:00:request returned an error response:matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "service": "payment",
+              "timestamp": "2026-11-13T07:10:00.382Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/charge"
+                },
+                {
+                  "key": "status",
+                  "value": 503
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_payment_attempt_failure",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:00:payment attempt failed:matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:00.383Z",
+              "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+              "span_id": "32461aa5b37a04b2",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+            "end": "2026-11-13T07:10:01.4061729Z",
+            "start": "2026-11-13T07:09:50.6775963Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:00:payment attempt failed:matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:00.383Z",
+              "trace_id": "8f8a809e05d08f69395815f9e79b03a3",
+              "span_id": "32461aa5b37a04b2",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-payment_reject-a4db7492-b31e-432d-8843-dfa0c396a67e",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "attempt",
+                  "value": 1
+                },
+                {
+                  "key": "error_type",
+                  "value": "HTTPError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-stale-inventory-01",
+      "scenario": "stale_inventory",
+      "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+      "start": "2026-11-13T07:10:01.4890886Z",
+      "end": "2026-11-13T07:10:12.3242751Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 7,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:10:10.497Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:11.305Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:10.554Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:11.301Z",
+          "service": "inventory",
+          "severity": "warning",
+          "message": "inventory stale replica response",
+          "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+          "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+          "span_id": "f73fa8514bf6e22f",
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": 20,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:11.301Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:07.724Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:11.304Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "bc5e0b82-88fa-4ca0-ab7b-613989e6f591",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:10:11.2614994Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 4,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "inventory",
+          "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+          "span_id": "f73fa8514bf6e22f",
+          "operation": "inventory/reserve",
+          "start": 1794553811301300,
+          "duration": 81,
+          "status": 200,
+          "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+          "span_id": "16232dff4f4b9996",
+          "operation": "payment/charge",
+          "start": 1794553811304766,
+          "duration": 27,
+          "status": 200,
+          "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+          "span_id": "922661f714f01ed4",
+          "operation": "gateway/checkout",
+          "start": 1794553811276038,
+          "duration": 29364,
+          "status": 200,
+          "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+          "span_id": "775caaf838f80a19",
+          "operation": "orders/orders",
+          "start": 1794553811285744,
+          "duration": 19327,
+          "status": 200,
+          "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "inventory_stale_replica_response",
+        "inventory_remaining_20"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_stale_replica_response",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:11:inventory stale replica response:matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:11.301Z",
+              "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+              "span_id": "f73fa8514bf6e22f",
+              "operation": null,
+              "message": "inventory stale replica response",
+              "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 20
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+            "end": "2026-11-13T07:10:12.3242751Z",
+            "start": "2026-11-13T07:10:01.4890886Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:11:inventory stale replica response:matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:11.301Z",
+              "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+              "span_id": "f73fa8514bf6e22f",
+              "operation": null,
+              "message": "inventory stale replica response",
+              "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 20
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "inventory_remaining_20",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:11:inventory stale replica response:matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:11.301Z",
+              "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+              "span_id": "f73fa8514bf6e22f",
+              "operation": null,
+              "message": "inventory stale replica response",
+              "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 20
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+            "end": "2026-11-13T07:10:12.3242751Z",
+            "start": "2026-11-13T07:10:01.4890886Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:11:inventory stale replica response:matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:11.301Z",
+              "trace_id": "363d3dd16e765d8f4527947c8dabf469",
+              "span_id": "f73fa8514bf6e22f",
+              "operation": null,
+              "message": "inventory stale replica response",
+              "order_id": "matrix-stale_inventory-a4c21399-2222-4dce-8083-e6d23b9c1b04",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 20
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-duplicate-delivery-01",
+      "scenario": "duplicate_delivery",
+      "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+      "start": "2026-11-13T07:10:12.3811803Z",
+      "end": "2026-11-13T07:10:23.7117689Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 8,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:10:21.783Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:22.656Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "duplicate delivery replayed payment",
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "daf6c19680c8e009",
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:22.657Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:21.847Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:22.652Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:18.915Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:22.656Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:22.657Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "85a94834-e389-47bd-a342-de37ef11b340",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:10:22.6173368Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 5,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "inventory",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "db69081ce07b0802",
+          "operation": "inventory/reserve",
+          "start": 1794553822645825,
+          "duration": 6216,
+          "status": 200,
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "2f63e25ab5be4d67",
+          "operation": "payment/charge",
+          "start": 1794553822655999,
+          "duration": 28,
+          "status": 200,
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "31575c6b1df6de2a",
+          "operation": "payment/charge",
+          "start": 1794553822656988,
+          "duration": 24,
+          "status": 200,
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "8eb9a8c71b6d2cd0",
+          "operation": "gateway/checkout",
+          "start": 1794553822619119,
+          "duration": 38420,
+          "status": 200,
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+          "span_id": "daf6c19680c8e009",
+          "operation": "orders/orders",
+          "start": 1794553822629777,
+          "duration": 27454,
+          "status": 200,
+          "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "duplicate_delivery_replayed_payment",
+        "same_order_id"
+      ],
+      "signal_results": [
+        {
+          "name": "duplicate_delivery_replayed_payment",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:22:duplicate delivery replayed payment:matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:22.656Z",
+              "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+              "span_id": "daf6c19680c8e009",
+              "operation": null,
+              "message": "duplicate delivery replayed payment",
+              "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+            "end": "2026-11-13T07:10:23.7117689Z",
+            "start": "2026-11-13T07:10:12.3811803Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:22:duplicate delivery replayed payment:matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:22.656Z",
+              "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+              "span_id": "daf6c19680c8e009",
+              "operation": null,
+              "message": "duplicate delivery replayed payment",
+              "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "same_order_id",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:22:duplicate delivery replayed payment:matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:22.656Z",
+              "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+              "span_id": "daf6c19680c8e009",
+              "operation": null,
+              "message": "duplicate delivery replayed payment",
+              "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+            "end": "2026-11-13T07:10:23.7117689Z",
+            "start": "2026-11-13T07:10:12.3811803Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:22:duplicate delivery replayed payment:matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:22.656Z",
+              "trace_id": "29945be7f884a12a7776d227afeb4cc2",
+              "span_id": "daf6c19680c8e009",
+              "operation": null,
+              "message": "duplicate delivery replayed payment",
+              "order_id": "matrix-duplicate_delivery-cc280f2b-c649-426c-9c10-06c7204bea83",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-redis-unavailable-01",
+      "scenario": "redis_unavailable",
+      "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+      "start": "2026-11-13T07:10:23.7994345Z",
+      "end": "2026-11-13T07:10:35.0939553Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:10:33.247Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:34.099Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "cache connection failed",
+          "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+          "trace_id": "236920c0075584bb2ac3c2d2de393007",
+          "span_id": "aad06b28d33bac4a",
+          "service_version": "v1",
+          "error_type": "ConnectionError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:34.099Z",
+          "service": "orders",
+          "severity": "error",
+          "message": "request failed",
+          "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": "ConnectionError",
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:33.296Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:30.371Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "5cf76799-912d-40da-bffa-05b366ad1614",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:10:34.0092145Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 2,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "gateway",
+          "trace_id": "236920c0075584bb2ac3c2d2de393007",
+          "span_id": "1c5cf9544b94d9a7",
+          "operation": "gateway/checkout",
+          "start": 1794553834080620,
+          "duration": 20455,
+          "status": null,
+          "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611"
+            }
+          ]
+        },
+        {
+          "service": "orders",
+          "trace_id": "236920c0075584bb2ac3c2d2de393007",
+          "span_id": "aad06b28d33bac4a",
+          "operation": "orders/orders",
+          "start": 1794553834092171,
+          "duration": 7650,
+          "status": null,
+          "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "cache_connection_failed",
+        "orders_cache_error"
+      ],
+      "signal_results": [
+        {
+          "name": "cache_connection_failed",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:34:cache connection failed:matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:34.099Z",
+              "trace_id": "236920c0075584bb2ac3c2d2de393007",
+              "span_id": "aad06b28d33bac4a",
+              "operation": null,
+              "message": "cache connection failed",
+              "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "error_type",
+                  "value": "ConnectionError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+            "end": "2026-11-13T07:10:35.0939553Z",
+            "start": "2026-11-13T07:10:23.7994345Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:34:cache connection failed:matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:34.099Z",
+              "trace_id": "236920c0075584bb2ac3c2d2de393007",
+              "span_id": "aad06b28d33bac4a",
+              "operation": null,
+              "message": "cache connection failed",
+              "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "error_type",
+                  "value": "ConnectionError"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "orders_cache_error",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:34:request failed:matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:34.099Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/orders"
+                },
+                {
+                  "key": "error_type",
+                  "value": "ConnectionError"
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+            "end": "2026-11-13T07:10:35.0939553Z",
+            "start": "2026-11-13T07:10:23.7994345Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:34:request failed:matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:34.099Z",
+              "trace_id": null,
+              "span_id": null,
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-redis_unavailable-3d043d96-c3dc-42c2-8ae4-ae415b1ef611",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "error"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "path",
+                  "value": "/orders"
+                },
+                {
+                  "key": "error_type",
+                  "value": "ConnectionError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-inventory-depleted-01",
+      "scenario": "inventory_depleted",
+      "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+      "start": "2026-11-13T07:10:35.1429172Z",
+      "end": "2026-11-13T07:10:46.5972881Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 8,
+      "logs_observed": true,
+      "window_log_records": [
+        {
+          "timestamp": "2026-11-13T07:10:44.603Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:45.523Z",
+          "service": "orders",
+          "severity": "warning",
+          "message": "inventory reservation rejected",
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "ca8415ac9a8931fb",
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": 0,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:45.526Z",
+          "service": "orders",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/orders"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:44.665Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:45.522Z",
+          "service": "inventory",
+          "severity": "warning",
+          "message": "inventory exhausted",
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "9808c0ecd54f839d",
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": 0,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:45.522Z",
+          "service": "inventory",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/reserve"
+        },
+        {
+          "timestamp": "2026-11-13T07:10:41.799Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "service started",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": null,
+          "attempt": null,
+          "remaining": null,
+          "path": null
+        },
+        {
+          "timestamp": "2026-11-13T07:10:45.526Z",
+          "service": "payment",
+          "severity": "info",
+          "message": "request completed",
+          "order_id": null,
+          "trace_id": null,
+          "span_id": null,
+          "service_version": "v1",
+          "error_type": null,
+          "error_reason": null,
+          "dependency_host": null,
+          "status": 200,
+          "attempt": null,
+          "remaining": null,
+          "path": "/charge"
+        }
+      ],
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "cc4f096b-9c95-4d0b-a747-344dddb0ad3e",
+          "version": "v1",
+          "timestamp": "2026-11-13T07:10:45.4975903Z",
+          "service": "orders"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 4,
+      "traces_observed": true,
+      "window_trace_spans": [
+        {
+          "service": "orders",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "ca8415ac9a8931fb",
+          "operation": "orders/orders",
+          "start": 1794553845506806,
+          "duration": 19952,
+          "status": 200,
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/orders"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776"
+            }
+          ]
+        },
+        {
+          "service": "inventory",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "9808c0ecd54f839d",
+          "operation": "inventory/reserve",
+          "start": 1794553845522661,
+          "duration": 92,
+          "status": 200,
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/reserve"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776"
+            }
+          ]
+        },
+        {
+          "service": "payment",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "28af12c2d8bf6ddc",
+          "operation": "payment/charge",
+          "start": 1794553845526457,
+          "duration": 29,
+          "status": 200,
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/charge"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776"
+            }
+          ]
+        },
+        {
+          "service": "gateway",
+          "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+          "span_id": "8fc4b18afa903c66",
+          "operation": "gateway/checkout",
+          "start": 1794553845496992,
+          "duration": 30105,
+          "status": 200,
+          "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+          "attributes": [
+            {
+              "key": "http.request.method",
+              "value": "POST"
+            },
+            {
+              "key": "http.response.status_code",
+              "value": 200
+            },
+            {
+              "key": "http.route",
+              "value": "/checkout"
+            },
+            {
+              "key": "opspilot.order_id",
+              "value": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776"
+            }
+          ]
+        }
+      ],
+      "telemetry_observed": true,
+      "expected_signals": [
+        "inventory_remaining_zero",
+        "reservation_rejected"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_remaining_zero",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:45:inventory exhausted:matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:45.522Z",
+              "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+              "span_id": "9808c0ecd54f839d",
+              "operation": null,
+              "message": "inventory exhausted",
+              "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+            "end": "2026-11-13T07:10:46.5972881Z",
+            "start": "2026-11-13T07:10:35.1429172Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "inventory:11/13/2026 07:10:45:inventory exhausted:matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "service": "inventory",
+              "timestamp": "2026-11-13T07:10:45.522Z",
+              "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+              "span_id": "9808c0ecd54f839d",
+              "operation": null,
+              "message": "inventory exhausted",
+              "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "reservation_rejected",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:45:inventory reservation rejected:matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:45.523Z",
+              "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+              "span_id": "ca8415ac9a8931fb",
+              "operation": null,
+              "message": "inventory reservation rejected",
+              "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 0
+                }
+              ]
+            }
+          ],
+          "query_scope": {
+            "source": "logs",
+            "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+            "end": "2026-11-13T07:10:46.5972881Z",
+            "start": "2026-11-13T07:10:35.1429172Z"
+          },
+          "raw_matches": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 07:10:45:inventory reservation rejected:matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "service": "orders",
+              "timestamp": "2026-11-13T07:10:45.523Z",
+              "trace_id": "477b2916a3d10bdacb65ff7edfbe13b0",
+              "span_id": "ca8415ac9a8931fb",
+              "operation": null,
+              "message": "inventory reservation rejected",
+              "order_id": "matrix-inventory_depleted-9a058265-da2c-42e6-aed3-cb1477674776",
+              "attributes": [
+                {
+                  "key": "severity",
+                  "value": "warning"
+                },
+                {
+                  "key": "service_version",
+                  "value": "v1"
+                },
+                {
+                  "key": "remaining",
+                  "value": 0
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": true,
+      "live_run": true
+    }
+  ],
+  "volume_deletion": false,
+  "cleanup": {
+    "empty": true,
+    "remaining_error": null,
+    "stop_error": null,
+    "stop_exit": 0
+  },
+  "normal_control": {
+    "scenario": "none",
+    "start": "2026-11-13T07:08:11.287293Z",
+    "end": "2026-11-13T07:08:20.9114165Z",
+    "http_status": 200,
+    "error": null,
+    "log_count": 2,
+    "deployment_count": 1,
+    "deployment_records": [
+      {
+        "record_id": "39eb425a-fc00-4383-935d-5bbb65d0b08f",
+        "version": "v1",
+        "timestamp": "2026-11-13T07:08:18.7654769Z",
+        "service": "orders"
+      }
+    ],
+    "expected_deployment_version": "v1",
+    "expected_deployment_observed": true,
+    "passed": true
+  },
+  "project": "opspilot-matrix-ed1798ae",
+  "run_metadata": {
+    "tested_commit": "967a4ec",
+    "docker_cli_client": "29.1.3",
+    "docker_engine_server": "宿主矩阵报告未记录；当前执行环境无权读取",
+    "service_image": "python:3.12-slim",
+    "python_version": "3.12",
+    "started_utc": "2026-11-13T07:08:20Z",
+    "finished_utc": "2026-11-13T07:10:46Z",
+    "case_count": 12,
+    "passed_count": 12,
+    "failed_count": 0,
+    "synthetic_lab_only": true
+  }
+}
