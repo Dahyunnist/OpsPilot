@@ -1,0 +1,224 @@
+{
+  "evaluation": "s15_offline_mock_paired_ablation_v1",
+  "runner": "deterministic_mock_no_model_calls",
+  "benchmark": {
+    "manifest": {
+      "benchmark_id": "opspilot_causal_chains_v1",
+      "seed": 20261030,
+      "synthetic": true,
+      "cases": 100,
+      "family_counts": {
+        "pool_root": 20,
+        "configuration_root_with_downstream_symptoms": 20,
+        "downstream_root_with_pool_pressure": 20,
+        "independent_dual_fault": 20,
+        "insufficient_or_conflicted": 20
+      },
+      "split_policy": "Every family has 10 train, 4 validation, and 6 test cases; labels remain outside incident inputs.",
+      "provenance": "Synthetic records authored from the OpsPilot incident contract and OpenTelemetry semantic field conventions; no production or copied incident data.",
+      "splits": {
+        "train": {
+          "cases": 50,
+          "data_sha256": "bca3218fa70a490f5d5b977d410f3b01f0f15facc0dcb76b35fe2eadcf556d8f",
+          "labels_sha256": "ba336e9c0a07e32e0986d89bc8b67dbc8cc172895f1d4e2c845372317137b0e6"
+        },
+        "validation": {
+          "cases": 20,
+          "data_sha256": "7ce4315b1a7f4b7c1449b622e93999225e5ce8ce20fb79670db7ac7270c324d4",
+          "labels_sha256": "1dc80198185c4501c69be1ca9e297b21c3eed079cc8c8317b4b9a259b5b2000d"
+        },
+        "test": {
+          "cases": 30,
+          "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
+          "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1"
+        }
+      }
+    },
+    "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
+    "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1"
+  },
+  "strategies": [
+    "rules",
+    "single",
+    "always-multi",
+    "auto"
+  ],
+  "case_count_per_strategy": 30,
+  "metric_definitions": {
+    "root_cause_set_exact": "predicted cause set equals independent active_causes, among decidable cases",
+    "top1_active_cause": "first predicted cause belongs to active_causes, among decidable cases",
+    "top3_active_cause": "at least one active cause appears in first three predictions, among decidable cases",
+    "active_cause_recall_at_3": "micro recall over all independent active causes, among decidable cases",
+    "false_positives": "predicted causes outside active_causes; cause_rate denominator is all predicted causes",
+    "false_certainty": "number of insufficient-evidence cases with any predicted cause",
+    "insufficient_evidence_abstentions": "number of insufficient-evidence cases with no predicted cause",
+    "evidence_precision_recall": "micro set precision/recall against independent gold_evidence_ids, among decidable cases",
+    "estimated_cost_usd": "always zero: runner makes no model/provider calls; not an agent cost estimate",
+    "latency_ms": "local deterministic runner wall time; not model or end-to-end latency",
+    "cancellations_failures": "count of explicitly injected mock outcomes; default run injects neither"
+  },
+  "summaries": {
+    "rules": {
+      "decidable_cases": 24,
+      "root_cause_set_exact": {
+        "correct": 12,
+        "total": 24,
+        "rate": 0.5
+      },
+      "top1_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "top3_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "active_cause_recall_at_3": {
+        "recalled": 18,
+        "total": 30,
+        "rate": 0.6
+      },
+      "false_positives": {
+        "causes": 0,
+        "cases": 0,
+        "cause_rate": 0.0
+      },
+      "false_certainty": 0,
+      "insufficient_evidence_abstentions": 6,
+      "evidence_precision": 0.631578947368421,
+      "evidence_recall": 0.6,
+      "estimated_cost_usd": 0.0,
+      "model_calls": 0,
+      "latency_ms": {
+        "mean_local_runner": 0.002,
+        "p95_local_runner": 0.003
+      },
+      "cancellations": 0,
+      "failures": 0
+    },
+    "single": {
+      "decidable_cases": 24,
+      "root_cause_set_exact": {
+        "correct": 12,
+        "total": 24,
+        "rate": 0.5
+      },
+      "top1_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "top3_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "active_cause_recall_at_3": {
+        "recalled": 18,
+        "total": 30,
+        "rate": 0.6
+      },
+      "false_positives": {
+        "causes": 6,
+        "cases": 6,
+        "cause_rate": 0.25
+      },
+      "false_certainty": 6,
+      "insufficient_evidence_abstentions": 0,
+      "evidence_precision": 0.6875,
+      "evidence_recall": 0.55,
+      "estimated_cost_usd": 0.0,
+      "model_calls": 0,
+      "latency_ms": {
+        "mean_local_runner": 0.002,
+        "p95_local_runner": 0.003
+      },
+      "cancellations": 0,
+      "failures": 0
+    },
+    "always-multi": {
+      "decidable_cases": 24,
+      "root_cause_set_exact": {
+        "correct": 12,
+        "total": 24,
+        "rate": 0.5
+      },
+      "top1_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "top3_active_cause": {
+        "correct": 24,
+        "total": 24,
+        "rate": 1.0
+      },
+      "active_cause_recall_at_3": {
+        "recalled": 30,
+        "total": 30,
+        "rate": 1.0
+      },
+      "false_positives": {
+        "causes": 12,
+        "cases": 12,
+        "cause_rate": 0.2857142857142857
+      },
+      "false_certainty": 6,
+      "insufficient_evidence_abstentions": 0,
+      "evidence_precision": 0.75,
+      "evidence_recall": 0.9,
+      "estimated_cost_usd": 0.0,
+      "model_calls": 0,
+      "latency_ms": {
+        "mean_local_runner": 0.003,
+        "p95_local_runner": 0.005
+      },
+      "cancellations": 0,
+      "failures": 0
+    },
+    "auto": {
+      "decidable_cases": 24,
+      "root_cause_set_exact": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "top1_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "top3_active_cause": {
+        "correct": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "active_cause_recall_at_3": {
+        "recalled": 24,
+        "total": 30,
+        "rate": 0.8
+      },
+      "false_positives": {
+        "causes": 6,
+        "cases": 6,
+        "cause_rate": 0.2
+      },
+      "false_certainty": 0,
+      "insufficient_evidence_abstentions": 6,
+      "evidence_precision": 0.6521739130434783,
+      "evidence_recall": 0.75,
+      "estimated_cost_usd": 0.0,
+      "model_calls": 0,
+      "latency_ms": {
+        "mean_local_runner": 0.007,
+        "p95_local_runner": 0.011
+      },
+      "cancellations": 0,
+      "failures": 0
+    }
+  },
+  "interpretation": "Harness mechanics and route-policy behavior only. Mock predictions are not Agent outputs or evidence of model quality.",
+  "failure_sample_count": 54
+}

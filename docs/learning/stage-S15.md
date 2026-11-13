@@ -46,3 +46,22 @@ S13 validation 有 20 例。Auto 选择 rules 12 例、single-agent 4 例、mult
 ```
 
 测试输入 SHA-256：`fc392cc3f0218ceaf0c7b0aadc3f1f2452d92202efead7d78397c954645d7e50`。逐例模型输出、证据、路由、费用和哈希见 `reports/causal-routing-replication.json`。
+
+## 离线配对消融 harness
+
+新增 `scripts/evaluate_s15_mock_ablation.py`，对冻结的 `data/causal-benchmark` test 30 例逐案配对运行 `rules`、`single`、`always-multi` 与 `auto`。输入与独立 labels 分文件保存；运行前校验 manifest、病例 SHA-256 `78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd` 和 truth SHA-256 `223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1`。策略预测只读 incident 与规则调查报告，不读 labels。
+
+本 harness 用确定性 mock：`single` 取规则报告强候选首项；`always-multi` 取最多三个；`auto` 先调用真实 `select_route`，再按被选路线套用相同 mock 结果；`rules` 保留规则结论。它覆盖相同病例上的路线和汇总机制，不是 Agent 输出、模型质量对比或 live-model 结果。默认无模型调用、费用记为 `$0`；延迟仅为本地 mock runner wall time，不能代表模型或端到端延迟。
+
+报告定义完整根因集合准确率为预测集合等于 independent `active_causes`；Top-1/Top-3 衡量活动根因是否出现在对应排序前缀；根因召回为所有活动根因的 micro recall；误判统计预测中的非真值根因数和病例数；证据 P/R 为预测引用与 `gold_evidence_ids` 的 micro 集合 P/R。取消与执行失败只由显式 mock 注入产生，默认皆为零。根因不匹配、弃答错误和取消/失败样本写入 `failure_samples`，并单独导出 failures JSON。
+
+运行：
+
+```powershell
+python scripts/evaluate_s15_mock_ablation.py
+python -m unittest tests.test_s15_mock_ablation -v
+```
+
+需覆盖中断路径时，可用 `--inject-cancel auto:opx-...` 或 `--inject-failure single:opx-...` 注入已冻结病例；未知病例、策略或结果类型会被拒绝。汇总同时报告证据不足集的错误确定与正确弃答数。
+
+默认报告输出到 `reports/s15-offline-mock-ablation.json` 与 `reports/s15-offline-mock-ablation-failures.json`。这轮离线准备不调用付费模型；任何 live-model 配对实验须另行授权，并单独记录实际 Agent 结果。

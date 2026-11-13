@@ -1,0 +1,1256 @@
+[
+  {
+    "strategy": "rules",
+    "incident_id": "opx-1qw3ls9hey",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-1qw3ls9hey",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-5c41d37ef3",
+        "rec-951fc9c04c",
+        "rec-e3e59a2c45"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-1qw3ls9hey",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-5c41d37ef3",
+        "rec-951fc9c04c",
+        "rec-e3e59a2c45",
+        "rec-314af50d59",
+        "rec-58f1ab1a35",
+        "rec-762cf841f4",
+        "rec-d6276e3d06"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-1qw3ls9hey",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-5c41d37ef3",
+        "rec-951fc9c04c",
+        "rec-e3e59a2c45"
+      ]
+    },
+    "selected_route": "single-agent"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-52f355xe3s",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1721a8d248",
+        "rec-3eb1e0f822",
+        "rec-424aecbaa4",
+        "rec-6c146cc967",
+        "rec-c766c4c206",
+        "rec-c79a4ec9a5",
+        "rec-f61fc04d88"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-52f355xe3s",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1721a8d248",
+        "rec-424aecbaa4",
+        "rec-6c146cc967",
+        "rec-c79a4ec9a5",
+        "rec-f61fc04d88"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-5sun4486lm",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-2cb6e6f49d",
+        "rec-342d56cbb1",
+        "rec-38803584de",
+        "rec-759ed24275",
+        "rec-bc71f6278a",
+        "rec-d605692279",
+        "rec-e26177a1f0"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-5sun4486lm",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-2cb6e6f49d",
+        "rec-342d56cbb1",
+        "rec-759ed24275",
+        "rec-bc71f6278a",
+        "rec-e26177a1f0"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-5wa4huor41",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-5wa4huor41",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-3df4a3b02d",
+        "rec-59c3774927",
+        "rec-e0c732ec32"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-5wa4huor41",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-3df4a3b02d",
+        "rec-59c3774927",
+        "rec-e0c732ec32",
+        "rec-0104287553",
+        "rec-72a63d06d2",
+        "rec-c0c7c4e17a",
+        "rec-ebd38ff082"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-5wa4huor41",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-3df4a3b02d",
+        "rec-59c3774927",
+        "rec-e0c732ec32"
+      ]
+    },
+    "selected_route": "single-agent"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-5ze1sg7iw3",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-211366de1f",
+        "rec-32f17f2aec",
+        "rec-3fa6917ec9",
+        "rec-97e74d5c66",
+        "rec-b5396dff42",
+        "rec-c12ba26896",
+        "rec-dac23c58dd"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-5ze1sg7iw3",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-32f17f2aec",
+        "rec-3fa6917ec9",
+        "rec-b5396dff42",
+        "rec-c12ba26896",
+        "rec-dac23c58dd"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-63di9ej1vq",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-72c2553a43"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-63di9ej1vq",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-72c2553a43"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-6dmyydf121",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-057e642796",
+        "rec-83f305d090",
+        "rec-c904dd867a",
+        "rec-ef23c2c036"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-7cn58nc1dp",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-6041ebc663",
+        "rec-7b71c8749f",
+        "rec-ed0b0fc665",
+        "rec-0b4d1a596f"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-99bdevw907",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-23d2614bc2",
+        "rec-44991c37f5",
+        "rec-dd10e6684e",
+        "rec-2fd2b44917"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-as510bish2",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error"
+      ],
+      "evidence_ids": [
+        "rec-2f2421aa43"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-as510bish2",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-2f2421aa43",
+        "rec-438f236ac7"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-bivkwwym3t",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-d420e600fb"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-bivkwwym3t",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-d420e600fb"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-cbsyr2yjl9",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1cdc107522",
+        "rec-7027f6c119",
+        "rec-95767dbe84",
+        "rec-a18a930554",
+        "rec-a3efb6008d",
+        "rec-e2062ea26e",
+        "rec-f63003e6e0"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-cbsyr2yjl9",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1cdc107522",
+        "rec-a18a930554",
+        "rec-a3efb6008d",
+        "rec-e2062ea26e",
+        "rec-f63003e6e0"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-fvqdygxtzw",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-02168ba945",
+        "rec-57d3b9d62c",
+        "rec-716595b760",
+        "rec-b3c9a7389b"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-h9l9va4b67",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-h9l9va4b67",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-51003015b1",
+        "rec-d21b7a5bbf",
+        "rec-d65cd848e7"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-h9l9va4b67",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-51003015b1",
+        "rec-d21b7a5bbf",
+        "rec-d65cd848e7",
+        "rec-0fc67b2a96",
+        "rec-1d492e30f6",
+        "rec-aed56eab96",
+        "rec-e21ad31a2a"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-h9l9va4b67",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-51003015b1",
+        "rec-d21b7a5bbf",
+        "rec-d65cd848e7"
+      ]
+    },
+    "selected_route": "single-agent"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-htylp08qxb",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-5efc49082e",
+        "rec-75911b0ba5",
+        "rec-85504c05f6",
+        "rec-c963130611",
+        "rec-e112807bdb",
+        "rec-f06c2d2776",
+        "rec-f850f1e657"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-htylp08qxb",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-85504c05f6",
+        "rec-c963130611",
+        "rec-e112807bdb",
+        "rec-f06c2d2776",
+        "rec-f850f1e657"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-jx1p70g1tf",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error"
+      ],
+      "evidence_ids": [
+        "rec-83f90e5ff0"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-jx1p70g1tf",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-83f90e5ff0",
+        "rec-5bbecab6db"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-kd0bsjwhb7",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-3d8dbeb4c7",
+        "rec-73d4c863a3",
+        "rec-c2e5ac677c",
+        "rec-23c980f1f9"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-l1i63qkmrs",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-ed4d459998"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-l1i63qkmrs",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-ed4d459998"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-n01al8t03r",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-n01al8t03r",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-9ad09dd531",
+        "rec-c179979a04",
+        "rec-d8a122533d"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-n01al8t03r",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-9ad09dd531",
+        "rec-c179979a04",
+        "rec-d8a122533d",
+        "rec-1de45a3622",
+        "rec-5616298e90",
+        "rec-71429fd0fb",
+        "rec-e8695febcb"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-n01al8t03r",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-9ad09dd531",
+        "rec-c179979a04",
+        "rec-d8a122533d"
+      ]
+    },
+    "selected_route": "single-agent"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-n3pc5dfgu4",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-31aefdde99",
+        "rec-72f7494d66",
+        "rec-d5c22fd807",
+        "rec-77b027ed2f"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-ob0jhps2xm",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1b03f88f58",
+        "rec-54ba43b5ff",
+        "rec-6a85325954",
+        "rec-7b64222035",
+        "rec-c1cac1ea58",
+        "rec-e9407f8f55",
+        "rec-fd18d75872"
+      ]
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-ob0jhps2xm",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-1b03f88f58",
+        "rec-54ba43b5ff",
+        "rec-6a85325954",
+        "rec-e9407f8f55",
+        "rec-fd18d75872"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-pp8qn71n8x",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error"
+      ],
+      "evidence_ids": [
+        "rec-8280c91b04"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-pp8qn71n8x",
+    "status": "completed",
+    "failure_reason": "false_certainty",
+    "truth": {
+      "decidable": false,
+      "active_causes": []
+    },
+    "prediction": {
+      "root_causes": [
+        "config_error",
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-8280c91b04",
+        "rec-9d78886e3a"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-pvuxzweih7",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-pvuxzweih7",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-0c3fdbc53d",
+        "rec-596a0b449d",
+        "rec-b956fecb79"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-pvuxzweih7",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-0c3fdbc53d",
+        "rec-596a0b449d",
+        "rec-b956fecb79",
+        "rec-0d5c313d4d",
+        "rec-8eacf7dc81",
+        "rec-e3e302ec3b",
+        "rec-f845c4e52c"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-pvuxzweih7",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-0c3fdbc53d",
+        "rec-596a0b449d",
+        "rec-b956fecb79"
+      ]
+    },
+    "selected_route": "single-agent"
+  },
+  {
+    "strategy": "rules",
+    "incident_id": "opx-yw6vibxhll",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [],
+      "evidence_ids": []
+    },
+    "selected_route": null
+  },
+  {
+    "strategy": "single",
+    "incident_id": "opx-yw6vibxhll",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-2d964300bf",
+        "rec-3a86e9b324",
+        "rec-b715bfded6"
+      ]
+    },
+    "selected_route": "single"
+  },
+  {
+    "strategy": "always-multi",
+    "incident_id": "opx-yw6vibxhll",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion",
+        "downstream_timeout"
+      ],
+      "evidence_ids": [
+        "rec-2d964300bf",
+        "rec-3a86e9b324",
+        "rec-b715bfded6",
+        "rec-0ecce0fcff",
+        "rec-7a92162922",
+        "rec-a67ebe002e",
+        "rec-cc738b586b"
+      ]
+    },
+    "selected_route": "multi"
+  },
+  {
+    "strategy": "auto",
+    "incident_id": "opx-yw6vibxhll",
+    "status": "completed",
+    "failure_reason": "root_cause_set_mismatch",
+    "truth": {
+      "decidable": true,
+      "active_causes": [
+        "downstream_timeout"
+      ]
+    },
+    "prediction": {
+      "root_causes": [
+        "pool_exhaustion"
+      ],
+      "evidence_ids": [
+        "rec-2d964300bf",
+        "rec-3a86e9b324",
+        "rec-b715bfded6"
+      ]
+    },
+    "selected_route": "single-agent"
+  }
+]
