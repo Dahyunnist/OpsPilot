@@ -123,13 +123,17 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         "inventory_remaining_zero": {"service": "inventory", "severity": "warning", "message": "inventory exhausted", "remaining": 0},
         "reservation_rejected": {"service": "orders", "severity": "warning", "message": "inventory reservation rejected"},
     }
+    start = dt.datetime(2026, 11, 13, tzinfo=dt.timezone.utc)
+    end = start + dt.timedelta(hours=1)
     logs = []
     for signal, row in logs_by_signal.items():
         repeated = 3 if signal in {"payment_attempts", "orders_retry_logs"} else 1
         logs.extend(dict(row, record_id=f"log-{signal}-{index}", order_id=order_id)
                     for index in range(repeated))
-    start = dt.datetime(2026, 11, 13, tzinfo=dt.timezone.utc)
-    end = start + dt.timedelta(hours=1)
+    for index, row in enumerate(logs):
+        row["timestamp"] = (start + dt.timedelta(seconds=5, microseconds=index)).isoformat().replace("+00:00", "Z")
+    logs.append(dict(logs_by_signal["orders_db_errors"], record_id="out-of-window", order_id=order_id,
+                     timestamp=(start - dt.timedelta(seconds=1)).isoformat().replace("+00:00", "Z")))
     start_us = int(start.timestamp() * 1_000_000)
     process_ids = {"payment": "p1", "orders": "p2", "inventory": "p3"}
     spans = []
@@ -143,7 +147,7 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
                       "spanID": f"span-{len(spans)}", "startTime": start_us + 1_000_000, "duration": duration,
                       "tags": [{"key": "opspilot.order_id", "type": "string", "value": order_id}]})
     fixture = {"cases": truth["cases"], "order_id": order_id, "logs": logs,
-               "deployments": [{"service": "orders", "version": "v2"}],
+               "deployments": [{"service": "orders", "version": "v2", "timestamp": (start + dt.timedelta(seconds=5)).isoformat().replace("+00:00", "Z")}],
                "traces": [{"traceID": "trace-fixture-001", "processes": {pid: {"serviceName": service}
                                             for service, pid in process_ids.items()}, "spans": spans}]}
     encoded = base64.b64encode(json.dumps(fixture).encode()).decode()
@@ -154,13 +158,19 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         f"$start='{start.isoformat().replace('+00:00', 'Z')}'; $end='{end.isoformat().replace('+00:00', 'Z')}'; "
         "$all=@(); foreach ($case in $fixture.cases) { "
         "$all+=@(Get-ObservedSignals $case $fixture.order_id $fixture.logs $fixture.deployments $fixture.traces $start $end) }; "
-        "$all|ConvertTo-Json -Depth 6 -Compress"
+        "$absent=@(Get-ObservedSignals $fixture.cases[0] $fixture.order_id @() @() @() $start $end); "
+        "[pscustomobject]@{all=$all;absent=$absent}|ConvertTo-Json -Depth 8 -Compress"
     )
     result = subprocess.run(
         [powershell, "-NoProfile", "-NonInteractive", "-Command", command],
         capture_output=True, text=True, check=True, timeout=15,
     )
-    observed = json.loads(result.stdout.strip().splitlines()[-1])
+    outcome = json.loads(result.stdout.strip().splitlines()[-1])
+    observed = outcome["all"]
     assert len(observed) == 25
-    assert all(item["observed"] for item in observed)
+    assert all(item["observed"] for item in observed), [item["name"] for item in observed if not item["observed"]]
     assert all(item["evidence"] for item in observed)
+    assert all(item["raw_matches"] for item in observed)
+    assert all(item["query_scope"]["order_id"] == order_id for item in observed)
+    assert all(record.get("order_id") == order_id for item in observed for record in item["raw_matches"] if item["query_scope"]["source"] != "deployments")
+    assert all(not item["observed"] and item["raw_matches"] == [] and item["query_scope"]["start"] for item in outcome["absent"])

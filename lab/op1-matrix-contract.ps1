@@ -10,6 +10,13 @@ function Get-SpanTag($Span, [string]$Key) {
     return $null
 }
 
+function Test-InEvidenceWindow($Timestamp, [string]$Start, [string]$End) {
+    try {
+        $instant = if ($Timestamp -is [DateTimeOffset]) { $Timestamp } elseif ($Timestamp -is [DateTime]) { [DateTimeOffset]$Timestamp.ToUniversalTime() } else { [DateTimeOffset]::Parse([string]$Timestamp) }
+        return $instant -ge [DateTimeOffset]::Parse($Start) -and $instant -le [DateTimeOffset]::Parse($End)
+    } catch { return $false }
+}
+
 function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$OrderId) {
     $from = ([DateTimeOffset]::Parse($Start)).ToUnixTimeMilliseconds() * 1000
     $to = ([DateTimeOffset]::Parse($End)).ToUnixTimeMilliseconds() * 1000
@@ -28,6 +35,7 @@ function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$Orde
                     duration = [long]$span.duration
                     status = Get-SpanTag $span "http.response.status_code"
                     order_id = $spanOrderId
+                    attributes = @($span.tags | Where-Object { $_.key -match "^(opspilot\.order_id|http\.|db\.|error\.)" } | ForEach-Object { [pscustomobject]@{key=$_.key;value=$_.value} })
                 }
             }
         }
@@ -36,6 +44,8 @@ function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$Orde
 }
 
 function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $TraceData, [string]$Start, [string]$End) {
+    $Logs = @($Logs | Where-Object { Test-InEvidenceWindow $_.timestamp $Start $End })
+    $Deployments = @($Deployments | Where-Object { Test-InEvidenceWindow $_.timestamp $Start $End })
     $spans = @(Get-WindowSpans $TraceData $Start $End $OrderId)
     $results = @()
     foreach ($signal in $Case.must_observe) {
@@ -70,9 +80,13 @@ function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $Trac
             $recordId = if ($_.record_id) { $_.record_id }
                 elseif ($source -eq "traces") { "$($_.trace_id):$($_.span_id)" }
                 else { "$($_.service):$($_.timestamp):$($_.message):$($_.order_id)" }
-            [pscustomobject]@{source=$source;record_id=$recordId;service=$_.service;timestamp=$_.timestamp;operation=$_.operation;message=$_.message;order_id=$_.order_id}
+            $attributes = $_.attributes
+            if ($source -eq "logs") {
+                $attributes = @($_.PSObject.Properties | Where-Object { $_.Name -in @("severity", "service_version", "error_type", "error_reason", "dependency_host", "status", "attempt", "remaining", "path") } | ForEach-Object { [pscustomobject]@{key=$_.Name;value=$_.Value} })
+            }
+            [pscustomobject]@{source=$source;record_id=$recordId;service=$_.service;timestamp=$_.timestamp;trace_id=$_.trace_id;span_id=$_.span_id;operation=$_.operation;message=$_.message;order_id=$_.order_id;attributes=$attributes}
         })
-        $results += [pscustomobject]@{name=$signal;observed=($matches.Count -ge $minimumCount);match_count=$matches.Count;minimum_count=$minimumCount;evidence=$references}
+        $results += [pscustomobject]@{name=$signal;observed=($matches.Count -ge $minimumCount);match_count=$matches.Count;minimum_count=$minimumCount;evidence=$references;query_scope=@{start=$Start;end=$End;order_id=$OrderId;source=$source};raw_matches=$references}
     }
     return $results
 }
