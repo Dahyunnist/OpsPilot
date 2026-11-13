@@ -76,7 +76,8 @@ def investigate_live(start: str, end: str, limit: int = 100,
             source_status[source] = "ok" if result.get("records") else "empty"
     source_status.update({source: "error" for source in failures})
 
-    findings: dict[str, dict[str, Any]] = {cause: {"id": cause, "title": title, "support": [], "against": [], "source_set": set()}
+    findings: dict[str, dict[str, Any]] = {cause: {"id": cause, "title": title, "support": [], "against": [],
+        "source_set": set(), "causal_links": []}
         for cause, title in CAUSES}
 
     def support(cause: str, record: dict[str, Any], reason: str) -> None:
@@ -166,6 +167,38 @@ def investigate_live(start: str, end: str, limit: int = 100,
             for error in later_errors:
                 against("invalid_release_configuration", error, "matching-version error predates its deployment record; check clock/order skew")
 
+    trace_spans_by_id = {(row.get("trace_id"), row.get("attributes", {}).get("span_id")): row
+        for row in records if row.get("source") == "traces" and row.get("trace_id")
+        and row.get("attributes", {}).get("span_id")}
+    payment_timeout_logs = [row for row in records if row.get("source") == "logs" and row.get("service") == "orders"
+        and row.get("trace_id") and row.get("raw", {}).get("attributes", row.get("raw", {})).get("error_type") == "TimeoutError"]
+    payment_timeout_spans = [row for row in records if row.get("source") == "traces"
+        and row.get("attributes", {}).get("operation") == "payment/charge"
+        and int(row.get("attributes", {}).get("duration_us") or 0) >= 350_000]
+    for log in payment_timeout_logs:
+        for payment_span in payment_timeout_spans:
+            trace_id = log["trace_id"]
+            if payment_span.get("trace_id") != trace_id:
+                continue
+            if abs((_instant(log["timestamp"]) - _instant(payment_span["timestamp"])).total_seconds()) > 2.0:
+                continue
+            parent_id = payment_span.get("attributes", {}).get("parent_span_id")
+            visited: set[str] = set()
+            while parent_id and parent_id not in visited:
+                visited.add(parent_id)
+                parent = trace_spans_by_id.get((trace_id, parent_id))
+                if not parent:
+                    break
+                parent_attrs = parent.get("attributes", {})
+                if parent.get("service") == "orders" and parent_attrs.get("operation") == "orders/orders":
+                    link = {"type": "orders_to_payment_trace_path", "evidence": [_ref(log), _ref(payment_span)]}
+                    if link not in findings["payment_dependency_timeout"]["causal_links"]:
+                        findings["payment_dependency_timeout"]["causal_links"].append(link)
+                    break
+                parent_id = parent_attrs.get("parent_span_id")
+    timeout_facts_exist = bool(payment_timeout_logs and payment_timeout_spans)
+    timeout_causal_link_exists = bool(findings["payment_dependency_timeout"]["causal_links"])
+
     logs = source_results.get("logs", {}).get("records", [])
     traces = source_results.get("traces", {}).get("records", [])
     missing_trace_logs = [row for row in logs if not row.get("trace_id")]
@@ -206,7 +239,15 @@ def investigate_live(start: str, end: str, limit: int = 100,
         item = findings[cause]
         source_count = len(item["source_set"])
         score = min(1.0, 0.35 * len(item["source_set"]) + 0.08 * min(len(item["support"]), 4) - 0.25 * bool(item["against"]))
-        item["confidence"] = "high" if source_count >= 2 and len(item["support"]) >= 2 and not item["against"] else "medium" if item["support"] else "low"
+        causal_gate = cause != "payment_dependency_timeout" or bool(item["causal_links"])
+        item["confidence"] = "high" if source_count >= 2 and len(item["support"]) >= 2 and not item["against"] and causal_gate else "medium" if item["support"] else "low"
+        if cause == "payment_dependency_timeout":
+            if item["causal_links"]:
+                item["evidence_relationship"] = "causal_trace_link"
+            elif source_count >= 2:
+                item["evidence_relationship"] = "cross_source_correlation_only"
+            else:
+                item["evidence_relationship"] = "single_source_signal" if item["support"] else "no_support"
         item["score"] = round(max(0.0, score), 2)
         item["independent_sources"] = sorted(item.pop("source_set"))
         hypotheses.append(item)
@@ -226,6 +267,8 @@ def investigate_live(start: str, end: str, limit: int = 100,
         warnings.append("deployment_events_out_of_order")
     if same_trace_skews:
         warnings.append("source_clock_drift")
+    if timeout_facts_exist and not timeout_causal_link_exists:
+        warnings.append("unlinked_cross_source_signals")
 
     source_details = {}
     for source in ("metrics", "logs", "traces", "deployments"):

@@ -44,9 +44,10 @@ class LiveTelemetryTests(unittest.TestCase):
     def test_prometheus_query_is_get_bounded_and_returns_stable_source_refs(self) -> None:
         inside_start = datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() + 60
         outside_start = datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() - 2
+        exact_end = datetime.fromisoformat(END.replace("Z", "+00:00")).timestamp()
         payload = {"status": "success", "data": {"result": [{
             "metric": {"__name__": "opspilot_http_requests_total", "service": "orders", "version": "v1"},
-            "values": [[outside_start, "1"], [inside_start, "3"]],
+            "values": [[outside_start, "1"], [inside_start, "3"], [exact_end, "4"]],
         }]}}
 
         class Response:
@@ -65,6 +66,29 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertTrue(result["records"][0]["record_id"].startswith("metrics:"))
         self.assertEqual([row["record_id"] for row in result["records"]], [row["record_id"] for row in repeated["records"]])
         self.assertEqual(result["records"][0]["attributes"]["value"], "3")
+
+    def test_metrics_filters_window_then_applies_global_limit_with_stable_refs(self) -> None:
+        lower = datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp()
+        upper = datetime.fromisoformat(END.replace("Z", "+00:00")).timestamp()
+        payload = {"status": "success", "data": {"result": [
+            {"metric": {"__name__": "opspilot_http_errors_total", "service": "orders", "version": "v1"},
+             "values": [[lower - 1, "0"], [lower + 60, "1"]]},
+            {"metric": {"__name__": "opspilot_http_errors_total", "service": "payment", "version": "v1"},
+             "values": [[lower + 120, "2"], [upper + 1, "3"]]},
+        ]}}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response()]):
+            first = LabTelemetry().metrics(START, END, 1)
+            repeated = LabTelemetry().metrics(START, END, 1)
+        self.assertEqual(1, len(first["records"]))
+        self.assertEqual("1", first["records"][0]["attributes"]["value"])
+        self.assertEqual(first["records"][0]["record_id"], repeated["records"][0]["record_id"])
+        self.assertTrue(first["records"][0]["record_id"].startswith("metrics:"))
 
     def test_log_adapter_enforces_global_limit_across_services(self) -> None:
         class Response:
@@ -114,6 +138,7 @@ class LiveTelemetryTests(unittest.TestCase):
             def read(self, _size): return json.dumps({"records": [
                 {"timestamp": "2026-10-23T09:59:59Z", "message": "early"},
                 {"timestamp": "2026-10-23T10:05:00Z", "message": "inside"},
+                {"timestamp": END, "message": "at-end"},
                 {"timestamp": "2026-10-23T10:10:01Z", "message": "late"},
                 {"timestamp": "not-a-date", "message": "invalid"},
             ]}).encode()
@@ -270,13 +295,41 @@ class LiveTelemetryTests(unittest.TestCase):
         timeout_logs = [record("logs", "timeout-log", "2026-10-23T10:05:00Z", service="orders", trace_id=trace_id,
             raw={"message": "payment attempt failed", "trace_id": trace_id,
                 "attributes": {"error_type": "TimeoutError"}, "timestamp": "2026-10-23T10:05:00Z"})]
-        long_span = record("traces", "timeout-span", "2026-10-23T10:05:00Z", service="payment", trace_id=trace_id,
-            attributes={"operation": "payment/charge", "duration_us": 2_000_000})
+        order_span = record("traces", "orders-span", "2026-10-23T10:05:00Z", service="orders", trace_id=trace_id,
+            attributes={"operation": "orders/orders", "span_id": "orders-1", "parent_span_id": "gateway-1"})
+        long_span = record("traces", "timeout-span", "2026-10-23T10:05:01Z", service="payment", trace_id=trace_id,
+            attributes={"operation": "payment/charge", "span_id": "payment-1", "parent_span_id": "orders-1",
+                "duration_us": 2_000_000})
         empty = {"records": []}
         timeout = investigate_live(START, END, telemetry=FakeTelemetry({
-            "metrics": empty, "logs": {"records": timeout_logs}, "traces": {"records": [long_span]}, "deployments": empty,
+            "metrics": empty, "logs": {"records": timeout_logs}, "traces": {"records": [order_span, long_span]}, "deployments": empty,
         }))
         self.assertEqual(timeout["root_causes"], ["payment_dependency_timeout"])
+        linked = next(row for row in timeout["hypotheses"] if row["id"] == "payment_dependency_timeout")
+        self.assertEqual("causal_trace_link", linked["evidence_relationship"])
+        self.assertEqual(["timeout-log", "timeout-span"], sorted(ref["record_id"] for ref in linked["causal_links"][0]["evidence"]))
+
+        unlinked_log = record("logs", "unrelated-timeout", "2026-10-23T10:05:00Z", service="orders",
+            trace_id="b" * 32, raw={"message": "payment attempt failed", "trace_id": "b" * 32,
+                "attributes": {"error_type": "TimeoutError"}, "timestamp": "2026-10-23T10:05:00Z"})
+        unlinked = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty, "logs": {"records": [unlinked_log]},
+            "traces": {"records": [order_span, long_span]}, "deployments": empty,
+        }))
+        self.assertNotIn("payment_dependency_timeout", unlinked["root_causes"])
+        unlinked_hypothesis = next(row for row in unlinked["hypotheses"] if row["id"] == "payment_dependency_timeout")
+        self.assertEqual("cross_source_correlation_only", unlinked_hypothesis["evidence_relationship"])
+        self.assertIn("unlinked_cross_source_signals", unlinked["quality"]["warnings"])
+
+        drifted_log = dict(timeout_logs[0], timestamp="2026-10-23T10:05:20Z")
+        drifted = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty, "logs": {"records": [drifted_log]},
+            "traces": {"records": [order_span, long_span]}, "deployments": empty,
+        }))
+        self.assertNotIn("payment_dependency_timeout", drifted["root_causes"])
+        drifted_hypothesis = next(row for row in drifted["hypotheses"] if row["id"] == "payment_dependency_timeout")
+        self.assertEqual("cross_source_correlation_only", drifted_hypothesis["evidence_relationship"])
+        self.assertIn("source_clock_drift", drifted["quality"]["warnings"])
 
         retry_logs = [record("logs", f"retry-log-{i}", f"2026-10-23T10:05:0{i}Z", service="orders", trace_id=trace_id,
             raw={"message": "payment attempt failed", "trace_id": trace_id,
@@ -347,8 +400,11 @@ class LiveTelemetryTests(unittest.TestCase):
         trace_id = "d" * 32
         slow_query = record("traces", "slow-query", "2026-10-23T10:05:00Z", service="orders",
             trace_id=trace_id, attributes={"operation": "postgres.query", "duration_us": 1_600_000})
+        order_span = record("traces", "orders-span", "2026-10-23T10:05:00Z", service="orders", trace_id=trace_id,
+            attributes={"operation": "orders/orders", "span_id": "orders-1", "parent_span_id": "gateway-1"})
         payment_timeout = record("traces", "payment-timeout", "2026-10-23T10:05:00Z", service="payment",
-            trace_id=trace_id, attributes={"operation": "payment/charge", "duration_us": 2_000_000})
+            trace_id=trace_id, attributes={"operation": "payment/charge", "span_id": "payment-1",
+                "parent_span_id": "orders-1", "duration_us": 2_000_000})
         timeout_log = record("logs", "timeout-log", "2026-10-23T10:05:00Z", service="orders", trace_id=trace_id,
             raw={"message": "payment attempt failed", "trace_id": trace_id,
                 "attributes": {"error_type": "TimeoutError"}, "timestamp": "2026-10-23T10:05:00Z"})
@@ -358,7 +414,7 @@ class LiveTelemetryTests(unittest.TestCase):
                     attributes={"name": "opspilot_http_duration_ms_sum", "version": "v1", "value": 0}),
                 record("metrics", "duration-after", "2026-10-23T10:09:00Z", service="orders",
                     attributes={"name": "opspilot_http_duration_ms_sum", "version": "v1", "value": 1800})]},
-            "logs": {"records": [timeout_log]}, "traces": {"records": [slow_query, payment_timeout]},
+            "logs": {"records": [timeout_log]}, "traces": {"records": [order_span, slow_query, payment_timeout]},
             "deployments": {"records": []},
         }))
         self.assertEqual(set(result["root_causes"]), {"slow_database_query", "payment_dependency_timeout"})
@@ -397,6 +453,41 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertIn("source_order_out_of_order", result["warnings"])
         self.assertEqual([row["record_id"] for row in result["records"]], ["early", "late"])
 
+    def test_all_adapters_use_half_open_end_boundary(self) -> None:
+        deployment_payload = {"records": [
+            {"record_id": "inside", "timestamp": "2026-10-23T10:09:59Z", "service": "orders"},
+            {"record_id": "at-end", "timestamp": END, "service": "orders"},
+        ]}
+        trace_start = int(datetime.fromisoformat(END.replace("Z", "+00:00")).timestamp() * 1_000_000)
+        trace_payload = {"data": [{"traceID": "e" * 32, "processes": {"orders": {"serviceName": "orders"}},
+            "spans": [{"spanID": "at-end", "processID": "orders", "operationName": "orders/orders",
+                "startTime": trace_start, "duration": 10}]}]}
+
+        class Response:
+            def __init__(self, payload): self.payload = payload
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(self.payload).encode()
+
+        logs_payload = {"records": [
+            {"timestamp": "2026-10-23T10:09:59Z", "message": "inside"},
+            {"timestamp": END, "message": "at-end"},
+        ]}
+        with patch("opspilot.telemetry.urlopen", side_effect=[
+                Response({"status": "success", "data": {"result": [{"metric": {"__name__": "x", "service": "orders"},
+                    "values": [[trace_start / 1_000_000 - 1, "1"], [trace_start / 1_000_000, "2"]]}]}}),
+                *[Response(logs_payload) for _ in range(4)], Response(trace_payload),
+                *[Response({"data": []}) for _ in range(3)], Response(deployment_payload)]):
+            adapter = LabTelemetry()
+            metrics = adapter.metrics(START, END, 10)
+            logs = adapter.logs(START, END, 10)
+            traces = adapter.traces(START, END, 10)
+            deployments = adapter.deployments(START, END, 10)
+        self.assertEqual(1, len(metrics["records"]))
+        self.assertEqual(["inside"], [row["raw"]["message"] for row in logs["records"] if row["service"] == "gateway"])
+        self.assertNotIn("at-end", [row["attributes"]["span_id"] for row in traces["records"]])
+        self.assertEqual(["inside"], [row["record_id"] for row in deployments["records"]])
+
     def test_deployment_adapter_filters_window_before_applying_limit(self) -> None:
         payload = {"records": [
             {"record_id": "outside", "timestamp": "2026-10-23T09:59:59Z", "service": "orders"},
@@ -413,6 +504,36 @@ class LiveTelemetryTests(unittest.TestCase):
         params = parse_qs(urlsplit(opened.call_args.args[0].full_url).query)
         self.assertEqual(params["limit"], ["1"])
         self.assertEqual([row["record_id"] for row in result["records"]], ["inside"])
+
+    def test_deployment_without_record_id_gets_stable_source_pointer(self) -> None:
+        payload = {"records": [{"timestamp": "2026-10-23T10:05:00Z", "service": "orders", "version": "v2"}]}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response(), Response()]):
+            first = LabTelemetry().deployments(START, END, 10)["records"][0]
+            repeated = LabTelemetry().deployments(START, END, 10)["records"][0]
+        self.assertTrue(first["record_id"].startswith("deployments:"))
+        self.assertEqual(first["record_id"], repeated["record_id"])
+        self.assertEqual(first["raw"]["version"], "v2")
+
+    def test_out_of_order_deployment_signals_warn_and_do_not_create_root_cause(self) -> None:
+        empty = {"records": []}
+        deployments = {"records": [
+            record("deployments", "newer-v2", "2026-10-23T10:08:00Z", service="orders", attributes={"version": "v2"}),
+            record("deployments", "older-v1", "2026-10-23T10:02:00Z", service="orders", attributes={"version": "v1"}),
+        ], "warnings": ["source_order_out_of_order"]}
+        report = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty, "logs": empty, "traces": empty, "deployments": deployments,
+        }))
+        self.assertEqual([], report["root_causes"])
+        self.assertEqual("abstain", report["confidence"])
+        self.assertIn("deployment_events_out_of_order", report["quality"]["warnings"])
+        self.assertEqual({"newer-v2", "older-v1"}, {
+            ref["record_id"] for ref in report["sources"]["deployments"]["evidence_refs"]})
 
 
 if __name__ == "__main__":

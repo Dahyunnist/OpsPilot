@@ -96,7 +96,7 @@ class LabTelemetry:
             version = metric.get("version")
             for stamp, value in series.get("values", []):
                 instant = datetime.fromtimestamp(float(stamp), timezone.utc)
-                if not lower <= instant <= upper:
+                if not lower <= instant < upper:
                     continue
                 row = {"name": name, "service": service, "version": version, "value": value}
                 records.append({"record_id": _record_id("metrics", [metric, stamp, value]),
@@ -131,7 +131,7 @@ class LabTelemetry:
                     instant = _instant(row["timestamp"])
                 except ValueError:
                     continue
-                if not lower <= instant <= upper:
+                if not lower <= instant < upper:
                     continue
                 records.append({"record_id": _record_id("logs", {"source_service": service, "record": row}), "timestamp": instant.isoformat().replace("+00:00", "Z"),
                     "source": "logs", "service": service, "trace_id": row.get("trace_id"),
@@ -159,7 +159,7 @@ class LabTelemetry:
                 instant = _instant(row.get("timestamp"))
             except ValueError:
                 continue
-            if lower <= instant <= upper:
+            if lower <= instant < upper:
                 source_order.append(instant)
                 rows.append({"record_id": row.get("record_id") or _record_id("deployments", row),
                     "timestamp": instant.isoformat().replace("+00:00", "Z"), "source": "deployments",
@@ -225,7 +225,7 @@ class LabTelemetry:
                         "attributes": raw, "raw": raw}
                     records_by_id.setdefault(normalized["record_id"], normalized)
         records = list(records_by_id.values())
-        records = [row for row in records if lower <= _instant(row["timestamp"]) <= upper]
+        records = [row for row in records if lower <= _instant(row["timestamp"]) < upper]
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
         warnings = ["partial_service_unavailable"] if failed_services else []
         return {"source": "traces", "query": {"start": start, "end": end, "limit": limit},
