@@ -107,7 +107,7 @@ try {
                 $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
                 $missingTraceSignals=@($signals | Where-Object { $_.name -in $traceSignals -and -not $_.observed })
                 $missingLogSignals=@($signals | Where-Object { $_.name -in $logSignals -and -not $_.observed })
-                if (($missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0) -or $traceAttempt -eq 10) { break }
+                if (($windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0) -or $traceAttempt -eq 10) { break }
                 Start-Sleep -Seconds 1
             }
         } catch { $message=$_.Exception.Message }

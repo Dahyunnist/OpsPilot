@@ -53,6 +53,7 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "for ($traceAttempt=0; $traceAttempt -le 10; $traceAttempt++)" in script
     assert "api/traces?service=orders&limit=1000" in script
     assert "$missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0" in script
+    assert "$windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0" in script
     assert "window_log_records=$safeLogs" in script and "window_trace_spans=$safeSpans" in script
     assert "$settleAttempts=if ($case.fault -eq \"bad_release\") { 10 } else { 2 }" in script
     assert "for ($settle=0; $settle -le $settleAttempts; $settle++)" in script

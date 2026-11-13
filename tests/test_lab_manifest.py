@@ -126,6 +126,13 @@ class LabManifestTests(unittest.TestCase):
         self.assertIn('emit("warning", "inventory reservation rejected", order_id=order_id', source)
         self.assertIn('emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__, order_id=order_id)', source)
 
+    def test_inventory_faults_receive_the_selected_fault_environment(self) -> None:
+        compose = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")
+        inventory = compose.split("  inventory:\n", 1)[1].split("  payment:\n", 1)[0]
+        self.assertIn("LAB_FAULT: ${LAB_FAULT:-none}", inventory)
+        matrix = (ROOT / "lab" / "run-host-matrix.ps1").read_text(encoding="utf-8-sig")
+        self.assertIn("$windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0", matrix)
+
 
 if __name__ == "__main__":
     unittest.main()

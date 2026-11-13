@@ -66,6 +66,7 @@ services:
       DB_PASSWORD: local-only
       REDIS_HOST: redis
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      LAB_FAULT: ${LAB_FAULT:-none}
     depends_on:
       postgres:
         condition: service_healthy
