@@ -39,3 +39,7 @@
 runner 逐例保留 investigate、预测或注入取消/超时/失败的 trajectory；汇总包含取消、超时、失败和 query budget exhausted/最大/总查询数。注入超时使用 `--inject-timeout STRATEGY:INCIDENT_ID`。固定集默认预算 8 时各策略均未耗尽，最大 4 次查询、总计 120 次。mock 固定零模型调用与零费用；本轮禁止模型请求、Docker 和推送。
 
 定向 `python -m unittest tests.test_s15_mock_ablation -v`：8 项通过。该阶段补强证明评测隔离与 runner 报告契约，不构成真实模型质量比较。真实模型对照仍须用户明确授权。
+
+## 2026-11-13 对照 harness 复现
+
+复用 `scripts/evaluate_s15_mock_ablation.py` 作为 OP-3 离线对照 harness：策略标签 `rules`、`single`、`always-multi`、`auto`；30 个冻结案例同输入配对，真值预测后评分，重复运行校验确定性结果 SHA-256。回归命令：`.\.venv\Scripts\python.exe -m unittest tests.test_s15_mock_ablation tests.test_strategy_eval -q`。mock runner 固定 0 模型调用、0 费用；只验证输入/评分隔离和路由控制，不评估模型质量或泛化。本轮未调模型。

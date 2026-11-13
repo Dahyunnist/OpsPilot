@@ -13,3 +13,8 @@
 `reports/op2-model-subset.json` 冻结三例：正常 slow SQL、移除连接池正例证据后的缺失样本、保留 payment 快慢 span 的矛盾样本。每例保存独立问题、遥测快照 SHA-256、注入前 oracle、移除记录 ID、策略及逐请求上限；快照本身无真值。
 
 用当前 token 预算和官方峰价估算四策略完整评测：5/9/7 次尝试，逐例最坏 `$0.0062070 / $0.0083088 / $0.0085068`，合计 `$0.0230226`。账本 `$0.47833002`，cap `$0.60`，执行后最坏余额 `$0.09864738`。尚未调用模型；DeepSeek 账户实际余额无法从本地账本读取。官方 Flash 峰价为 cache miss 输入 `$0.30/M`、cache hit `$0.006/M`、输出 `$1.20/M`。
+
+## 2026-11-13 反例与归因回归
+
+新增 `tests/test_op2_source_status.py` 矛盾部署顺序反例：同一 v2 错误被部署前后两条真实记录夹住时，保留支持与反证、列出真实 deployment/log 引用并弃答。扩充 `tests/test_op2_telemetry_robustness.py`：日志缺 trace 时支付超时不得确认为根因；窗口内同 trace 时钟偏差产生告警；采样缺失时弃答；所有引用必须属于输入快照真实记录。已有 HTTP adapter 回归覆盖窗外部署被过滤。共定向运行 36 项：`tests.test_op2_source_status tests.test_op2_telemetry_robustness tests.test_strategy_eval tests.test_s15_mock_ablation`，通过；没有模型调用。
+全仓验证：`.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp .pytest-op2-full`，210 passed，58 subtests passed。运行授权仅用于本机 loopback 与仓库内临时目录；未启动 Docker 或模型。

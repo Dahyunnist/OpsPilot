@@ -98,6 +98,10 @@ class TelemetryRobustnessTests(unittest.TestCase):
         self.assertIn("possible_trace_sampling_bias", report["quality"]["warnings"])
         self.assertNotIn("payment_dependency_timeout", report["root_causes"])
         self.assertEqual("abstain", report["confidence"])
+        available = {(source, row["record_id"]) for source, result in sparse.items()
+                     for row in result.get("records", [])}
+        cited = {(ref["source"], ref["record_id"]) for ref in report["evidence_refs"]}
+        self.assertLessEqual(cited, available)
 
     def test_logs_without_trace_id_are_flagged_and_not_used_as_causal_link(self):
         sources, window = self.load("dependency_timeout")
@@ -106,7 +110,13 @@ class TelemetryRobustnessTests(unittest.TestCase):
             row["trace_id"] = None
         report = inspect(missing_ids, window)
         self.assertIn("missing_trace_context", report["quality"]["warnings"])
-        self.assertTrue(all(ref["record_id"] for ref in report["evidence_refs"]))
+        self.assertNotIn("payment_dependency_timeout", report["root_causes"])
+        self.assertEqual("abstain", report["confidence"])
+        available = {(source, row["record_id"]) for source, result in missing_ids.items()
+                     for row in result.get("records", [])}
+        cited = {(ref["source"], ref["record_id"]) for ref in report["evidence_refs"]}
+        self.assertTrue(cited)
+        self.assertLessEqual(cited, available)
 
     def test_out_of_order_records_are_order_independent(self):
         for case in CASES:
@@ -126,17 +136,25 @@ class TelemetryRobustnessTests(unittest.TestCase):
 
     def test_same_trace_clock_drift_is_reported(self):
         sources, window = self.load("dependency_timeout")
+        sources = copy.deepcopy(sources)
         spans = sources["traces"]["records"]
         trace_id = next(row["trace_id"] for row in spans if row.get("trace_id"))
-        logs = sources["logs"]["records"]
-        synthetic = {"record_id": "logs:drift", "timestamp": "2026-10-23T13:00:00Z", "source": "logs",
+        drift_time = "2026-10-23T13:12:15.000Z"
+        synthetic = {"record_id": "logs:drift", "timestamp": drift_time, "source": "logs",
             "service": "orders", "trace_id": trace_id, "attributes": {},
-            "raw": {"timestamp": "2026-10-23T13:00:00Z", "message": "request completed", "severity": "info"}}
-        sources = copy.deepcopy(sources)
+            "raw": {"timestamp": drift_time, "message": "request completed", "severity": "info"}}
         sources["logs"]["records"].append(synthetic)
+        window_end = window["assessment_window"]["end"]
+        self.assertLess(drift_time, window_end)
         report = inspect(sources, window)
         # The investigation report exposes skew details in its diagnostic field.
         self.assertTrue(any(item["seconds"] > 2 for item in report.get("quality", {}).get("same_trace_clock_skews", [])))
+        self.assertIn("source_clock_drift", report["quality"]["warnings"])
+        self.assertNotIn("payment_dependency_timeout", report["root_causes"])
+        available = {(source, row["record_id"]) for source, result in sources.items()
+                     for row in result.get("records", [])}
+        cited = {(ref["source"], ref["record_id"]) for ref in report["evidence_refs"]}
+        self.assertLessEqual(cited, available)
 
     def test_auto_route_boundaries(self):
         def candidate(count):

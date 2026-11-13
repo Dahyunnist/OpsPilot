@@ -131,6 +131,32 @@ class Op2SourceStatusTests(unittest.TestCase):
         self.assertEqual("ok", report["sources"]["logs"]["status"])
         self.assertEqual({"start": START, "end": END}, report["sources"]["deployments"]["window"])
 
+    def test_contradictory_deployment_order_is_cited_but_cannot_certify_release_cause(self):
+        logs = {"orders": [{"timestamp": "2026-10-23T10:04:00Z", "severity": "error",
+            "message": "inventory dependency failed", "service": "orders", "service_version": "v2",
+            "error_type": "URLError", "dependency_host": "inventory-v2"}]}
+        deployments = [
+            {"record_id": "release-before-error", "timestamp": "2026-10-23T10:03:00Z",
+             "service": "orders", "version": "v2"},
+            {"record_id": "release-after-error", "timestamp": "2026-10-23T10:05:00Z",
+             "service": "orders", "version": "v2"},
+        ]
+        with TelemetryHTTPFake(logs=logs, deployments=deployments) as fake:
+            report = self.investigate(fake)
+        release = next(item for item in report["hypotheses"] if item["id"] == "invalid_release_configuration")
+        self.assertEqual("abstain", report["confidence"])
+        self.assertNotIn("invalid_release_configuration", report["root_causes"])
+        self.assertTrue(release["support"])
+        self.assertTrue(release["against"])
+        available = {(ref["source"], ref["record_id"]) for details in report["sources"].values()
+                     for ref in details["evidence_refs"]}
+        cited = {(ref["source"], ref["record_id"]) for ref in report["evidence_refs"]}
+        self.assertLessEqual(cited, available)
+        self.assertIn(("deployments", "release-before-error"), cited)
+        self.assertIn(("deployments", "release-after-error"), cited)
+        self.assertTrue(all(source == "logs" or record_id in {"release-before-error", "release-after-error"}
+                            for source, record_id in cited))
+
 
 if __name__ == "__main__":
     unittest.main()
