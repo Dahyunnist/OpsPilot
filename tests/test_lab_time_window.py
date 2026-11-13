@@ -53,6 +53,35 @@ def test_logs_and_deployments_share_service_window_filter_and_documented_ports()
     assert "start <= deployment timestamp < end" in acceptance
 
 
+def test_readme_host_endpoint_map_matches_compose_services_and_routes():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for row in (
+        "`127.0.0.1:18080` | gateway | `/deployments`",
+        "`127.0.0.1:18081` | orders | `/logs`",
+        "`127.0.0.1:18082` | inventory | `/logs`",
+        "`127.0.0.1:18083` | payment | `/logs`",
+        "`127.0.0.1:19090` | Prometheus | `/api/v1/query`",
+        "`127.0.0.1:16686` | Jaeger | `/api/traces`",
+        "`18081/deployments` 不存在",
+    ):
+        assert row in readme
+
+    compose = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")
+    for mapping in (
+        '"127.0.0.1:18080:8080"', '"127.0.0.1:18081:8080"',
+        '"127.0.0.1:18082:8080"', '"127.0.0.1:18083:8080"',
+        '"127.0.0.1:16686:16686"', '"127.0.0.1:19090:9090"',
+    ):
+        assert mapping in compose
+
+    service = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
+    assert 'if path.path == "/logs":' in service
+    assert 'if path.path == "/deployments" and SERVICE == "gateway":' in service
+    telemetry = (ROOT / "opspilot" / "telemetry.py").read_text(encoding="utf-8")
+    assert '"/api/v1/query_range"' in telemetry
+    assert '"/api/traces"' in telemetry
+
+
 def test_synthetic_deployment_jsonl_roundtrips_through_gateway_shape_to_smoke_evidence(tmp_path):
     start, end = "2026-11-11T13:47:00Z", "2026-11-11T14:07:00Z"
     source_rows = [

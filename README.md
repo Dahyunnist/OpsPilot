@@ -88,6 +88,19 @@ python -m venv .venv
 
 `lab/compose.yaml` 提供 gateway/orders/inventory/payment、PostgreSQL、Redis、OTLP、Jaeger 与 Prometheus。六种可重放故障与双根因清单见 `lab/scenarios/truth.json`。需先启动 Docker Desktop，再运行 `.\lab\run-scenario.ps1 -Scenario slow_sql`；六场景服务烟测为 `.\lab\smoke.ps1`。端口仅绑定本机。详见 `docs/learning/stage-OP1.md`。
 
+宿主机遥测 HTTP 端点：
+
+| Host 地址 | 服务 | 路径 | 用途 |
+| --- | --- | --- | --- |
+| `127.0.0.1:18080` | gateway | `/deployments`、`/checkout`、`/metrics` | 发布记录、下单、服务指标 |
+| `127.0.0.1:18081` | orders | `/logs`、`/metrics` | 业务日志、服务指标 |
+| `127.0.0.1:18082` | inventory | `/logs`、`/metrics` | 服务日志、服务指标 |
+| `127.0.0.1:18083` | payment | `/logs`、`/metrics` | 服务日志、服务指标 |
+| `127.0.0.1:19090` | Prometheus | `/api/v1/query`、`/api/v1/query_range` | 指标查询 |
+| `127.0.0.1:16686` | Jaeger | `/api/traces` | Trace 查询 |
+
+故障实验重点查 orders 日志 `http://127.0.0.1:18081/logs` 和 gateway 发布记录 `http://127.0.0.1:18080/deployments`。`18081/deployments` 不存在，会返回 404。带时间窗的 logs/deployments 查询须共用本次运行的 UTC `start/end`；部署时间戳满足 `start <= timestamp < end` 才会返回。可复制 `docs/learning/op1-dependency-timeout-host-card.md` 的查询步骤。
+
 ## 测试
 
 ```powershell
