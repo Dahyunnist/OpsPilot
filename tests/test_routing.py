@@ -35,6 +35,16 @@ class RoutingTests(unittest.TestCase):
         ], "hypotheses": [{"hypothesis_id": "cause_a", "strong_support": []}]}
         self.assertEqual("rules", select_route(report)[0])
 
+    def test_exhausted_query_budget_blocks_model_escalation(self):
+        report = {"status": "insufficient_evidence", "query_budget_exhausted": True,
+            "cost": {"budget_exhausted": True}, "query_trace": [
+                {"source": "metrics", "records": [{"record_id": "m1"}]},
+                {"source": "logs", "records": [{"record_id": "l1"}]},
+            ], "hypotheses": [{"hypothesis_id": "cause_a", "strong_support": ["m1", "l1"]}]}
+        route, reason = select_route(report)
+        self.assertEqual("rules", route)
+        self.assertIn("预算已耗尽", reason)
+
     def test_auto_cli_dispatches_selected_route(self):
         report = {"status": "determined", "query_trace": [
             {"source": "metrics", "records": [{"record_id": "m1"}, {"record_id": "m2"}]},

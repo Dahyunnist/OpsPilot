@@ -7,6 +7,7 @@ import unittest
 from opspilot.strategy_eval import STRATEGIES, evaluate_snapshot, score_case, summarize_cases
 from opspilot.model_client import ModelError
 from scripts.evaluate_agents import BudgetLimitExceeded
+from unittest.mock import patch
 
 
 START = "2026-10-23T10:00:00Z"
@@ -207,6 +208,24 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(multi["fallback_route"], "rules")
         self.assertEqual(multi["evaluation_status"], "failed")
         self.assertEqual(multi["failures"], ["BudgetLimitExceeded", "BudgetLimitExceeded"])
+
+    def test_auto_single_route_budget_exhaustion_falls_back_to_rules_without_call(self) -> None:
+        model = FakeChatModel()
+
+        def exhausted_gate(*_args):
+            raise BudgetLimitExceeded("ledger cap")
+
+        empty_snapshot = {source: {"records": []} for source in ("metrics", "logs", "traces", "deployments")}
+        with patch("opspilot.strategy_eval._auto_route", return_value="single"):
+            report = evaluate_snapshot("synthetic-budget-case", START, END, empty_snapshot, model,
+                exhausted_gate, ("auto",))
+        auto = report["strategies"]["auto"]
+        self.assertEqual("single", auto["selected_route"])
+        self.assertEqual("rules", auto["fallback_route"])
+        self.assertEqual([], auto["prediction"]["root_causes"])
+        self.assertEqual("insufficient_evidence", auto["prediction"]["status"])
+        self.assertEqual(0, auto["model_calls"])
+        self.assertEqual(0.0, auto["provider_rate_estimate_usd"])
 
     def test_summary_excludes_failed_partial_predictions_from_performance(self) -> None:
         def row(*, failed: bool, exact: bool, duration: int) -> dict:

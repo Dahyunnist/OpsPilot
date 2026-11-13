@@ -7,6 +7,9 @@ from typing import Any
 
 def select_route(report: dict[str, Any]) -> tuple[str, str]:
     """Escalate only when live cross-source evidence needs model adjudication."""
+    cost = report.get("cost")
+    if report.get("query_budget_exhausted") or (isinstance(cost, dict) and cost.get("budget_exhausted")):
+        return "rules", "遥测查询预算已耗尽；保留当前规则结论或弃答，不升级模型"
     source_by_id = {
         row["record_id"]: query["source"]
         for query in report.get("query_trace", [])

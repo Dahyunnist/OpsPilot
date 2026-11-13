@@ -24,4 +24,8 @@
 
 已有六个冻结故障窗口的对照结果，Multi 六例均失败，不能比较其准确率或声称收益。一个较早的非冻结开发窗口花费 `$0.0045072`，复现了 `finish_reason=length`。最终升级验收在另一个全新本地依赖超时窗口对照 rules、single 与 Multi：10 次尝试的最坏预留 `$0.038859`，实际 7 次请求、账本估算 `$0.01365257`。Multi 专家首次 320-token 截断后，512-token 重试成功。本例根因及证据都命中独立 oracle，但单例不能证明泛化或生产收益。详细轨迹和限制见[最终升级验收](../../reports/final-upgrade-acceptance.md)。冻结集未重跑。
 
+离线路由边界回归重新运行 S15 mock harness 的 30 个冻结 test 案例，覆盖五类机制、每类 6 例。每案保留 `query_count` 与 `query_budget_exhausted`，两者也进入确定性 fingerprint。默认查询预算 8 时，auto 选 rules 18 例、single-agent 6 例、multi-agent 6 例；6 个 insufficient/conflicted 案例均留在 rules 并弃答。模拟器 model_calls 与费用都为 0。将查询预算降至 2 后，Investigator 标出未完成 follow-up；修复后的 auto 对 30/30 案例降级至 rules，均无根因输出。预算参数为 2 的运行清单在内存中通过校验。此测试证明冻结输入下的路由降级与报告契约，不证明 Agent 质量或模型收益。
+
+另外用本地 fake call gate 拒绝 Auto single 路由预算申请：不调用 FakeChatModel，记录 `fallback_route=rules`，输入全空时保持 `insufficient_evidence`。真实 RunBudget/provider 行为仍需单独受控验证；本轮不访问模型 API。
+
 之后另完成 OP-1 slow SQL 实时切片：rules、single、Multi、auto 均命中该例 oracle；Multi 与 single 没有增加根因或证据命中。完整计时、precision/recall 和成本见[垂直切片学习记录](OP1-vertical-slice.md)。这仍是单例证据，不代表泛化。

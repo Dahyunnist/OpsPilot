@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import shutil
 import tempfile
@@ -7,6 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from opspilot.model_client import ChatModel
+from opspilot.cli import load_incidents
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_s15_mock_ablation import (
     ROOT, STRATEGIES, _candidate_predictions, build_s15_op_manifest, evaluate,
@@ -81,6 +83,60 @@ class S15MockAblationTests(unittest.TestCase):
         self.assertEqual(result["parameters"], manifest["parameters"])
         self.assertEqual("none", manifest["model_id"])
         self.assertEqual(0.0, manifest["cost_usd_estimate"])
+
+    def test_frozen_mechanisms_route_safely_and_exhausted_query_budget_abstains(self):
+        labels_path = ROOT / "data" / "causal-benchmark" / "labels" / "test.json"
+        labels = {row["incident_id"]: row for row in json.loads(labels_path.read_text(encoding="utf-8"))["labels"]}
+        incidents = load_incidents(ROOT / "data" / "causal-benchmark" / "test.jsonl")
+        with patch.object(ChatModel, "complete", side_effect=AssertionError("model calls forbidden")):
+            full = evaluate()
+            exhausted = evaluate(query_budget=2)
+
+        auto = {row["incident_id"]: row for row in full["cases"]["auto"]}
+        by_family = {family: [row for incident_id, row in auto.items()
+            if labels[incident_id]["scenario_family"] == family] for family in {
+                "pool_root", "configuration_root_with_downstream_symptoms",
+                "downstream_root_with_pool_pressure", "independent_dual_fault", "insufficient_or_conflicted"}}
+        self.assertTrue(all(row["selected_route"] == "rules" for row in by_family["pool_root"]))
+        self.assertTrue(all(row["selected_route"] == "rules" for row in by_family["configuration_root_with_downstream_symptoms"]))
+        self.assertTrue(all(row["selected_route"] == "single-agent" for row in by_family["downstream_root_with_pool_pressure"]))
+        self.assertTrue(all(row["selected_route"] == "multi-agent" for row in by_family["independent_dual_fault"]))
+        self.assertTrue(all(row["selected_route"] == "rules" and not row["prediction"]["root_causes"]
+                            for row in by_family["insufficient_or_conflicted"]))
+        expected_route = {
+            "pool_root": "rules", "configuration_root_with_downstream_symptoms": "rules",
+            "downstream_root_with_pool_pressure": "single-agent", "independent_dual_fault": "multi-agent",
+            "insufficient_or_conflicted": "rules",
+        }
+        for incident_id, row in auto.items():
+            family = labels[incident_id]["scenario_family"]
+            available = {record["record_id"] for records in incidents[incident_id]["signals"].values() for record in records}
+            self.assertEqual("completed", row["status"], incident_id)
+            self.assertEqual(expected_route[family], row["selected_route"], incident_id)
+            self.assertFalse(row["query_budget_exhausted"], incident_id)
+            self.assertLessEqual(row["query_count"], 8, incident_id)
+            self.assertLessEqual(set(row["prediction"]["evidence_ids"]), available, incident_id)
+            if not labels[incident_id]["decidable"]:
+                self.assertEqual([], row["prediction"]["root_causes"], incident_id)
+        self.assertEqual(0, full["summaries"]["auto"]["model_calls"])
+        self.assertEqual(0.0, full["summaries"]["auto"]["estimated_cost_usd"])
+        self.assertEqual({"correct": 18, "total": 24, "rate": 0.75},
+                         full["summaries"]["auto"]["root_cause_set_exact"])
+        self.assertEqual(6, full["summaries"]["auto"]["false_positives"]["causes"])
+
+        exhausted_auto = exhausted["cases"]["auto"]
+        self.assertTrue(all(row["selected_route"] == "rules" and not row["prediction"]["root_causes"]
+                            for row in exhausted_auto))
+        self.assertTrue(all(row["query_budget_exhausted"] and row["query_count"] == 2 for row in exhausted_auto))
+        self.assertEqual(0, exhausted["summaries"]["auto"]["model_calls"])
+        self.assertEqual(0.0, exhausted["summaries"]["auto"]["estimated_cost_usd"])
+        manifest = build_s15_op_manifest(
+            exhausted, started_at="2026-11-13T01:00:00+00:00", ended_at="2026-11-13T01:01:00+00:00",
+            run_id="synthetic-budget-exhausted", trace_id="synthetic-budget-trace", git_sha="a" * 40,
+        )
+        self.assertEqual([], validate_op_run_artifact({"op_run_manifest": manifest}, is_new_run=True))
+        self.assertEqual(2, manifest["max_steps"])
+        self.assertEqual(2, manifest["parameters"]["query_budget"])
 
     def test_unknown_fault_target_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "known strategy"):

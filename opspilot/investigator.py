@@ -288,6 +288,7 @@ def investigate(
     for hypothesis in hypotheses:
         hypothesis["strong_support"] = strong_ids[hypothesis["hypothesis_id"]]
     queried_sources = {query["source"] for query in queries}
+    budget_exhausted = attempted >= query_budget and any(source not in queried_sources for source in planned_followups)
     top = hypotheses[0]
     second_score = hypotheses[1]["score"]
     strong_sources = {query["source"] for query in queries if any(row["record_id"] in top["strong_support"] for row in query["records"])}
@@ -330,6 +331,7 @@ def investigate(
         "conclusion": conclusion,
         "hypotheses": hypotheses,
         "query_strategy": {"first": "metrics", "followups": planned_followups, "reason": strategy_reason},
+        "query_budget_exhausted": budget_exhausted,
         "comparison": {
             "logs_only": {"status": "tentative" if log_conclusion else "insufficient_evidence", "conclusion": log_conclusion},
             "no_refutation": {
@@ -350,6 +352,7 @@ def investigate(
             "query_count": attempted,
             "reused_query_count": len(queries) - attempted,
             "query_budget": query_budget,
+            "budget_exhausted": budget_exhausted,
             "duration_ms": round((perf_counter() - started) * 1000, 3),
             "input_tokens": None,
             "output_tokens": None,

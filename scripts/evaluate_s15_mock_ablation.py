@@ -165,6 +165,8 @@ def _reproducibility_digest(benchmark: dict[str, Any], parameters: dict[str, Any
     }
     stable_cases = {
         strategy: [{"incident_id": case["incident_id"], "status": case["status"],
+                    "query_budget_exhausted": case["query_budget_exhausted"],
+                    "query_count": case["query_count"],
                     "truth": {"decidable": case["truth"]["decidable"],
                               "active_causes": case["truth"]["active_causes"]},
                     "prediction": case["prediction"], "selected_route": case["selected_route"]}
@@ -180,7 +182,10 @@ def _reproducibility_digest(benchmark: dict[str, Any], parameters: dict[str, Any
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str, str], str] | None = None) -> dict[str, Any]:
+def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str, str], str] | None = None,
+             query_budget: int = QUERY_BUDGET) -> dict[str, Any]:
+    if not isinstance(query_budget, int) or isinstance(query_budget, bool) or not 1 <= query_budget <= 12:
+        raise ValueError("query_budget must be an integer from 1 to 12")
     data_dir = benchmark_dir or ROOT / "data" / "causal-benchmark"
     incidents, label_by_id, frozen = _load_frozen_cases(data_dir)
     faults = injected_faults or {}
@@ -194,7 +199,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
         label = label_by_id[incident_id]
         truth = {"decidable": label["decidable"], "active_causes": label.get("active_causes", []),
                  "gold_evidence_ids": label.get("gold_evidence_ids", [])}
-        report = investigate(incident, max_rows=MAX_ROWS, query_budget=QUERY_BUDGET)
+        report = investigate(incident, max_rows=MAX_ROWS, query_budget=query_budget)
         available = {row["record_id"] for records in incident["signals"].values() for row in records}
         for strategy in STRATEGIES:
             started = time.perf_counter()
@@ -203,12 +208,15 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
                 case = {"incident_id": incident_id, "status": "cancelled" if fault == "cancel" else "failed",
                         "truth": truth, "prediction": {"root_causes": [], "evidence_ids": []},
                         "selected_route": None, "duration_ms": round((time.perf_counter() - started) * 1000, 3),
-                        "failure_reason": f"injected_{fault}"}
+                        "query_budget_exhausted": report["query_budget_exhausted"],
+                        "query_count": report["cost"]["query_count"], "failure_reason": f"injected_{fault}"}
             else:
                 predicted, evidence, selected_route = _predict(strategy, report, available)
                 case = {"incident_id": incident_id, "status": "completed", "truth": truth,
                         "prediction": {"root_causes": predicted, "evidence_ids": evidence},
                         "selected_route": selected_route,
+                        "query_budget_exhausted": report["query_budget_exhausted"],
+                        "query_count": report["cost"]["query_count"],
                         "duration_ms": round((time.perf_counter() - started) * 1000, 3)}
             paired[strategy].append(case)
             if case["status"] != "completed":
@@ -228,7 +236,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
     if any({case["incident_id"] for case in cases} != expected_ids for cases in paired.values()):
         raise RuntimeError("paired strategies did not evaluate identical frozen cases")
     parameters = {
-        "split": "test", "max_rows_per_source": MAX_ROWS, "query_budget": QUERY_BUDGET,
+        "split": "test", "max_rows_per_source": MAX_ROWS, "query_budget": query_budget,
         "strategies": list(STRATEGIES),
         "scorer_version": SCORER_VERSION, "mock_policy_version": MOCK_POLICY_VERSION,
         "mock_policies": {
@@ -297,7 +305,7 @@ def build_s15_op_manifest(result: dict[str, Any], *, started_at: str, ended_at: 
         evaluator_sha256=result["code_sha256"]["evaluator"],
         result_fingerprint_sha256=result["deterministic_result_sha256"],
         git_sha=commit_sha, model_id="none", prompt_sha=None, tool_schema_sha=None,
-        runtime_digest=None, max_steps=QUERY_BUDGET, max_tokens=None, scorer_sha=scorer_sha,
+        runtime_digest=None, max_steps=result["parameters"]["query_budget"], max_tokens=None, scorer_sha=scorer_sha,
         gold_source="independent", cost_usd_estimate=0.0, trace_id=trace_id,
         started_at=started_at, ended_at=ended_at, parameters=result["parameters"],
     )

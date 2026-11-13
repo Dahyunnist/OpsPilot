@@ -292,7 +292,7 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
         except Exception as exc:
             errors.append(_failure_label(exc))
             error_trace.append(_failure_diagnostic(exc))
-            if selected == "multi":
+            if selected == "multi" or (strategy == "auto" and selected == "single"):
                 prediction = _rules_prediction(live_report)
                 fallback_route = "rules"
         evaluated[strategy] = {"strategy": strategy, "selected_route": selected,
