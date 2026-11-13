@@ -16,4 +16,6 @@
 
 trace adapter 要求 Jaeger span 同时带非空 `traceID` 与 `spanID`。缺任一来源身份的 malformed span 会被丢弃；只有这类 span 时调查必须弃答，且不得生成 evidence reference。该边界由合成 HTTP fixture 离线验证，不代表生产 Collector 验收。
 
+调查报告对每类来源都输出 `sources` 详情：状态 `ok`、`empty`、`partial` 或 `error`，请求时间窗、查询参数、记录数、source/record ID 引用、服务级状态与失败类型。HTTP 200 且筛窗后无匹配记录标记 `empty`；部分端点失败即使没有记录也标 `partial`；全部日志/trace 子端点失败标 `error`。整类 logs 503 与单服务 503 都由离线 HTTP fake 覆盖。冲突的 v2 deployment 与其前置 DNS 错误保留支持/反证和两条来源引用，报告弃答，不拼出确定根因。未启动 Docker 或模型；这是 adapter 集成回归，不是 live 遥测验收。
+
 MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 MCP 服务对真实 Docker 遥测执行工具调用。生产连接仍不支持。

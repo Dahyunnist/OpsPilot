@@ -60,9 +60,19 @@ def investigate_live(start: str, end: str, limit: int = 100,
     records.sort(key=lambda record: (record.get("timestamp", ""), record.get("record_id", "")))
     partial_failures = {source: result["failed_services"] for source, result in source_results.items()
         if isinstance(result.get("failed_services"), dict) and result["failed_services"]}
-    source_status = {source: ("error" if source in failures or (result.get("failed_services") and not result.get("records"))
-        else "partial" if result.get("failed_services") else "ok" if result.get("records") else "empty")
-        for source, result in source_results.items()}
+    source_status = {}
+    for source, result in source_results.items():
+        failed_services = result.get("failed_services", {})
+        service_status = result.get("service_status", {})
+        if source in failures:
+            source_status[source] = "error"
+        elif failed_services:
+            if service_status:
+                source_status[source] = "error" if not any(state == "ok" for state in service_status.values()) else "partial"
+            else:
+                source_status[source] = "error" if not result.get("records") else "partial"
+        else:
+            source_status[source] = "ok" if result.get("records") else "empty"
     source_status.update({source: "error" for source in failures})
 
     findings: dict[str, dict[str, Any]] = {cause: {"id": cause, "title": title, "support": [], "against": [], "source_set": set()}
@@ -216,10 +226,28 @@ def investigate_live(start: str, end: str, limit: int = 100,
     if same_trace_skews:
         warnings.append("source_clock_drift")
 
+    source_details = {}
+    for source in ("metrics", "logs", "traces", "deployments"):
+        result = source_results.get(source, {})
+        source_records = result.get("records", [])
+        status = source_status.get(source, "error")
+        source_details[source] = {
+            "status": status,
+            "window": {"start": start, "end": end},
+            "query": result.get("query", {"start": start, "end": end, "limit": limit}),
+            "record_count": len(source_records) if isinstance(source_records, list) else 0,
+            "evidence_refs": [_ref(row) for row in source_records if isinstance(row, dict) and row.get("record_id")],
+            "warnings": result.get("warnings", []),
+            "failed_services": result.get("failed_services", {}),
+            "service_status": result.get("service_status", {}),
+            "error": failures.get(source),
+            "reason": "no_matching_records" if status == "empty" else "adapter_unavailable" if status == "error" else None,
+        }
+
     return {
         "window": {"start": start, "end": end}, "status": "concluded" if sufficient else "insufficient_evidence",
         "root_causes": claimed, "confidence": "high" if sufficient else "abstain",
-        "hypotheses": hypotheses, "source_status": source_status,
+        "hypotheses": hypotheses, "source_status": source_status, "sources": source_details,
         "evidence_refs": [{"source": row["source"], "record_id": row["record_id"]} for row in records],
         "dependency_graph": [{"caller": caller, "callee": callee, "evidence": refs}
             for (caller, callee), refs in sorted(dependency_edges.items())],

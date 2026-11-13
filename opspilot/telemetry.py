@@ -109,17 +109,21 @@ class LabTelemetry:
         lower, upper, limit = self._bounds(start, end, limit)
         records = []
         failed_services: dict[str, str] = {}
+        service_status: dict[str, str] = {}
         per_service = max(1, min(1000, limit))
         for service, base in self.log_services.items():
             try:
                 response = self._get(base, "/logs", {"start": start, "end": end, "limit": per_service})
             except (OSError, ValueError) as exc:
                 failed_services[service] = type(exc).__name__
+                service_status[service] = "error"
                 continue
-            rows = response.get("records", [])
+            rows = response.get("records")
             if not isinstance(rows, list):
                 failed_services[service] = "InvalidRecords"
+                service_status[service] = "error"
                 continue
+            service_status[service] = "ok"
             for row in rows:
                 if not isinstance(row, dict) or not isinstance(row.get("timestamp"), str):
                     continue
@@ -136,15 +140,19 @@ class LabTelemetry:
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
         warnings = ["partial_service_unavailable"] if failed_services else []
         return {"source": "logs", "query": {"start": start, "end": end, "limit": limit},
-            "records": records[:limit], "warnings": warnings, "failed_services": failed_services}
+            "records": records[:limit], "warnings": warnings, "failed_services": failed_services,
+            "service_status": service_status}
 
     def deployments(self, start: str, end: str, limit: int = 100) -> dict[str, Any]:
         self._bounds(start, end, limit)
         response = self._get(self.gateway, "/deployments", {"start": start, "end": end, "limit": limit})
+        source_rows = response.get("records")
+        if not isinstance(source_rows, list):
+            raise ValueError("deployment response records must be a list")
         lower, upper = _instant(start), _instant(end)
         rows = []
         source_order = []
-        for row in response.get("records", []):
+        for row in source_rows:
             if not isinstance(row, dict):
                 continue
             try:
@@ -166,6 +174,7 @@ class LabTelemetry:
         lower, upper, limit = self._bounds(start, end, limit)
         records_by_id = {}
         failed_services: dict[str, str] = {}
+        service_status: dict[str, str] = {}
         for service in SERVICES:
             try:
                 response = self._get(self.jaeger, "/api/traces", {
@@ -174,11 +183,14 @@ class LabTelemetry:
                 })
             except (OSError, ValueError) as exc:
                 failed_services[service] = type(exc).__name__
+                service_status[service] = "error"
                 continue
-            trace_rows = response.get("data", [])
+            trace_rows = response.get("data")
             if not isinstance(trace_rows, list):
                 failed_services[service] = "InvalidTraceData"
+                service_status[service] = "error"
                 continue
+            service_status[service] = "ok"
             for trace_row in trace_rows:
                 if not isinstance(trace_row, dict):
                     continue
@@ -217,4 +229,5 @@ class LabTelemetry:
         records.sort(key=lambda row: (row["timestamp"], row["record_id"]))
         warnings = ["partial_service_unavailable"] if failed_services else []
         return {"source": "traces", "query": {"start": start, "end": end, "limit": limit},
-            "records": records[:limit], "warnings": warnings, "failed_services": failed_services}
+            "records": records[:limit], "warnings": warnings, "failed_services": failed_services,
+            "service_status": service_status}
