@@ -21,3 +21,23 @@ def test_dependency_timeout_host_card_uses_real_read_only_endpoints_and_cleanup(
     assert '不表示场景已运行' in text
 
 
+def test_bad_release_acceptance_orders_utc_window_and_queries_correct_services():
+    acceptance = render()
+    release = acceptance.split("## lab-release-01 / bad_release", 1)[1].split("\n## ", 1)[0]
+    assert release.index("先记录 UTC 起点") < release.index("启动场景")
+    assert release.index("启动场景") < release.index("触发：POST")
+    assert release.index("触发：POST") < release.index("记录 UTC 终点")
+    assert "18081/logs?start=$from&end=$to" in release
+    assert "18080/deployments?start=$from&end=$to" in release
+    assert "不能证明记录缺失" in release
+    assert "AddMinutes(-30)" not in release and "AddMinutes(5)" not in release
+
+    smoke = (ROOT / "lab" / "smoke.ps1").read_text(encoding="utf-8-sig")
+    assert smoke.index('$windowStart = [DateTime]::UtcNow.ToString("o")') < smoke.index('& $runScript -Scenario')
+    assert smoke.index('& $runScript -Scenario') < smoke.index('http://127.0.0.1:18080/checkout')
+    assert smoke.index('http://127.0.0.1:18080/checkout') < smoke.index('$windowEnd = [DateTime]::UtcNow.ToString("o")')
+    assert '18081/logs?start=$from&end=$to' in smoke
+    assert '18080/deployments?start=$from&end=$to' in smoke
+    assert "18081/deployments" not in smoke
+
+

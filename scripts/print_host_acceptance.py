@@ -16,11 +16,13 @@ def render() -> str:
         fault = case["fault"]
         case_id = case["case_id"]
         lines += [f"## {case_id} / {fault}", f"预期真值（仅评测端）：{', '.join(case['root_causes'])}",
-                  f"启动：Set-Location {ROOT}; .\\lab\\run-scenario.ps1 -Scenario {fault}",
-                  "时间窗：$start=[DateTime]::UtcNow.AddMinutes(-30).ToString('o'); $end=[DateTime]::UtcNow.AddMinutes(5).ToString('o')",
+                  f"先记录 UTC 起点：Set-Location {ROOT}; $start=[DateTime]::UtcNow.ToString('o')。必须先于 run-scenario；启动脚本会写 deployment timestamp。",
+                  f"启动场景：.\\lab\\run-scenario.ps1 -Scenario {fault}",
                   "端口：Gateway 18080；orders 18081；inventory 18082；payment 18083；Prometheus 19090；Jaeger 16686",
                   "触发：POST http://127.0.0.1:18080/checkout，order_id 使用新 GUID",
-                  "只读取证：GET orders /logs（18081）；GET gateway /deployments（18080）；Prometheus 19090；Jaeger 16686",
+                  "请求和日志轮询结束后记录 UTC 终点：$end=[DateTime]::UtcNow.ToString('o'); $from/$to 必须复用这次运行的 $start/$end。",
+                  "只读取证：GET 127.0.0.1:18081/logs?start=$from&end=$to；GET 127.0.0.1:18080/deployments?start=$from&end=$to；Prometheus 19090；Jaeger 16686",
+                  "18081/logs 是 orders；18080/deployments 是 gateway。禁止用 18081/deployments。时间窗必须包含本次 deployment timestamp；任意后续短窗返回空不能证明记录缺失。",
                   "停止：.\\lab\\stop.ps1；检查：docker compose -f .\\lab\\compose.yaml ps --all", ""]
     return "\n".join(lines)
 

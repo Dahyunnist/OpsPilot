@@ -68,3 +68,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 用户宿主回传中 gateway HTTP 504、orders `inventory-v2` DNS 失败和 BrokenPipe，与配置故障一致；BrokenPipe 可能是 gateway 超时后下游才结束请求的次生现象。旧 gateway 对 orders 等待上限为 3 秒，可能早于下游 DNS 错误完成。现在上限改为 10 秒；orders 在 inventory 请求失败时也会记录脱敏后的目标 hostname 和错误原因。启动流程先做有界 readiness；目的是让下游失败先返回，避免过早断开连接。该解释基于源码和用户日志，修复效果仍需宿主复跑确认。故意错误的 `inventory-v2` 仍保留为 bad_release 注入。
 
 2026-11-12 执行环境前置检查：七个映射端口均空闲，但本执行环境无法连接 Docker Desktop Linux Engine，镜像状态无法读取；矩阵未启动、未注入故障、未生成 live 证据。用户此前提供的 Docker 版本输出显示其桌面 Engine 可运行；两者是不同执行环境，不能互相代替。
+
+## 用户 bad_release 证据回看
+
+用户回传的 orders 日志包含 `inventory-v2` DNS 失败（日志时间 `2026-11-11T14:06:22Z`），与 bad_release 注入一致。随后部署查询应使用 gateway `127.0.0.1:18080/deployments`；orders `127.0.0.1:18081` 只提供 `/logs`，`18081/deployments` 是错误路径。后来正确端口查询返回空，但它使用的短时间窗未覆盖 deployment 记录 `13:47Z`；这不是部署证据缺失的结论。
+
+复现时先记录 UTC `start`，再运行 `run-scenario.ps1 -Scenario bad_release`。该脚本在 readiness 后写 deployment timestamp。触发 checkout，等待 DNS 日志落盘，再记录 UTC `end`；logs 与 deployments 查询复用同一窗口。必须核对 `start <= 13:47Z <= end`（针对该次记录）及 orders/v2；不要用之后以当前时间计算的短窗判定缺失。手动步骤见 [bad_release 宿主验收卡](op1-bad-release-host-card.md)。离线回归只检查步骤顺序、端口和窗口参数，不启动 Docker。
