@@ -1,0 +1,957 @@
+{
+  "volume_deletion": false,
+  "normal_control": {
+    "scenario": "none",
+    "start": "2026-11-13T06:24:12.7544516Z",
+    "end": "2026-11-13T06:24:25.9415870Z",
+    "http_status": 200,
+    "error": null,
+    "log_count": 2,
+    "deployment_count": 1,
+    "deployment_records": [
+      {
+        "record_id": "dafa8993-ecde-438e-9dc7-1d7ecb0fe445",
+        "service": "orders",
+        "timestamp": "2026-11-13T06:24:23.7619331Z",
+        "version": "v1"
+      }
+    ],
+    "expected_deployment_version": "v1",
+    "expected_deployment_observed": true,
+    "passed": true
+  },
+  "cases": [
+    {
+      "case_id": "lab-pool-01",
+      "scenario": "db_pool_exhaustion",
+      "order_id": "matrix-db_pool_exhaustion-252d3394-0b62-4556-bd3c-cccd05ed9015",
+      "start": "2026-11-13T06:24:24.0191789Z",
+      "end": "2026-11-13T06:24:36.2141157Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "05d2a890-969d-4bb1-81d5-3084044689aa",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:24:35.9784341Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "orders_db_errors",
+        "db_session_pressure"
+      ],
+      "signal_results": [
+        {
+          "name": "orders_db_errors",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:24:36:request failed:matrix-db_pool_exhaustion-252d3394-0b62-4556-bd3c-cccd05ed9015",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:24:36.107Z",
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-db_pool_exhaustion-252d3394-0b62-4556-bd3c-cccd05ed9015"
+            }
+          ]
+        },
+        {
+          "name": "db_session_pressure",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:24:36:database sessions remain occupied:matrix-db_pool_exhaustion-252d3394-0b62-4556-bd3c-cccd05ed9015",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:24:36.101Z",
+              "operation": null,
+              "message": "database sessions remain occupied",
+              "order_id": "matrix-db_pool_exhaustion-252d3394-0b62-4556-bd3c-cccd05ed9015"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-dependency-01",
+      "scenario": "dependency_timeout",
+      "order_id": "matrix-dependency_timeout-ad2adf17-47c9-4a8f-aab5-b250e059226a",
+      "start": "2026-11-13T06:24:34.5815886Z",
+      "end": "2026-11-13T06:24:47.0759935Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 4,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "05d2a890-969d-4bb1-81d5-3084044689aa",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:24:35.9784341Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "ce9cfa9c-1061-4904-9294-6f53c1a51492",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:24:46.601747Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "payment_latency",
+        "orders_timeout"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_latency",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "orders_timeout",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "payment_latency",
+        "orders_timeout"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-release-01",
+      "scenario": "bad_release",
+      "order_id": "matrix-bad_release-3d845165-ad9d-4469-90bc-3cdc69a91214",
+      "start": "2026-11-13T06:24:45.1457071Z",
+      "end": "2026-11-13T06:25:01.3639041Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        502,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "ce9cfa9c-1061-4904-9294-6f53c1a51492",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:24:46.601747Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "19b8bd58-78b4-4c3a-9dfc-e5fd54bbf051",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:24:57.2634349Z",
+          "version": "v2"
+        }
+      ],
+      "expected_deployment_version": "v2",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "orders_v2",
+        "inventory_connection_errors"
+      ],
+      "signal_results": [
+        {
+          "name": "orders_v2",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "deployments",
+              "record_id": "19b8bd58-78b4-4c3a-9dfc-e5fd54bbf051",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:24:57.2634349Z",
+              "operation": null,
+              "message": null,
+              "order_id": null
+            }
+          ]
+        },
+        {
+          "name": "inventory_connection_errors",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:01:inventory dependency failed:matrix-bad_release-3d845165-ad9d-4469-90bc-3cdc69a91214",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:01.275Z",
+              "operation": null,
+              "message": "inventory dependency failed",
+              "order_id": "matrix-bad_release-3d845165-ad9d-4469-90bc-3cdc69a91214"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-sql-01",
+      "scenario": "slow_sql",
+      "order_id": "matrix-slow_sql-f8529a1c-1aec-4e33-9bb9-5a27f00d3d36",
+      "start": "2026-11-13T06:24:59.4161120Z",
+      "end": "2026-11-13T06:25:12.8846528Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 3,
+      "logs_observed": true,
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "90796ffd-d9bc-4207-aadc-7f75b867e2a8",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:11.3103164Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "postgres_slow_query",
+        "orders_latency"
+      ],
+      "signal_results": [
+        {
+          "name": "postgres_slow_query",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "orders_latency",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "postgres_slow_query",
+        "orders_latency"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-retry-01",
+      "scenario": "retry_storm",
+      "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+      "start": "2026-11-13T06:25:10.9126590Z",
+      "end": "2026-11-13T06:25:22.7149582Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 12,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "90796ffd-d9bc-4207-aadc-7f75b867e2a8",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:11.3103164Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "21a54496-9640-4f70-b449-30b07a22bdf6",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:22.6517631Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "payment_attempts",
+        "orders_retry_logs"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_attempts",
+          "observed": true,
+          "match_count": 3,
+          "minimum_count": 3,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 06:25:22:request returned an error response:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "payment",
+              "timestamp": "2026-11-13T06:25:22.678Z",
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 06:25:22:request returned an error response:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "payment",
+              "timestamp": "2026-11-13T06:25:22.68Z",
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            },
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 06:25:22:request returned an error response:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "payment",
+              "timestamp": "2026-11-13T06:25:22.681Z",
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            }
+          ]
+        },
+        {
+          "name": "orders_retry_logs",
+          "observed": true,
+          "match_count": 3,
+          "minimum_count": 3,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:22:payment attempt failed:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:22.679Z",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:22:payment attempt failed:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:22.68Z",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            },
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:22:payment attempt failed:matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:22.681Z",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-retry_storm-3f7b9ad2-f860-423a-9d35-8aaa0fb6e0be"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-double-01",
+      "scenario": "double_root",
+      "order_id": "matrix-double_root-a8d76d93-2aba-4333-985f-10f98f8f34a6",
+      "start": "2026-11-13T06:25:20.7680851Z",
+      "end": "2026-11-13T06:25:34.6278614Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 6,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "21a54496-9640-4f70-b449-30b07a22bdf6",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:22.6517631Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "18aadae2-356c-4f24-b812-1967c361d00b",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:32.6247651Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 2,
+      "traces_observed": true,
+      "telemetry_observed": true,
+      "expected_signals": [
+        "postgres_slow_query",
+        "payment_latency",
+        "orders_timeout"
+      ],
+      "signal_results": [
+        {
+          "name": "postgres_slow_query",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "traces",
+              "record_id": "b06050a0ecaef3b391b59fd195aeab52:57b52d047daa48a6",
+              "service": "orders",
+              "timestamp": null,
+              "operation": "postgres.query",
+              "message": null,
+              "order_id": "matrix-double_root-a8d76d93-2aba-4333-985f-10f98f8f34a6"
+            }
+          ]
+        },
+        {
+          "name": "payment_latency",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "orders_timeout",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:34:payment attempt failed:matrix-double_root-a8d76d93-2aba-4333-985f-10f98f8f34a6",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:34.608Z",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-double_root-a8d76d93-2aba-4333-985f-10f98f8f34a6"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [
+        "payment_latency"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-inventory-latency-01",
+      "scenario": "inventory_latency",
+      "order_id": "matrix-inventory_latency-716776c2-4842-4222-a891-ea1df30f7e7b",
+      "start": "2026-11-13T06:25:32.7643372Z",
+      "end": "2026-11-13T06:25:44.5013057Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 3,
+      "logs_observed": true,
+      "deployment_count": 1,
+      "deployment_records": [
+        {
+          "record_id": "a0674058-4144-4d96-93c0-b426915a939c",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:44.4498562Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "inventory_duration",
+        "orders_latency"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_duration",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "orders_latency",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "inventory_duration",
+        "orders_latency"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-payment-reject-01",
+      "scenario": "payment_reject",
+      "order_id": "matrix-payment_reject-4129061f-9264-4179-9459-5ec454dc2098",
+      "start": "2026-11-13T06:25:42.5220687Z",
+      "end": "2026-11-13T06:25:54.9179810Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 7,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "a0674058-4144-4d96-93c0-b426915a939c",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:44.4498562Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "22ed3252-ab85-4d7b-b475-5b054ba90c95",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:54.8616356Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "payment_503",
+        "orders_payment_attempt_failure"
+      ],
+      "signal_results": [
+        {
+          "name": "payment_503",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "payment:11/13/2026 06:25:54:request returned an error response:matrix-payment_reject-4129061f-9264-4179-9459-5ec454dc2098",
+              "service": "payment",
+              "timestamp": "2026-11-13T06:25:54.872Z",
+              "operation": null,
+              "message": "request returned an error response",
+              "order_id": "matrix-payment_reject-4129061f-9264-4179-9459-5ec454dc2098"
+            }
+          ]
+        },
+        {
+          "name": "orders_payment_attempt_failure",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:25:54:payment attempt failed:matrix-payment_reject-4129061f-9264-4179-9459-5ec454dc2098",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:25:54.872Z",
+              "operation": null,
+              "message": "payment attempt failed",
+              "order_id": "matrix-payment_reject-4129061f-9264-4179-9459-5ec454dc2098"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-stale-inventory-01",
+      "scenario": "stale_inventory",
+      "order_id": "matrix-stale_inventory-0cfab1de-24b1-434e-8af0-3ff38c5976e0",
+      "start": "2026-11-13T06:25:52.9521655Z",
+      "end": "2026-11-13T06:26:04.9386805Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 6,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "22ed3252-ab85-4d7b-b475-5b054ba90c95",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:25:54.8616356Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "e67d121a-2f43-4281-845f-52a80e5855b8",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:04.8726385Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "inventory_stale_replica_response",
+        "inventory_remaining_20"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_stale_replica_response",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "inventory_remaining_20",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "inventory_stale_replica_response",
+        "inventory_remaining_20"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-duplicate-delivery-01",
+      "scenario": "duplicate_delivery",
+      "order_id": "matrix-duplicate_delivery-5057c0d3-a837-41c9-96c8-12fdc5fde822",
+      "start": "2026-11-13T06:26:02.9698394Z",
+      "end": "2026-11-13T06:26:14.9669990Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 3,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "e67d121a-2f43-4281-845f-52a80e5855b8",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:04.8726385Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "464e76bf-5e38-4202-bc9e-53be71ac4396",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:14.9184987Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "duplicate_delivery_replayed_payment",
+        "same_order_id"
+      ],
+      "signal_results": [
+        {
+          "name": "duplicate_delivery_replayed_payment",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "same_order_id",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "duplicate_delivery_replayed_payment",
+        "same_order_id"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-redis-unavailable-01",
+      "scenario": "redis_unavailable",
+      "order_id": "matrix-redis_unavailable-21b539d4-4daf-44dd-8d4c-b99313db9f8a",
+      "start": "2026-11-13T06:26:12.9873348Z",
+      "end": "2026-11-13T06:26:24.9425549Z",
+      "http_status": 502,
+      "expected_http_statuses": [
+        400,
+        401,
+        403,
+        404,
+        408,
+        409,
+        429,
+        500,
+        502,
+        503,
+        504
+      ],
+      "error": "Response status code does not indicate success: 502 (Bad Gateway).",
+      "log_count": 5,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "464e76bf-5e38-4202-bc9e-53be71ac4396",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:14.9184987Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "8b42f497-f031-4461-8462-1d4628658106",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:24.8973112Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": true,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "cache_connection_failed",
+        "orders_cache_error"
+      ],
+      "signal_results": [
+        {
+          "name": "cache_connection_failed",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:26:24:cache connection failed:matrix-redis_unavailable-21b539d4-4daf-44dd-8d4c-b99313db9f8a",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:26:24.905Z",
+              "operation": null,
+              "message": "cache connection failed",
+              "order_id": "matrix-redis_unavailable-21b539d4-4daf-44dd-8d4c-b99313db9f8a"
+            }
+          ]
+        },
+        {
+          "name": "orders_cache_error",
+          "observed": true,
+          "match_count": 1,
+          "minimum_count": 1,
+          "evidence": [
+            {
+              "source": "logs",
+              "record_id": "orders:11/13/2026 06:26:24:request failed:matrix-redis_unavailable-21b539d4-4daf-44dd-8d4c-b99313db9f8a",
+              "service": "orders",
+              "timestamp": "2026-11-13T06:26:24.907Z",
+              "operation": null,
+              "message": "request failed",
+              "order_id": "matrix-redis_unavailable-21b539d4-4daf-44dd-8d4c-b99313db9f8a"
+            }
+          ]
+        }
+      ],
+      "missing_signals": [],
+      "scenario_passed": false,
+      "live_run": true
+    },
+    {
+      "case_id": "lab-inventory-depleted-01",
+      "scenario": "inventory_depleted",
+      "order_id": "matrix-inventory_depleted-fb6a12ff-fd69-4749-8a98-f795b8ce1dd2",
+      "start": "2026-11-13T06:26:22.9693958Z",
+      "end": "2026-11-13T06:26:34.9981970Z",
+      "http_status": 200,
+      "expected_http_statuses": 200,
+      "error": null,
+      "log_count": 4,
+      "logs_observed": true,
+      "deployment_count": 2,
+      "deployment_records": [
+        {
+          "record_id": "8b42f497-f031-4461-8462-1d4628658106",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:24.8973112Z",
+          "version": "v1"
+        },
+        {
+          "record_id": "73217f23-d4f8-49ce-9a61-b2981a47927f",
+          "service": "orders",
+          "timestamp": "2026-11-13T06:26:34.940977Z",
+          "version": "v1"
+        }
+      ],
+      "expected_deployment_version": "v1",
+      "expected_deployment_observed": true,
+      "expected_failure": false,
+      "expected_status_observed": true,
+      "dns_failure_observed": true,
+      "trace_count": 0,
+      "traces_observed": false,
+      "telemetry_observed": false,
+      "expected_signals": [
+        "inventory_remaining_zero",
+        "reservation_rejected"
+      ],
+      "signal_results": [
+        {
+          "name": "inventory_remaining_zero",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        },
+        {
+          "name": "reservation_rejected",
+          "observed": false,
+          "match_count": 0,
+          "minimum_count": 1,
+          "evidence": []
+        }
+      ],
+      "missing_signals": [
+        "inventory_remaining_zero",
+        "reservation_rejected"
+      ],
+      "scenario_passed": false,
+      "live_run": true
+    }
+  ],
+  "project": "opspilot-matrix-039e015c",
+  "cleanup": {
+    "remaining_error": null,
+    "stop_error": null,
+    "stop_exit": 0,
+    "empty": true
+  }
+}

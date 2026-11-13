@@ -66,7 +66,7 @@ try {
     if ($normalControl.passed) {
       foreach ($case in $truth.cases) {
         $id = "matrix-$($case.fault)-$([guid]::NewGuid())"
-        $start = [DateTime]::UtcNow.AddSeconds(-2).ToString("o")
+        $start = [DateTime]::UtcNow.ToString("o")
         $status = $null; $message = $null; $logs = @(); $ordersLogs = @{records=@();count=0}; $deploymentRecords = @(); $traceData = @(); $dnsObserved = $false; $end = $start
         try {
             & $runScript -Scenario $case.fault
@@ -95,8 +95,14 @@ try {
             }
             $deployments=Invoke-RestMethod "http://127.0.0.1:18080/deployments?start=$from&end=$to&limit=100"
             $deploymentRecords=@($deployments.records)
-            $traces=Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=100"
-            $traceData=@($traces.data)
+            $traceData=@()
+            for ($traceAttempt=0; $traceAttempt -le 10; $traceAttempt++) {
+                $traces=Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=1000"
+                $traceData=@($traces.data)
+                $windowSpans=@(Get-WindowSpans $traceData $start ([DateTime]::UtcNow.ToString("o")) $id)
+                if ($windowSpans.Count -gt 0 -or $traceAttempt -eq 10) { break }
+                Start-Sleep -Seconds 1
+            }
         } catch { $message=$_.Exception.Message }
         $expectedVersion=if ($case.fault -eq "bad_release") { "v2" } else { "v1" }
         $versionObserved=@($deploymentRecords | Where-Object { $_.service -eq "orders" -and $_.version -eq $expectedVersion }).Count -gt 0
