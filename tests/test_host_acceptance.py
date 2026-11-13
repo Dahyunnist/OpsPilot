@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 from scripts.print_host_acceptance import ROOT, render
 
@@ -40,5 +41,23 @@ def test_bad_release_acceptance_orders_utc_window_and_queries_correct_services()
     assert '18080/deployments?start=$from&end=$to' in smoke
     assert "18081/deployments" not in smoke
     assert '$_.order_id -eq $case.case_id' in smoke
+
+
+def test_user_host_bad_release_result_preserves_reported_status_and_limits():
+    result_path = ROOT / "reports" / "op1-bad-release-host-result-2026-11-13.json"
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    assert result["evidence_source"] == "user-provided Windows host terminal summary"
+    assert result["checkout"]["http_status"] == 502
+    assert result["fault_deployment"] == {
+        "service": "orders", "version": "v2", "record_observed": True,
+        "host": "127.0.0.1:18080", "path": "/deployments",
+    }
+    assert result["logs"]["records_returned"] is True
+    assert result["logs"]["record_count"] is None
+    assert result["cleanup"]["containers_removed"] == 10
+    assert result["cleanup"]["networks_removed"] == 1
+    assert result["cleanup"]["compose_ps_all_empty"] is True
+    assert result["not_recorded"]
+    assert "Does not infer detailed root cause" in result["interpretation_limit"]
 
 

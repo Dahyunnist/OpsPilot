@@ -1,0 +1,106 @@
+{
+  "schema_version": 2,
+  "normalizer_sha256": "2a54b38ba60bdd12dc9377fac12f3bedd0d945c93e38071187667c8bd4df90e3",
+  "project": "OpsPilot",
+  "run_id": "opspilot-matrix-ed1798ae",
+  "trace_id": "matrix-ed1798ae",
+  "evaluation_id": null,
+  "environment": null,
+  "git_sha": "967a4ecd65dd58a37680cff3cdf707c6174a3cae",
+  "dataset_id": "op1-truth-v1",
+  "dataset_sha256": "9c08b4abbef988c76a0fdf9d77f81a515d439b06fbc712c0d66a882064cb9694",
+  "truth_sha256": "9c08b4abbef988c76a0fdf9d77f81a515d439b06fbc712c0d66a882064cb9694",
+  "report_sha256": "f924be53a3e2fc63bbc0833806e6f01a39ba6f37d939211bf0094690e3dc2529",
+  "prompt_sha256": null,
+  "tool_schema_sha256": null,
+  "scorer_sha256": null,
+  "split": "host_matrix",
+  "runtime": {
+    "digest_sha256": null,
+    "python": "3.12",
+    "platform": null,
+    "lock_sha256": null,
+    "container_image": "python:3.12-slim",
+    "docker_cli_version": "29.1.3",
+    "docker_engine_version": null
+  },
+  "model_id": "none",
+  "model_version": null,
+  "gold_source": "lab/scenarios/truth.json",
+  "budget": {
+    "cap_usd": null,
+    "spent_usd": 0.0,
+    "status": "cap_not_recorded"
+  },
+  "cost_usd": 0.0,
+  "max_steps": 13,
+  "max_tokens": null,
+  "status": "passed",
+  "source_status": "completed",
+  "conformance_status": "blocked",
+  "started_at": "2026-11-13T07:08:11.287293Z",
+  "completed_at": "2026-11-13T07:10:46.5972881Z",
+  "field_status": {
+    "evaluation_id": "blocked",
+    "environment": "blocked",
+    "dataset_sha256": "recorded",
+    "truth_sha256": "recorded",
+    "report_sha256": "recorded",
+    "prompt_sha256": "not_applicable",
+    "tool_schema_sha256": "not_applicable",
+    "scorer_sha256": "blocked",
+    "runtime.digest_sha256": "blocked",
+    "runtime.platform": "blocked",
+    "runtime.lock_sha256": "blocked",
+    "runtime.python": "recorded",
+    "runtime.container_image": "recorded",
+    "runtime.docker_cli_version": "recorded",
+    "runtime.docker_engine_version": "blocked",
+    "model_version": "not_applicable",
+    "max_tokens": "not_applicable",
+    "budget.cap_usd": "blocked",
+    "budget.spent_usd": "recorded"
+  },
+  "blocked_fields": [
+    "budget.cap_usd",
+    "environment",
+    "evaluation_id",
+    "runtime.digest_sha256",
+    "runtime.docker_engine_version",
+    "runtime.lock_sha256",
+    "runtime.platform",
+    "scorer_sha256"
+  ],
+  "trace_event_coverage": {
+    "timeout": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "retry": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "budget_exceeded": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "cancel": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "unsafe_action_blocked": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "checkpoint_resume": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "source_artifacts": {
+    "manifest_sha256": "2dd280828cadbb5589d30da0613484cfccd6161559145e919183926610b6e99a",
+    "manifest_path": "reports/op1-host-matrix-run-manifest.json",
+    "report_path": "reports/op1-host-matrix.json",
+    "truth_path": "lab/scenarios/truth.json"
+  }
+}

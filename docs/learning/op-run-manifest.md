@@ -63,3 +63,24 @@ validates it when present. Existing generic `run_manifest` schema v1 remains a
 separate contract; this addition does not rewrite old reports. `is_new_run=True`
 is required at new report write boundaries; `is_new_run=False` preserves
 historical report reads.
+
+## Shared public v2 view
+
+`reports/op1-host-matrix-run-manifest.json` is historical source evidence; it remains unchanged. Its normalizer writes `reports/op1-host-matrix-public-manifest.json` in shared field vocabulary aligned with `papertrail/evals/run-manifest-v1.schema.json`, plus explicit environment, field status, source artifact hashes, and trace-event coverage. Schema version 2 allows missing historical facts only as `null` with `blocked`, `not_recorded`, or `not_applicable`; `unknown` placeholders fail validation. `normalizer_sha256` binds the normalization code.
+
+Host manifest audit:
+
+| Field | Recorded value/state |
+| --- | --- |
+| Run identity | `run_id`, run correlation `trace_id`, source schema version 1 |
+| Code/data | 40-hex `git_sha`; `dataset_id=op1-truth-v1`; truth and report SHA-256 verified against files |
+| Model | `model_id=none`; model version, prompt and tool hashes are null/not applicable |
+| Gold/cost | `gold_source=lab/scenarios/truth.json`, matching truth SHA-256; `cost_usd=0.0`, zero model requests |
+| Runtime | Python 3.12, `python:3.12-slim`, Docker CLI 29.1.3 recorded; runtime digest, platform, lock hash and Engine version null/blocked |
+| Environment/scorer | Not recorded; null/blocked, never guessed |
+| Budget/time | 13 max steps; max tokens not applicable; spend 0.0, cap not recorded; source timestamps retained |
+| Result | Source run completed 12/12; public record `status=passed`, `conformance_status=blocked` due missing required provenance |
+
+The source has no standardized `events` array. `timeout`, `retry`, `budget_exceeded`, `unsafe_action_blocked` (safe-action rejection), `cancel`, and `checkpoint_resume` each report count 0 / `not_covered`. This does not claim no similar log or span signal occurred; host telemetry was recorded as `span_observed`, not these standard trace events. Manifest has 48 telemetry spans; their span trace IDs remain distinct from run correlation `trace_id`.
+
+`scripts/normalize_public_host_manifest.py` recreates the safe view and checks source, report, and truth file hashes. `tests/test_public_run_manifest.py` rejects unknown fillers, missing identity, inverted time, sensitive keys, and null scorer hashes without explicit blocked state. The root document named `Agent四项目_JD对标与升级路线` was not present in the accessible workspace; this mapping uses the shared Papertrail schema and field requirements supplied in the task.

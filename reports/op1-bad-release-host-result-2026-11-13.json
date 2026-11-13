@@ -1,0 +1,47 @@
+{
+  "evidence_schema_version": 1,
+  "project": "OpsPilot",
+  "scenario": "bad_release",
+  "evidence_source": "user-provided Windows host terminal summary",
+  "execution_context": "user host; separate from Codex execution environment",
+  "build": {
+    "status": "passed",
+    "service_image": "python:3.12-slim",
+    "services_started": 9
+  },
+  "healthy_baseline": "passed",
+  "fault_deployment": {
+    "service": "orders",
+    "version": "v2",
+    "record_observed": true,
+    "host": "127.0.0.1:18080",
+    "path": "/deployments"
+  },
+  "checkout": {
+    "order_id": null,
+    "host": "127.0.0.1:18080",
+    "path": "/checkout",
+    "http_status": 502
+  },
+  "logs": {
+    "host": "127.0.0.1:18081",
+    "path": "/logs",
+    "records_returned": true,
+    "record_count": null
+  },
+  "cleanup": {
+    "stop_script": "lab/stop.ps1",
+    "stop_status": "passed",
+    "containers_removed": 10,
+    "networks_removed": 1,
+    "compose_ps_all_empty": true
+  },
+  "not_recorded": [
+    "exact run start and end timestamps",
+    "order ID",
+    "log record count and contents",
+    "deployment record count",
+    "detailed failure cause"
+  ],
+  "interpretation_limit": "Records successful bad_release evidence and cleanup only. Does not infer detailed root cause from the supplied summary."
+}

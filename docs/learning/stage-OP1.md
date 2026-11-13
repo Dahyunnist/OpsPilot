@@ -78,3 +78,5 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 复现时先记录 UTC `start`，再运行 `run-scenario.ps1 -Scenario bad_release`。该脚本在 readiness 后写 deployment timestamp。触发 checkout，等待 DNS 日志落盘，再记录 UTC `end`；logs 与 deployments 查询复用同一半开区间 `[start,end)`。必须核对 `start <= 13:47:23Z < end`（针对该次记录）及 orders/v2；不要用之后以当前时间计算的短窗判定缺失。手动步骤见 [bad_release 宿主验收卡](op1-bad-release-host-card.md)。离线回归只检查步骤顺序、端口和窗口参数，不启动 Docker。
 
 宿主 `smoke.ps1` 的最终 JSON 除部署总数外，也保留 `deployment_evidence` 的 `record_id/timestamp/service/version` 与 expected/observed version。新增合成 JSONL 回归从写入字段、部署文件、gateway response shape 到 smoke 筛选字段逐段核对；不读取或覆盖用户已有输出。
+
+2026-11-13 用户 Windows 宿主 `bad_release` 验收通过：`python:3.12-slim` 构建成功并启动 9 个服务；健康基线通过；orders v2 发布记录由 `127.0.0.1:18080/deployments` 观测到；唯一 checkout 返回 **HTTP 502**；`127.0.0.1:18081/logs` 返回记录。随后停止成功，删除 10 个容器和 1 个网络，`compose ps --all` 为空。用户摘要未含精确窗口、order ID、记录数量/内容或详细失败原因，均留空，不推断。证据来源、字段与限制见[用户宿主 bad_release 验收](../../reports/op1-bad-release-host-result-2026-11-13.json)。该结果来自用户宿主，与本执行环境此前因 Docker pipe 权限失败的尝试分开记录。

@@ -19,6 +19,16 @@ SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
 SHA256 = re.compile(r"^[0-9a-f]{64}$", re.I)
 STATUSES = {"completed", "failed", "cancelled", "budget_exceeded"}
 EVENT_TYPES = {"timeout", "retry", "budget_exceeded", "unsafe_action_blocked", "cancel", "checkpoint_resume"}
+PUBLIC_MANIFEST_VERSION = 2
+PUBLIC_EVENT_TYPES = ("timeout", "retry", "budget_exceeded", "cancel", "unsafe_action_blocked", "checkpoint_resume")
+PUBLIC_MANIFEST_REQUIRED = {
+    "schema_version", "project", "run_id", "trace_id", "evaluation_id", "environment", "git_sha",
+    "dataset_id", "dataset_sha256", "truth_sha256", "report_sha256", "prompt_sha256", "tool_schema_sha256", "scorer_sha256",
+    "split", "runtime", "model_id", "model_version", "gold_source", "budget", "cost_usd", "max_steps",
+    "max_tokens", "status", "conformance_status", "started_at", "completed_at", "field_status",
+    "blocked_fields", "trace_event_coverage", "source_artifacts", "source_status", "normalizer_sha256",
+}
+PUBLIC_FIELD_STATES = {"recorded", "not_applicable", "not_recorded", "blocked"}
 OP_RUN_MANIFEST_VERSION = 1
 OP_RUN_MANIFEST_REQUIRED = {
     "schema_version", "project", "run_id", "evaluation_id", "dataset_id", "dataset_sha256",
@@ -96,6 +106,208 @@ def validate_run_manifest(value: Any) -> list[str]:
         optional_model_tokens = field in value and field == "max_tokens" and value.get("model_id") == "none" and value[field] is None
         if field in value and not optional_model_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
             errors.append(f"{field} must be a positive integer")
+    return errors
+
+
+def normalize_host_manifest(source: dict[str, Any], *, source_manifest_sha256: str,
+                            report_sha256: str, truth_sha256: str,
+                            normalizer_sha256: str) -> dict[str, Any]:
+    """Create public shared-schema v2 view without filling absent host-run facts."""
+    if source.get("dataset_sha256") != truth_sha256 or source.get("report_sha256") != report_sha256:
+        raise ValueError("host manifest artifact hashes do not match source files")
+    events = source.get("events")
+    if not isinstance(events, list):
+        events = []
+    trace_event_coverage = {
+        event_type: {"count": sum(isinstance(event, dict) and event.get("event_type") == event_type for event in events),
+                     "coverage": "covered" if any(isinstance(event, dict) and event.get("event_type") == event_type for event in events) else "not_covered"}
+        for event_type in PUBLIC_EVENT_TYPES
+    }
+    field_status = {
+        "evaluation_id": "not_recorded", "environment": "not_recorded", "dataset_sha256": "recorded",
+        "truth_sha256": "recorded", "report_sha256": "recorded", "prompt_sha256": "not_applicable",
+        "tool_schema_sha256": "not_applicable",
+        "scorer_sha256": "blocked", "runtime.digest_sha256": "blocked",
+        "runtime.platform": "blocked", "runtime.lock_sha256": "blocked",
+        "runtime.python": "recorded", "runtime.container_image": "recorded",
+        "runtime.docker_cli_version": "recorded", "runtime.docker_engine_version": "blocked",
+        "model_version": "not_applicable", "max_tokens": "not_applicable",
+        "budget.cap_usd": "blocked", "budget.spent_usd": "recorded",
+    }
+    field_status.update(evaluation_id="blocked", environment="blocked")
+    blocked_fields = sorted(field for field, state in field_status.items() if state == "blocked")
+    runtime = {
+        "digest_sha256": None,
+        "python": source.get("python_version"),
+        "platform": None,
+        "lock_sha256": None,
+        "container_image": source.get("service_image"),
+        "docker_cli_version": source.get("docker_cli_client"),
+        "docker_engine_version": None,
+    }
+    value = {
+        "schema_version": PUBLIC_MANIFEST_VERSION,
+        "normalizer_sha256": normalizer_sha256,
+        "project": source.get("project"), "run_id": source.get("run_id"),
+        "trace_id": source.get("trace_id"), "evaluation_id": None, "environment": None,
+        "git_sha": source.get("git_sha"), "dataset_id": source.get("dataset_id"),
+        "dataset_sha256": truth_sha256, "truth_sha256": truth_sha256, "report_sha256": report_sha256,
+        "prompt_sha256": None, "tool_schema_sha256": None, "scorer_sha256": None, "split": source.get("split"),
+        "runtime": runtime, "model_id": source.get("model_id"), "model_version": None,
+        "gold_source": source.get("gold_source"),
+        "budget": {"cap_usd": None, "spent_usd": source.get("cost_usd_estimate"), "status": "cap_not_recorded"},
+        "cost_usd": source.get("cost_usd_estimate"), "max_steps": source.get("max_steps"),
+        "max_tokens": None,
+        "status": ("passed" if source.get("status") == "completed"
+                   and source.get("passed_count") == source.get("case_count")
+                   and source.get("failed_count") == 0 else "blocked"),
+        "source_status": source.get("status"), "conformance_status": "blocked" if blocked_fields else "passed",
+        "started_at": source.get("started_at"), "completed_at": source.get("ended_at"),
+        "field_status": field_status, "blocked_fields": blocked_fields,
+        "trace_event_coverage": trace_event_coverage,
+        "source_artifacts": {"manifest_sha256": source_manifest_sha256,
+                             "manifest_path": "reports/op1-host-matrix-run-manifest.json",
+                             "report_path": source.get("report_path"),
+                             "truth_path": source.get("gold_source")},
+    }
+    errors = validate_public_manifest(value)
+    if errors:
+        raise ValueError("invalid normalized public manifest: " + "; ".join(errors))
+    return value
+
+
+def validate_public_manifest(value: Any) -> list[str]:
+    """Validate public run manifest v2; nullable provenance needs an explicit state."""
+    if not isinstance(value, dict):
+        return ["public manifest must be an object"]
+    errors: list[str] = []
+    missing = PUBLIC_MANIFEST_REQUIRED - value.keys()
+    if missing:
+        errors.append("missing public manifest fields: " + ", ".join(sorted(missing)))
+    if value.get("schema_version") != PUBLIC_MANIFEST_VERSION or isinstance(value.get("schema_version"), bool):
+        errors.append("unsupported public manifest schema_version")
+    def walk(item: Any, key: str = "") -> None:
+        if isinstance(item, dict):
+            for child_key, child in item.items():
+                if child_key != "max_tokens" and SENSITIVE_KEYS.search(str(child_key)):
+                    errors.append(f"sensitive field is forbidden: {child_key}")
+                walk(child, str(child_key))
+        elif isinstance(item, list):
+            for child in item:
+                walk(child, key)
+        elif isinstance(item, str) and item.strip().casefold() == "unknown":
+            errors.append(f"unknown placeholder is forbidden: {key}")
+    walk(value)
+    for field in ("project", "run_id", "trace_id", "dataset_id", "split", "gold_source"):
+        if not isinstance(value.get(field), str) or not value[field].strip():
+            errors.append(f"{field} must be a non-empty string")
+    sha40 = re.compile(r"^[0-9a-f]{40}$")
+    for field in ("git_sha",):
+        if not isinstance(value.get(field), str) or not sha40.fullmatch(value[field]):
+            errors.append(f"{field} must be 40 hexadecimal characters")
+    sha256_fields = ("dataset_sha256", "truth_sha256", "report_sha256")
+    for field in sha256_fields:
+        if not isinstance(value.get(field), str) or not SHA256.fullmatch(value[field]):
+            errors.append(f"{field} must be a recorded SHA-256")
+    if not isinstance(value.get("normalizer_sha256"), str) or not SHA256.fullmatch(value["normalizer_sha256"]):
+        errors.append("normalizer_sha256 must be a recorded SHA-256")
+    field_status = value.get("field_status")
+    if not isinstance(field_status, dict):
+        errors.append("field_status must be an object")
+        field_status = {}
+    for field in ("evaluation_id", "environment", "prompt_sha256", "tool_schema_sha256", "scorer_sha256", "model_version"):
+        field_value = value.get(field)
+        state = field_status.get(field)
+        if field_value is None and state not in PUBLIC_FIELD_STATES:
+            errors.append(f"null {field} requires explicit field_status")
+        if field_value is not None and (not isinstance(field_value, str) or not field_value.strip()):
+            errors.append(f"{field} must be a non-empty string or null")
+    for field in ("prompt_sha256", "tool_schema_sha256", "scorer_sha256"):
+        field_value = value.get(field)
+        state = field_status.get(field)
+        if field_value is None and state not in PUBLIC_FIELD_STATES:
+            errors.append(f"null {field} requires explicit field_status")
+        elif field_value is not None and (not isinstance(field_value, str) or not SHA256.fullmatch(field_value)):
+            errors.append(f"{field} must be a SHA-256 or explicitly null")
+        elif field_value is not None and state != "recorded":
+            errors.append(f"recorded {field} requires recorded field_status")
+    if value.get("model_id") != "none" and (not isinstance(value.get("model_id"), str) or not value["model_id"].strip()):
+        errors.append("model_id must identify model or declare none")
+    if value.get("model_id") == "none" and value.get("cost_usd") != 0:
+        errors.append("model_id none requires zero cost")
+    if value.get("model_id") == "none":
+        if value.get("model_version") is not None or value.get("prompt_sha256") is not None or value.get("tool_schema_sha256") is not None:
+            errors.append("model_id none requires model version/prompt/tool hashes not_applicable")
+    cost = value.get("cost_usd")
+    if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost < 0:
+        errors.append("cost_usd must be a non-negative number")
+    if value.get("environment") is None and field_status.get("environment") not in PUBLIC_FIELD_STATES:
+        errors.append("null environment requires explicit field_status")
+    budget = value.get("budget")
+    if not isinstance(budget, dict) or not {"cap_usd", "spent_usd", "status"} <= budget.keys():
+        errors.append("budget fields missing")
+    elif (budget["spent_usd"] != cost or (budget["cap_usd"] is not None
+          and (not isinstance(budget["cap_usd"], (int, float)) or isinstance(budget["cap_usd"], bool) or budget["cap_usd"] < 0))):
+        errors.append("budget values must match the recorded run cost")
+    runtime = value.get("runtime")
+    if not isinstance(runtime, dict):
+        errors.append("runtime must be an object")
+    else:
+        runtime_fields = ("digest_sha256", "python", "platform", "lock_sha256", "container_image",
+                          "docker_cli_version", "docker_engine_version")
+        for field in runtime_fields:
+            if field not in runtime:
+                errors.append(f"runtime missing field: {field}")
+        for field in ("digest_sha256", "lock_sha256"):
+            digest = runtime.get(field)
+            state = field_status.get(f"runtime.{field}")
+            if digest is None and state not in PUBLIC_FIELD_STATES:
+                errors.append(f"null runtime.{field} requires explicit field_status")
+            elif digest is not None and (not isinstance(digest, str) or not SHA256.fullmatch(digest)):
+                errors.append(f"runtime.{field} must be a SHA-256 or explicitly null")
+        for field in ("platform", "python", "container_image", "docker_cli_version", "docker_engine_version"):
+            if runtime.get(field) is None and field_status.get(f"runtime.{field}") not in PUBLIC_FIELD_STATES:
+                errors.append(f"null runtime.{field} requires explicit field_status")
+    for field in ("started_at", "completed_at"):
+        try:
+            stamp = datetime.fromisoformat(str(value[field]).replace("Z", "+00:00"))
+            if stamp.tzinfo is None:
+                raise ValueError
+        except (KeyError, TypeError, ValueError):
+            errors.append(f"{field} must be an ISO-8601 timestamp with timezone")
+    if not any(error.startswith("started_at") or error.startswith("completed_at") for error in errors):
+        start = datetime.fromisoformat(value["started_at"].replace("Z", "+00:00"))
+        end = datetime.fromisoformat(value["completed_at"].replace("Z", "+00:00"))
+        if end < start:
+            errors.append("completed_at must not precede started_at")
+    coverage = value.get("trace_event_coverage")
+    expected_events = set(PUBLIC_EVENT_TYPES)
+    if not isinstance(coverage, dict) or set(coverage) != expected_events:
+        errors.append("trace_event_coverage must declare the standard vocabulary")
+    else:
+        for event_type, item in coverage.items():
+            if (not isinstance(item, dict) or not isinstance(item.get("count"), int)
+                    or isinstance(item.get("count"), bool) or item["count"] < 0
+                    or item.get("coverage") != ("covered" if item["count"] > 0 else "not_covered")):
+                errors.append(f"invalid trace event coverage: {event_type}")
+    source_artifacts = value.get("source_artifacts")
+    if not isinstance(source_artifacts, dict):
+        errors.append("source_artifacts must be an object")
+    elif not isinstance(source_artifacts.get("manifest_sha256"), str) or not SHA256.fullmatch(source_artifacts["manifest_sha256"]):
+        errors.append("source manifest SHA-256 is required")
+    if value.get("blocked_fields") != sorted(path for path, state in field_status.items() if state == "blocked"):
+        errors.append("blocked_fields must match blocked field_status entries")
+    if value.get("conformance_status") not in {"passed", "blocked"}:
+        errors.append("invalid conformance_status")
+    if value.get("status") not in {"passed", "failed", "blocked"}:
+        errors.append("invalid public run status")
+    for field in ("max_steps",):
+        item = value.get(field)
+        if not isinstance(item, int) or isinstance(item, bool) or item <= 0:
+            errors.append(f"{field} must be a positive integer")
+    if value.get("max_tokens") is not None and (not isinstance(value["max_tokens"], int)
+            or isinstance(value["max_tokens"], bool) or value["max_tokens"] <= 0):
+        errors.append("max_tokens must be null or a positive integer")
     return errors
 
 
