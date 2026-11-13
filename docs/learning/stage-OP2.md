@@ -14,4 +14,6 @@
 
 单元测试用固定 HTTP 响应替身检查 GET、loopback、时间/数量边界、稳定引用、全局行数上限、反证弃答、超时与重试分离、部署乱序和 MCP 工具清单。Python 3.11 Docker 服务烟测及后续新开发窗口已实际读取 Prometheus、日志、Jaeger trace 和部署记录；窗口和费用条件见[最终升级验收](../../reports/final-upgrade-acceptance.md)。这只证明本地合成实验集成，不证明生产遥测覆盖。
 
+trace adapter 要求 Jaeger span 同时带非空 `traceID` 与 `spanID`。缺任一来源身份的 malformed span 会被丢弃；只有这类 span 时调查必须弃答，且不得生成 evidence reference。该边界由合成 HTTP fixture 离线验证，不代表生产 Collector 验收。
+
 MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 MCP 服务对真实 Docker 遥测执行工具调用。生产连接仍不支持。

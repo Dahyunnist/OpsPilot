@@ -184,6 +184,33 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertIn("partial_service_unavailable", result["warnings"])
         self.assertTrue(result["records"][0]["record_id"].startswith("traces:"))
 
+    def test_jaeger_drops_spans_without_source_identity_and_investigation_abstains(self) -> None:
+        start_us = int(datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() * 1_000_000)
+        payload = {"data": [
+            {"traceID": "", "processes": {"orders": {"serviceName": "orders"}}, "spans": [
+                {"spanID": "span-missing-trace", "processID": "orders", "operationName": "postgres.query",
+                 "startTime": start_us + 1_000_000, "duration": 2_000_000}]},
+            {"traceID": "a" * 32, "processes": {"orders": {"serviceName": "orders"}}, "spans": [
+                {"processID": "orders", "operationName": "postgres.query",
+                 "startTime": start_us + 1_000_000, "duration": 2_000_000}]},
+        ]}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def read(self, _size): return json.dumps(payload).encode()
+
+        with patch("opspilot.telemetry.urlopen", side_effect=[Response() for _ in range(4)]):
+            traces = LabTelemetry().traces(START, END, 10)
+        self.assertEqual([], traces["records"])
+        empty = {"records": []}
+        report = investigate_live(START, END, telemetry=FakeTelemetry({
+            "metrics": empty, "logs": empty, "traces": traces, "deployments": empty,
+        }))
+        self.assertEqual("abstain", report["confidence"])
+        self.assertEqual([], report["root_causes"])
+        self.assertEqual([], report["evidence_refs"])
+
     def test_jaeger_query_uses_window_and_caps_global_result_after_filtering(self) -> None:
         lower = int(datetime.fromisoformat(START.replace("Z", "+00:00")).timestamp() * 1_000_000)
         payload = {"data": [{"traceID": "d" * 32, "processes": {"orders": {"serviceName": "orders"}},

@@ -183,12 +183,17 @@ class LabTelemetry:
                 if not isinstance(trace_row, dict):
                     continue
                 trace_id = trace_row.get("traceID")
+                if not isinstance(trace_id, str) or not trace_id.strip():
+                    continue
                 processes = trace_row.get("processes", {})
                 spans = trace_row.get("spans", [])
                 if not isinstance(processes, dict) or not isinstance(spans, list):
                     continue
                 for span in spans:
                     if not isinstance(span, dict):
+                        continue
+                    span_id = span.get("spanID")
+                    if not isinstance(span_id, str) or not span_id.strip():
                         continue
                     try:
                         timestamp = datetime.fromtimestamp(float(span["startTime"]) / 1_000_000, timezone.utc).isoformat().replace("+00:00", "Z")
