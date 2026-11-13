@@ -119,6 +119,13 @@ class LabManifestTests(unittest.TestCase):
         investigator = (ROOT / "opspilot" / "live_investigation.py").read_text(encoding="utf-8")
         self.assertIn('attrs.get("dependency_host") == "inventory-v2"', investigator)
 
+    def test_inventory_rejection_and_trace_spans_keep_order_correlation(self) -> None:
+        source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
+        self.assertIn('span.set_attribute("opspilot.order_id", str(payload["order_id"]))', source)
+        self.assertIn('span.set_attribute("opspilot.order_id", order_id)', source)
+        self.assertIn('emit("warning", "inventory reservation rejected", order_id=order_id', source)
+        self.assertIn('emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__, order_id=order_id)', source)
+
 
 if __name__ == "__main__":
     unittest.main()

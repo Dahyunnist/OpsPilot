@@ -1,6 +1,7 @@
 param([string]$OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/op1-host-matrix.json"))
 
 $ErrorActionPreference = "Continue"
+. (Join-Path $PSScriptRoot "op1-matrix-contract.ps1")
 $compose = Join-Path $PSScriptRoot "compose.yaml"
 $truth = Get-Content (Join-Path $PSScriptRoot "scenarios/truth.json") -Raw | ConvertFrom-Json
 $composeFiles = @("-f", $compose)
@@ -66,7 +67,7 @@ try {
       foreach ($case in $truth.cases) {
         $id = "matrix-$($case.fault)-$([guid]::NewGuid())"
         $start = [DateTime]::UtcNow.AddSeconds(-2).ToString("o")
-        $status = $null; $message = $null; $logs = @(); $deploymentRecords = @(); $traceCount = 0; $dnsObserved = $false; $end = $start
+        $status = $null; $message = $null; $logs = @(); $ordersLogs = @{records=@();count=0}; $deploymentRecords = @(); $traceData = @(); $dnsObserved = $false; $end = $start
         try {
             & $runScript -Scenario $case.fault
             if ($LASTEXITCODE -ne 0) { throw "scenario startup failed ($LASTEXITCODE)" }
@@ -79,29 +80,37 @@ try {
             for ($settle=0; $settle -le $settleAttempts; $settle++) {
                 $settledEnd=[DateTime]::UtcNow.ToString("o")
                 $settledTo=[uri]::EscapeDataString($settledEnd)
-                $logs=Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$settledTo&limit=100"
-                $dnsObserved=$case.fault -ne "bad_release" -or @($logs.records | Where-Object { $_.service -eq "orders" -and ($_.dependency_host -eq "inventory-v2" -or $_.error_reason -match "No address associated|Name or service not known" -or $_.message -match "inventory-v2|No address associated") }).Count -gt 0
+                $ordersLogs=Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$settledTo&limit=100"
+                $dnsObserved=$case.fault -ne "bad_release" -or @($ordersLogs.records | Where-Object { $_.service -eq "orders" -and ($_.dependency_host -eq "inventory-v2" -or $_.error_reason -match "No address associated|Name or service not known" -or $_.message -match "inventory-v2|No address associated") }).Count -gt 0
                 if ($dnsObserved -or $settle -eq $settleAttempts) { break }
                 Start-Sleep -Seconds 1
             }
             $end = [DateTime]::UtcNow.ToString("o")
             $to=[uri]::EscapeDataString($end)
-            $logs=Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$to&limit=100"
+            $ordersLogs=Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$to&limit=100"
+            $logs=@($ordersLogs.records)
+            foreach ($port in @(18082,18083)) {
+                $serviceResult=Invoke-RestMethod "http://127.0.0.1:$port/logs?start=$from&end=$to&limit=100"
+                $logs+=@($serviceResult.records)
+            }
             $deployments=Invoke-RestMethod "http://127.0.0.1:18080/deployments?start=$from&end=$to&limit=100"
             $deploymentRecords=@($deployments.records)
             $traces=Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=100"
-            $traceCount=@($traces.data).Count
+            $traceData=@($traces.data)
         } catch { $message=$_.Exception.Message }
         $expectedVersion=if ($case.fault -eq "bad_release") { "v2" } else { "v1" }
         $versionObserved=@($deploymentRecords | Where-Object { $_.service -eq "orders" -and $_.version -eq $expectedVersion }).Count -gt 0
         $expectedFailure=$case.fault -in @("db_pool_exhaustion", "dependency_timeout", "bad_release", "double_root", "payment_reject", "redis_unavailable")
         $expectedStatuses=if ($case.fault -eq "bad_release") { @(502, 504) } elseif ($expectedFailure) { @(400, 401, 403, 404, 408, 409, 429, 500, 502, 503, 504) } else { @(200) }
         $expectedStatusObserved=$status -in $expectedStatuses
-        $logsObserved=$logs.count -gt 0
-        $tracesObserved=$traceCount -gt 0
+        $windowSpans=@(Get-WindowSpans $traceData $start $end $id)
+        $logsObserved=$logs.Count -gt 0
+        $tracesObserved=$windowSpans.Count -gt 0
         $telemetryObserved=$logsObserved -and $tracesObserved
-        $scenarioPassed=($expectedStatusObserved -and $versionObserved -and $dnsObserved -and $telemetryObserved)
-        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.count;logs_observed=$logsObserved;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$traceCount;traces_observed=$tracesObserved;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
+        $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
+        $missingSignals=@($signals | Where-Object { -not $_.observed } | ForEach-Object { $_.name })
+        $scenarioPassed=Test-MatrixScenarioPass @{ExpectedStatusObserved=$expectedStatusObserved;VersionObserved=$versionObserved;DnsObserved=$dnsObserved;Logs=$logs;TraceSpans=$windowSpans;SignalResults=$signals}
+        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
       }
     }
 } finally {

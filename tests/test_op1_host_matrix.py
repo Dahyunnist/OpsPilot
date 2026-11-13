@@ -1,5 +1,9 @@
 from pathlib import Path
 import re
+import shutil
+import subprocess
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +45,119 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "expected_deployment_observed" in script and "scenario_passed=$scenarioPassed" in script
     assert "$telemetryObserved=$logsObserved -and $tracesObserved" in script
     assert "logs_observed=$logsObserved" in script and "traces_observed=$tracesObserved" in script
-    assert "$expectedStatusObserved -and $versionObserved -and $dnsObserved -and $telemetryObserved" in script
+    assert "Test-MatrixScenarioPass" in script
+    assert "Get-ObservedSignals" in script
+    assert "foreach ($port in @(18082,18083))" in script
+    assert "$start $end $id" in script
     assert "$settleAttempts=if ($case.fault -eq \"bad_release\") { 10 } else { 2 }" in script
     assert "for ($settle=0; $settle -le $settleAttempts; $settle++)" in script
     assert "@(502, 504)" in script and "expected_http_statuses=$expectedStatuses" in script
+
+
+def test_every_truth_signal_has_a_report_mapping():
+    import json
+
+    truth = json.loads((ROOT / "lab/scenarios/truth.json").read_text(encoding="utf-8"))
+    contract = (ROOT / "lab/op1-matrix-contract.ps1").read_text(encoding="utf-8")
+    signals = {signal for case in truth["cases"] for signal in case["must_observe"]}
+    for signal in signals:
+        assert f'"{signal}" {{' in contract
+    matrix = (ROOT / "lab/run-host-matrix.ps1").read_text(encoding="utf-8-sig")
+    assert "signal_results=$signals" in matrix
+    assert "missing_signals=$missingSignals" in matrix
+
+
+def test_matrix_contract_rejects_missing_logs_or_trace_spans():
+    powershell = shutil.which("pwsh") or shutil.which("powershell")
+    if not powershell:
+        pytest.skip("PowerShell is required to execute the host matrix contract")
+    contract_path = str(ROOT / "lab/op1-matrix-contract.ps1").replace("'", "''")
+    command = (
+        f". '{contract_path}'; "
+        "$logs=@([pscustomobject]@{record_id='log-1'}); "
+        "$spans=@([pscustomobject]@{operation='POST /orders'}); "
+        "$signals=@([pscustomobject]@{observed=$true}); "
+        "$complete=Test-MatrixScenarioPass @{ExpectedStatusObserved=$true;VersionObserved=$true;DnsObserved=$true;Logs=$logs;TraceSpans=$spans;SignalResults=$signals}; "
+        "$missingLogs=Test-MatrixScenarioPass @{ExpectedStatusObserved=$true;VersionObserved=$true;DnsObserved=$true;Logs=@();TraceSpans=$spans;SignalResults=$signals}; "
+        "$missingTraces=Test-MatrixScenarioPass @{ExpectedStatusObserved=$true;VersionObserved=$true;DnsObserved=$true;Logs=$logs;TraceSpans=@();SignalResults=$signals}; "
+        "[pscustomobject]@{complete=$complete;missing_logs=$missingLogs;missing_traces=$missingTraces}|ConvertTo-Json -Compress"
+    )
+    result = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-Command", command],
+        capture_output=True, text=True, check=True, timeout=15,
+    )
+    import json
+
+    outcome = json.loads(result.stdout.strip().splitlines()[-1])
+    assert outcome == {"complete": True, "missing_logs": False, "missing_traces": False}
+
+
+def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
+    import base64
+    import datetime as dt
+    import json
+
+    powershell = shutil.which("pwsh") or shutil.which("powershell")
+    if not powershell:
+        pytest.skip("PowerShell is required to execute the host matrix contract")
+    truth = json.loads((ROOT / "lab/scenarios/truth.json").read_text(encoding="utf-8"))
+    order_id = "matrix-fixture-001"
+    logs_by_signal = {
+        "orders_db_errors": {"service": "orders", "severity": "error", "message": "request failed", "error_type": "OperationalError"},
+        "db_session_pressure": {"service": "orders", "severity": "warning", "message": "database sessions remain occupied"},
+        "orders_timeout": {"service": "orders", "severity": "warning", "message": "payment attempt failed", "error_type": "TimeoutError"},
+        "inventory_connection_errors": {"service": "orders", "severity": "error", "message": "inventory dependency failed", "dependency_host": "inventory-v2", "error_reason": "Name or service not known"},
+        "payment_attempts": {"service": "payment", "severity": "warning", "message": "request returned an error response", "status": 503},
+        "orders_retry_logs": {"service": "orders", "severity": "warning", "message": "payment attempt failed", "error_type": "HTTPError"},
+        "payment_503": {"service": "payment", "severity": "warning", "message": "request returned an error response", "status": 503},
+        "orders_payment_attempt_failure": {"service": "orders", "severity": "warning", "message": "payment attempt failed", "error_type": "HTTPError"},
+        "inventory_stale_replica_response": {"service": "inventory", "severity": "warning", "message": "inventory stale replica response", "remaining": 20},
+        "inventory_remaining_20": {"service": "inventory", "severity": "warning", "message": "inventory stale replica response", "remaining": 20},
+        "duplicate_delivery_replayed_payment": {"service": "orders", "severity": "error", "message": "duplicate delivery replayed payment"},
+        "same_order_id": {"service": "orders", "severity": "error", "message": "duplicate delivery replayed payment"},
+        "cache_connection_failed": {"service": "orders", "severity": "error", "message": "cache connection failed"},
+        "orders_cache_error": {"service": "orders", "severity": "error", "message": "request failed", "error_type": "ConnectionError"},
+        "inventory_remaining_zero": {"service": "inventory", "severity": "warning", "message": "inventory exhausted", "remaining": 0},
+        "reservation_rejected": {"service": "orders", "severity": "warning", "message": "inventory reservation rejected"},
+    }
+    logs = []
+    for signal, row in logs_by_signal.items():
+        repeated = 3 if signal in {"payment_attempts", "orders_retry_logs"} else 1
+        logs.extend(dict(row, record_id=f"log-{signal}-{index}", order_id=order_id)
+                    for index in range(repeated))
+    start = dt.datetime(2026, 11, 13, tzinfo=dt.timezone.utc)
+    end = start + dt.timedelta(hours=1)
+    start_us = int(start.timestamp() * 1_000_000)
+    process_ids = {"payment": "p1", "orders": "p2", "inventory": "p3"}
+    spans = []
+    for service, operation, duration in (
+        ("payment", "payment/charge", 600_000),
+        ("orders", "orders/orders", 800_000),
+        ("inventory", "inventory/reserve", 800_000),
+        ("orders", "postgres.query", 100_000),
+    ):
+        spans.append({"processID": process_ids[service], "operationName": operation,
+                      "spanID": f"span-{len(spans)}", "startTime": start_us + 1_000_000, "duration": duration,
+                      "tags": [{"key": "opspilot.order_id", "type": "string", "value": order_id}]})
+    fixture = {"cases": truth["cases"], "order_id": order_id, "logs": logs,
+               "deployments": [{"service": "orders", "version": "v2"}],
+               "traces": [{"traceID": "trace-fixture-001", "processes": {pid: {"serviceName": service}
+                                            for service, pid in process_ids.items()}, "spans": spans}]}
+    encoded = base64.b64encode(json.dumps(fixture).encode()).decode()
+    contract_path = str(ROOT / "lab/op1-matrix-contract.ps1").replace("'", "''")
+    command = (
+        f". '{contract_path}'; "
+        f"$fixture=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{encoded}'))|ConvertFrom-Json; "
+        f"$start='{start.isoformat().replace('+00:00', 'Z')}'; $end='{end.isoformat().replace('+00:00', 'Z')}'; "
+        "$all=@(); foreach ($case in $fixture.cases) { "
+        "$all+=@(Get-ObservedSignals $case $fixture.order_id $fixture.logs $fixture.deployments $fixture.traces $start $end) }; "
+        "$all|ConvertTo-Json -Depth 6 -Compress"
+    )
+    result = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-Command", command],
+        capture_output=True, text=True, check=True, timeout=15,
+    )
+    observed = json.loads(result.stdout.strip().splitlines()[-1])
+    assert len(observed) == 25
+    assert all(item["observed"] for item in observed)
+    assert all(item["evidence"] for item in observed)

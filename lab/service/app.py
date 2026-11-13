@@ -113,7 +113,7 @@ class ResponseError(RuntimeError):
         self.status = status
 
 
-def start_pool_pressure() -> None:
+def start_pool_pressure(order_id: str) -> None:
     global POOL_FAULT_STARTED
     with LOCK:
         if POOL_FAULT_STARTED:
@@ -126,7 +126,7 @@ def start_pool_pressure() -> None:
             for _ in range(20):
                 connections.append(db_connect())
             POOL_PRESSURE_READY.set()
-            emit("warning", "database sessions remain occupied", occupied_sessions=len(connections))
+            emit("warning", "database sessions remain occupied", occupied_sessions=len(connections), order_id=order_id)
             time.sleep(8)
         except Exception as exc:
             POOL_PRESSURE_READY.set()
@@ -238,6 +238,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         started = time.perf_counter()
         status = 200
+        payload: dict[str, Any] = {}
         try:
             payload = self.body_json()
             from opentelemetry.propagate import extract
@@ -247,6 +248,8 @@ class Handler(BaseHTTPRequestHandler):
                 span.set_attribute("service.version", VERSION)
                 span.set_attribute("http.request.method", "POST")
                 span.set_attribute("http.route", urlsplit(self.path).path)
+                if payload.get("order_id"):
+                    span.set_attribute("opspilot.order_id", str(payload["order_id"]))
                 if SERVICE == "gateway" and urlsplit(self.path).path == "/checkout":
                     result = json_call(f"{ORDERS_URL}/orders", payload, timeout=ORDERS_REQUEST_TIMEOUT_SECONDS)
                 elif SERVICE == "orders" and urlsplit(self.path).path == "/orders":
@@ -264,19 +267,19 @@ class Handler(BaseHTTPRequestHandler):
             status = exc.status
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("warning", "request returned an error response", path=urlsplit(self.path).path, status=status)
+            emit("warning", "request returned an error response", path=urlsplit(self.path).path, status=status, order_id=payload.get("order_id"))
             self.send_json(status, {"error": str(exc)})
         except (TimeoutError, URLError) as exc:
             status = 504 if isinstance(exc, TimeoutError) else 502
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("error", "request dependency failed", path=urlsplit(self.path).path, error_type=type(exc).__name__)
+            emit("error", "request dependency failed", path=urlsplit(self.path).path, error_type=type(exc).__name__, order_id=payload.get("order_id"))
             self.send_json(status, {"error": "dependency unavailable", "error_type": type(exc).__name__})
         except Exception as exc:
             status = 500
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("error", "request failed", path=urlsplit(self.path).path, error_type=type(exc).__name__)
+            emit("error", "request failed", path=urlsplit(self.path).path, error_type=type(exc).__name__, order_id=payload.get("order_id"))
             self.send_json(status, {"error": "request failed", "error_type": type(exc).__name__})
         finally:
             elapsed = int((time.perf_counter() - started) * 1000)
@@ -288,26 +291,30 @@ class Handler(BaseHTTPRequestHandler):
         global PAYMENT_ATTEMPTS
         order_id = str(payload.get("order_id") or uuid.uuid4())
         if FAULT == "db_pool_exhaustion":
-            start_pool_pressure()
+            start_pool_pressure(order_id)
             if not POOL_PRESSURE_READY.wait(timeout=2.0):
                 raise RuntimeError("database session pressure did not become ready")
         if FAULT in {"slow_sql", "double_root"}:
             with TRACER.start_as_current_span("postgres.query") as span:
                 span.set_attribute("db.system", "postgresql")
+                span.set_attribute("opspilot.order_id", order_id)
                 with db_connect() as connection:
                     connection.execute("SELECT pg_sleep(1.5)")
         with db_connect() as connection:
             connection.execute("INSERT INTO orders (order_id, sku, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (order_id, "demo-1", 1))
         if REDIS_HOST:
             if FAULT == "redis_unavailable":
-                emit("error", "cache connection failed", error_type="ConnectionError")
+                emit("error", "cache connection failed", error_type="ConnectionError", order_id=order_id)
                 raise redis.ConnectionError("synthetic redis unavailable")
             redis.Redis(host=REDIS_HOST, socket_connect_timeout=1).set(f"order:{order_id}", "accepted", ex=3600)
         try:
             inventory = json_call(f"{INVENTORY_URL}/reserve", {"order_id": order_id}, timeout=0.5)
+            if not inventory.get("reserved", False):
+                emit("warning", "inventory reservation rejected", order_id=order_id,
+                    remaining=inventory.get("remaining"))
         except (TimeoutError, URLError) as exc:
             reason = getattr(exc, "reason", exc)
-            emit("error", "inventory dependency failed", error_type=type(exc).__name__,
+            emit("error", "inventory dependency failed", error_type=type(exc).__name__, order_id=order_id,
                 dependency_host=urlsplit(INVENTORY_URL).hostname, error_reason=str(reason)[:160])
             raise RuntimeError("inventory dependency failed") from exc
         retries = 4 if FAULT == "retry_storm" else 1
@@ -318,7 +325,7 @@ class Handler(BaseHTTPRequestHandler):
                 payment = json_call(f"{PAYMENT_URL}/charge", {"order_id": order_id}, timeout=0.4 if FAULT in {"dependency_timeout", "double_root"} else 1.0)
                 break
             except Exception as exc:
-                emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__)
+                emit("warning", "payment attempt failed", attempt=attempt + 1, error_type=type(exc).__name__, order_id=order_id)
                 if attempt + 1 == retries:
                     raise RuntimeError("payment attempts exhausted")
         if FAULT == "duplicate_delivery":
@@ -328,10 +335,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def reserve_inventory(self, payload: dict[str, Any]) -> dict[str, Any]:
         if FAULT == "inventory_depleted":
-            emit("warning", "inventory exhausted", remaining=0)
+            emit("warning", "inventory exhausted", remaining=0, order_id=payload.get("order_id"))
             return {"reserved": False, "remaining": 0}
         if FAULT == "stale_inventory":
-            emit("warning", "inventory stale replica response", remaining=20)
+            emit("warning", "inventory stale replica response", remaining=20, order_id=payload.get("order_id"))
             return {"reserved": True, "remaining": 20, "replica_stale": True}
         if FAULT == "inventory_latency":
             time.sleep(0.8)
