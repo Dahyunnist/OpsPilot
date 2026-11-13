@@ -48,6 +48,8 @@ def test_logs_and_deployments_share_service_window_filter_and_documented_ports()
     assert "COPY time_window.py ./time_window.py" in dockerfile
 
     acceptance = (ROOT / "docs" / "learning" / "op1-bad-release-host-card.md").read_text(encoding="utf-8")
+    assert "Set-Location (git rev-parse --show-toplevel)" in acceptance
+    assert "Set-Location E:\\job\\opspilot" not in acceptance
     assert "18081/logs?start=$from&end=$to" in acceptance
     assert "18080/deployments?start=$from&end=$to" in acceptance
     assert "start <= deployment timestamp < end" in acceptance

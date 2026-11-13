@@ -7,7 +7,7 @@
 `run-scenario.ps1` 在服务 readiness 后写入 orders deployment 记录。因此先记录 UTC 起点，再启动场景；执行 checkout 并等待 DNS 日志出现后，再记录终点。不要事后按当前时间重新计算相对窗口。
 
 ```powershell
-Set-Location E:\job\opspilot
+Set-Location (git rev-parse --show-toplevel)
 $start = [DateTime]::UtcNow.ToString('o')
 .\lab\run-scenario.ps1 -Scenario bad_release
 $order = 'op1-bad-release-' + [guid]::NewGuid().ToString()
