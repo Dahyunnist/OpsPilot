@@ -22,7 +22,7 @@ def render() -> str:
                   "触发：POST http://127.0.0.1:18080/checkout，order_id 使用新 GUID",
                   "请求和日志轮询结束后记录 UTC 终点：$end=[DateTime]::UtcNow.ToString('o'); $from/$to 必须复用这次运行的 $start/$end。",
                   "只读取证：GET 127.0.0.1:18081/logs?start=$from&end=$to；GET 127.0.0.1:18080/deployments?start=$from&end=$to；Prometheus 19090；Jaeger 16686",
-                  "18081/logs 是 orders；18080/deployments 是 gateway。禁止用 18081/deployments。时间窗必须包含本次 deployment timestamp；任意后续短窗返回空不能证明记录缺失。",
+                  "18081/logs 是 orders；18080/deployments 是 gateway。禁止用 18081/deployments。两端使用同一 UTC 半开区间 [start,end)；必须满足 start <= deployment timestamp < end。任意后续短窗返回空不能证明记录缺失。",
                   "停止：.\\lab\\stop.ps1；检查：docker compose -f .\\lab\\compose.yaml ps --all", ""]
     return "\n".join(lines)
 

@@ -20,4 +20,4 @@ Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=20"
 docker compose -f .\lab\compose.yaml ps --all
 ```
 
-先记录 UTC `start`，再运行 `run-scenario.ps1`；它在 readiness 后写入 deployment 记录。请求结束后记 UTC `end`，两个查询必须复用同一窗口。`/logs` 走 orders:18081，`/deployments` 走 gateway:18080；不要用 `18081/deployments`。任意当前时间短窗未覆盖该次 deployment timestamp 时，空结果不能证明记录缺失。完成后确认 `ps --all` 无实验容器；不要删 PostgreSQL/Redis 数据卷。此卡只提供步骤，不表示场景已运行。
+先记录 UTC `start`，再运行 `run-scenario.ps1`；它在 readiness 后写入 deployment 记录。请求结束后记 UTC `end`，两个查询必须复用同一半开区间 `[start,end)`。`/logs` 走 orders:18081，`/deployments` 走 gateway:18080；不要用 `18081/deployments`。任意当前时间短窗未覆盖该次 deployment timestamp 时，空结果不能证明记录缺失。完成后确认 `ps --all` 无实验容器；不要删 PostgreSQL/Redis 数据卷。此卡只提供步骤，不表示场景已运行。

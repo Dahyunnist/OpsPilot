@@ -40,11 +40,11 @@ $endUtc = [DateTimeOffset]::Parse($end).UtcDateTime
 $v2Deployments = @($deploymentResult.records | Where-Object {
     if ($_.service -ne 'orders' -or $_.version -ne 'v2') { return $false }
     $timestamp = [DateTimeOffset]::Parse($_.timestamp).UtcDateTime
-    $timestamp -ge $startUtc -and $timestamp -le $endUtc
+$timestamp -ge $startUtc -and $timestamp -lt $endUtc
 })
 [pscustomobject]@{ start=$start; end=$end; dns_records=$dnsRecords; v2_deployments=$v2Deployments }
 ```
 
-`18081/logs` 是 orders 日志端点；`18080/deployments` 是 gateway 部署端点。`18081/deployments` 不存在。两个查询必须用同一次运行的 UTC 起止时间；确认 `start <= deployment timestamp <= end`。用户回传的 `inventory-v2` DNS 错误能证明请求失败线索；后来用短窗口查到 0 条 deployment，若窗口没有包含 `13:47Z`，不能据此判定部署证据缺失。
+`18081/logs` 是 orders 日志端点；`18080/deployments` 是 gateway 部署端点。`18081/deployments` 不存在。两个查询必须用同一次运行的 UTC 半开区间 `[start,end)`；确认 `start <= deployment timestamp < end`。服务端和离线校验共用此边界，恰好等于 end 的记录不属于窗口。用户回传的 `inventory-v2` DNS 错误能证明请求失败线索；后来用五分钟窗口查到 0 条 deployment，是因为该窗不含 `13:47:23Z`，不能据此判定部署证据缺失。
 
 若记录为空，先核对该次场景记录中的 UTC 时间窗、服务、版本和 host 端口，再判断数据是否缺失。不得把不同运行的时间戳拼成一条证据链。

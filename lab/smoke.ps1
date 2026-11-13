@@ -47,7 +47,7 @@ foreach ($case in $truth.cases) {
     } else { Start-Sleep -Seconds 3 }
     $windowEnd = [DateTime]::UtcNow.ToString("o")
     $from = [uri]::EscapeDataString($windowStart); $to = [uri]::EscapeDataString($windowEnd)
-    # Keep this run's same UTC window: orders logs use 18081; gateway deployments use 18080.
+    # Keep this run's same UTC half-open [start,end) window: orders logs use 18081; gateway deployments use 18080.
     $logs = Invoke-RestMethod -Uri "http://127.0.0.1:18081/logs?start=$from&end=$to&limit=1000" -TimeoutSec 3
     $deployments = Invoke-RestMethod -Uri "http://127.0.0.1:18080/deployments?start=$from&end=$to&limit=100" -TimeoutSec 3
     $metrics = Invoke-RestMethod -Uri "http://127.0.0.1:19090/api/v1/query?query=opspilot_http_requests_total" -TimeoutSec 3

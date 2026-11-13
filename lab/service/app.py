@@ -22,6 +22,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from time_window import in_window, parse_utc
 
 SERVICE = os.environ.get("SERVICE_NAME", "unknown")
 VERSION = os.environ.get("SERVICE_VERSION", "v1")
@@ -57,24 +58,6 @@ TRACER = trace.get_tracer("opspilot.lab")
 
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-
-
-def parse_utc(value: str) -> datetime:
-    if not value:
-        raise ValueError("start and end are required")
-    instant = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if instant.tzinfo is None:
-        raise ValueError("timestamps must include a timezone")
-    return instant.astimezone(timezone.utc)
-
-
-def in_window(timestamp: str, start: str, end: str) -> bool:
-    lower, upper = parse_utc(start), parse_utc(end)
-    try:
-        value = parse_utc(timestamp)
-    except (TypeError, ValueError):
-        return False
-    return lower <= value <= upper
 
 
 def emit(level: str, message: str, **fields: Any) -> None:
