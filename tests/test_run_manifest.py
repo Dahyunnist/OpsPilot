@@ -54,8 +54,13 @@ class RunManifestTests(unittest.TestCase):
 
     def test_events_require_standard_type_and_trace_context(self):
         manifest = valid_manifest()
-        manifest["events"] = [{"event_type": "retry", "run_id": "r1", "trace_id": "t1", "span_id": "s1"}]
+        manifest["events"] = [{"event_type": "retry", "run_id": manifest["run_id"],
+                               "trace_id": manifest["trace_id"], "span_id": "s1"}]
         self.assertEqual([], validate_run_manifest(manifest))
+        for field in ("run_id", "trace_id"):
+            manifest["events"][0][field] = "unrelated-" + field
+            self.assertIn("event run_id and trace_id must match manifest identity", validate_run_manifest(manifest))
+            manifest["events"][0][field] = manifest[field]
         manifest["events"] = [{"event_type": "mystery", "run_id": "r1"}]
         errors = validate_run_manifest(manifest)
         self.assertIn("event has unsupported event_type", errors)
@@ -64,12 +69,16 @@ class RunManifestTests(unittest.TestCase):
     def test_telemetry_evidence_requires_real_trace_identity_and_timing(self):
         manifest = valid_manifest()
         manifest["telemetry_evidence"] = [{
-            "event_type": "span_observed", "run_id": "matrix-run", "trace_id": "trace-1",
+            "event_type": "span_observed", "run_id": manifest["run_id"], "trace_id": "trace-1",
             "span_id": "span-1", "service": "orders", "operation": "orders/orders",
             "order_id": "matrix-order-1", "start_unix_us": 1794553063608593,
             "duration_us": 800000,
         }]
+        # Telemetry evidence uses the observed distributed trace ID, distinct from the run correlation ID.
         self.assertEqual([], validate_run_manifest(manifest))
+        manifest["telemetry_evidence"][0]["run_id"] = "foreign-run"
+        self.assertIn("telemetry evidence run_id must match manifest identity", validate_run_manifest(manifest))
+        manifest["telemetry_evidence"][0]["run_id"] = manifest["run_id"]
         manifest["telemetry_evidence"][0]["span_id"] = ""
         errors = validate_run_manifest(manifest)
         self.assertIn("telemetry evidence requires run_id, trace_id, span_id, service, operation, and order_id", errors)
@@ -92,6 +101,10 @@ class RunManifestTests(unittest.TestCase):
         self.assertEqual("none", manifest["model_id"])
         self.assertEqual(48, len(manifest["telemetry_evidence"]))
         self.assertEqual(25, len(manifest["signal_evidence"]))
+        self.assertTrue(all(item["run_id"] == manifest["run_id"] for item in manifest["telemetry_evidence"]))
+        span_trace_ids = {item["trace_id"] for item in manifest["telemetry_evidence"]}
+        self.assertTrue(span_trace_ids)
+        self.assertNotIn(manifest["trace_id"], span_trace_ids)
         self.assertEqual((12, 12, 0), (manifest["case_count"], manifest["passed_count"], manifest["failed_count"]))
 
 

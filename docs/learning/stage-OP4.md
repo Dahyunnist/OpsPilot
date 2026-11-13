@@ -35,6 +35,12 @@ Dry-run 只在本地模拟并写本地审计；不会对业务系统执行写入
 
 定向命令 `python -m unittest tests.test_action_safety tests.test_action_cli tests.test_s3 -v`：本轮身份边界回归 29 项通过。覆盖人工确认拒绝/通过、精确到期边界、重复消费、主体错配、自报角色拒绝、缺 resolver、错环境、越权和模拟回滚。无模型调用、Docker 服务或真实修复调用。
 
+## 2026-11-13 trace/manifest 对照与拒绝负例
+
+通用运行 manifest 的顶层 `run_id`/`trace_id` 是本次运行的关联标识。execution `events` 必须与二者一致；`telemetry_evidence` 的 `run_id` 必须属于该运行，但其 `trace_id` 是实际服务 span 的分布式 trace，可与顶层关联 ID 不同。冻结 OP-1 host manifest 的 report/truth SHA-256 重新核对，48 条 span 均关联同一 `run_id`，且 span trace ID 与运行关联 trace ID 分开。新增 validator 负例拒绝 event trace/run 错配与跨 run span；不误拒绝不同的真实 span trace ID。
+
+OP-4 安全负例仍用固定 synthetic report、Principal 与内存 HMAC key。过期/恰好到期、重放、主体错配、环境篡改、证据/建议/run 变化、越权和损坏账本均拒绝，拒绝审计的外部调用数为 0。未使用 Docker、模型或额外预算。当前宿主的 `bad_release` 验收被 Docker Desktop 命名管道拒绝：`open //./pipe/dockerDesktopLinuxEngine: Access is denied.`；健康基线未启动，未发 checkout 或遥测查询。停止命令也因相同权限失败，Compose 状态无法核实；遵照要求不再重试。
+
 ## 限制
 
 这是本机演示安全闸，不是企业授权系统。没有接入身份提供者；签名账本适用于顺序运行，不提供跨进程分布式锁。模拟验证不能证明真实系统回滚成功。任何真实业务操作仍须另外设计并做独立安全审查。

@@ -75,6 +75,8 @@ def validate_run_manifest(value: Any) -> list[str]:
                     errors.append("event has unsupported event_type")
                 if not isinstance(event, dict) or not event.get("run_id") or not event.get("trace_id") or not event.get("span_id"):
                     errors.append("event requires run_id, trace_id, and span_id")
+                elif event["run_id"] != value.get("run_id") or event["trace_id"] != value.get("trace_id"):
+                    errors.append("event run_id and trace_id must match manifest identity")
     if "telemetry_evidence" in value:
         evidence = value["telemetry_evidence"]
         if not isinstance(evidence, list):
@@ -86,6 +88,8 @@ def validate_run_manifest(value: Any) -> list[str]:
                     errors.append("telemetry evidence requires run_id, trace_id, span_id, service, operation, and order_id")
                 elif item.get("event_type") != "span_observed":
                     errors.append("telemetry evidence event_type must be span_observed")
+                if isinstance(item, dict) and item.get("run_id") and item["run_id"] != value.get("run_id"):
+                    errors.append("telemetry evidence run_id must match manifest identity")
                 if isinstance(item, dict) and (not isinstance(item.get("start_unix_us"), int) or not isinstance(item.get("duration_us"), int) or item["duration_us"] < 0):
                     errors.append("telemetry evidence requires integer start_unix_us and non-negative duration_us")
     for field in ("max_steps", "max_tokens"):
