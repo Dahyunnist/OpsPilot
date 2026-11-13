@@ -31,6 +31,12 @@ class S15MockAblationTests(unittest.TestCase):
         self.assertEqual("test", first["parameters"]["split"])
         self.assertEqual(100, first["parameters"]["max_rows_per_source"])
         self.assertEqual(8, first["parameters"]["query_budget"])
+        self.assertEqual("post_prediction_scoring_only", first["parameters"]["truth_access"])
+        self.assertEqual({"pool_root": 6, "configuration_root_with_downstream_symptoms": 6,
+                          "downstream_root_with_pool_pressure": 6, "independent_dual_fault": 6,
+                          "insufficient_or_conflicted": 6}, first["dataset_audit"]["mechanism_case_counts"])
+        self.assertEqual(["metrics", "logs", "traces", "deployments"], first["dataset_audit"]["available_sources"])
+        self.assertIn("never passed to investigator", first["dataset_audit"]["truth_use"])
         self.assertEqual(list(STRATEGIES), first["parameters"]["strategies"])
         self.assertEqual({"rules", "single", "always-multi", "auto"}, set(first["parameters"]["mock_policies"]))
         paired_ids = [case["incident_id"] for case in first["cases"]["rules"]]
@@ -49,15 +55,27 @@ class S15MockAblationTests(unittest.TestCase):
             if case["selected_route"] == "rules":
                 self.assertEqual(rules_by_id[case["incident_id"]], case["prediction"])
 
-    def test_injected_cancel_and_failure_are_counted_and_exported(self):
+    def test_injected_cancel_timeout_and_failure_are_counted_and_exported(self):
         baseline = evaluate()
         case_id = baseline["cases"]["rules"][0]["incident_id"]
-        result = evaluate(injected_faults={("rules", case_id): "cancel", ("auto", case_id): "failure"})
+        result = evaluate(injected_faults={("rules", case_id): "cancel", ("single", case_id): "timeout",
+                                           ("auto", case_id): "failure"})
         self.assertEqual(1, result["summaries"]["rules"]["cancellations"])
+        self.assertEqual(1, result["summaries"]["single"]["timeouts"])
         self.assertEqual(1, result["summaries"]["auto"]["failures"])
         exported = {(item["strategy"], item["incident_id"], item["status"]) for item in result["failure_samples"]}
         self.assertIn(("rules", case_id, "cancelled"), exported)
+        self.assertIn(("single", case_id, "timed_out"), exported)
         self.assertIn(("auto", case_id, "failed"), exported)
+        timeout_sample = next(item for item in result["failure_samples"] if item["strategy"] == "single")
+        self.assertEqual("mock_timeout", timeout_sample["failure_reason"])
+        self.assertEqual("mock_timeout", timeout_sample["trajectory"][0]["event"])
+        self.assertGreaterEqual(result["summaries"]["single"]["query_budget"]["total_queries"], 0)
+        self.assertEqual("mock_timeout", result["cases"]["single"][0]["failure_reason"])
+        self.assertEqual("evaluation_failure", result["cases"]["single"][0]["trajectory"][-1]["event"])
+        repeated = evaluate(injected_faults={("rules", case_id): "cancel", ("single", case_id): "timeout",
+                                             ("auto", case_id): "failure"})
+        self.assertEqual(result["deterministic_result_sha256"], repeated["deterministic_result_sha256"])
 
     def test_metrics_declare_mock_limits_and_independent_truth(self):
         result = evaluate()

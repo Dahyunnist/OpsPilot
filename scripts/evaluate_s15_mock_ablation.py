@@ -71,6 +71,28 @@ def _load_frozen_cases(benchmark_dir: Path) -> tuple[dict[str, dict[str, Any]], 
     return incidents, label_by_id, {"manifest": manifest, **actual_hashes}
 
 
+def _dataset_audit(incidents: dict[str, dict[str, Any]], labels: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    families: dict[str, dict[str, Any]] = {}
+    sources = ("metrics", "logs", "traces", "deployments")
+    for incident_id, incident in incidents.items():
+        family = labels[incident_id]["scenario_family"]
+        item = families.setdefault(family, {"cases": 0, "causes": {}, "source_case_counts": {source: 0 for source in sources}})
+        item["cases"] += 1
+        for cause in labels[incident_id].get("active_causes", []):
+            item["causes"][cause] = item["causes"].get(cause, 0) + 1
+        for source in sources:
+            if incident.get("signals", {}).get(source):
+                item["source_case_counts"][source] += 1
+    return {
+        "provenance": "synthetic records authored from OpsPilot incident contract and OpenTelemetry conventions; no production or copied incident data",
+        "mechanism_case_counts": {family: value["cases"] for family, value in sorted(families.items())},
+        "mechanism_profiles": families,
+        "available_sources": list(sources),
+        "truth_storage": "separate labels/test.json; SHA-256 bound in benchmark manifest",
+        "truth_use": "joined after strategy prediction for scoring; never passed to investigator or route policy",
+    }
+
+
 def _candidate_predictions(report: dict[str, Any], available: set[str], limit: int) -> tuple[list[str], list[str]]:
     ranked: list[str] = []
     evidence: list[str] = []
@@ -151,7 +173,11 @@ def _summarize(cases: list[dict[str, Any]]) -> dict[str, Any]:
         "latency_ms": {"mean_local_runner": round(statistics.mean(latencies), 3) if latencies else None,
                        "p95_local_runner": round(p95, 3) if p95 is not None else None},
         "cancellations": sum(case["status"] == "cancelled" for case in cases),
+        "timeouts": sum(case["status"] == "timed_out" for case in cases),
         "failures": sum(case["status"] == "failed" for case in cases),
+        "query_budget": {"exhausted_cases": sum(case["query_budget_exhausted"] for case in cases),
+                         "max_queries": max((case["query_count"] for case in cases), default=0),
+                         "total_queries": sum(case["query_count"] for case in cases)},
     }
 
 
@@ -167,6 +193,8 @@ def _reproducibility_digest(benchmark: dict[str, Any], parameters: dict[str, Any
         strategy: [{"incident_id": case["incident_id"], "status": case["status"],
                     "query_budget_exhausted": case["query_budget_exhausted"],
                     "query_count": case["query_count"],
+                    "failure_reason": case.get("failure_reason"),
+                    "trajectory": case["trajectory"],
                     "truth": {"decidable": case["truth"]["decidable"],
                               "active_causes": case["truth"]["active_causes"]},
                     "prediction": case["prediction"], "selected_route": case["selected_route"]}
@@ -189,38 +217,49 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
     data_dir = benchmark_dir or ROOT / "data" / "causal-benchmark"
     incidents, label_by_id, frozen = _load_frozen_cases(data_dir)
     faults = injected_faults or {}
-    if any(strategy not in STRATEGIES or incident_id not in incidents or fault not in {"cancel", "failure"}
+    if any(strategy not in STRATEGIES or incident_id not in incidents or fault not in {"cancel", "timeout", "failure"}
            for (strategy, incident_id), fault in faults.items()):
-        raise ValueError("mock faults require a known strategy, frozen incident ID, and cancel/failure outcome")
+        raise ValueError("mock faults require a known strategy, frozen incident ID, and cancel/timeout/failure outcome")
     paired: dict[str, list[dict[str, Any]]] = {strategy: [] for strategy in STRATEGIES}
     failed_samples: list[dict[str, Any]] = []
     for incident_id in sorted(incidents):
         incident = incidents[incident_id]
-        label = label_by_id[incident_id]
-        truth = {"decidable": label["decidable"], "active_causes": label.get("active_causes", []),
-                 "gold_evidence_ids": label.get("gold_evidence_ids", [])}
         report = investigate(incident, max_rows=MAX_ROWS, query_budget=query_budget)
         available = {row["record_id"] for records in incident["signals"].values() for row in records}
         for strategy in STRATEGIES:
             started = time.perf_counter()
             fault = faults.get((strategy, incident_id))
-            if fault in {"cancel", "failure"}:
-                case = {"incident_id": incident_id, "status": "cancelled" if fault == "cancel" else "failed",
-                        "truth": truth, "prediction": {"root_causes": [], "evidence_ids": []},
+            if fault in {"cancel", "timeout", "failure"}:
+                status = {"cancel": "cancelled", "timeout": "timed_out", "failure": "failed"}[fault]
+                case = {"incident_id": incident_id, "status": status,
+                        "prediction": {"root_causes": [], "evidence_ids": []},
                         "selected_route": None, "duration_ms": round((time.perf_counter() - started) * 1000, 3),
                         "query_budget_exhausted": report["query_budget_exhausted"],
-                        "query_count": report["cost"]["query_count"], "failure_reason": f"injected_{fault}"}
+                        "query_count": report["cost"]["query_count"], "failure_reason": f"injected_{fault}",
+                        "trajectory": [{"event": "mock_" + fault, "query_count": report["cost"]["query_count"],
+                                        "query_budget": query_budget,
+                                        "query_budget_exhausted": report["query_budget_exhausted"]}]}
             else:
                 predicted, evidence, selected_route = _predict(strategy, report, available)
-                case = {"incident_id": incident_id, "status": "completed", "truth": truth,
+                case = {"incident_id": incident_id, "status": "completed",
                         "prediction": {"root_causes": predicted, "evidence_ids": evidence},
                         "selected_route": selected_route,
                         "query_budget_exhausted": report["query_budget_exhausted"],
                         "query_count": report["cost"]["query_count"],
-                        "duration_ms": round((time.perf_counter() - started) * 1000, 3)}
+                        "duration_ms": round((time.perf_counter() - started) * 1000, 3),
+                        "trajectory": [{"event": "investigated", "query_count": report["cost"]["query_count"],
+                                        "query_budget": query_budget,
+                                        "query_budget_exhausted": report["query_budget_exhausted"]},
+                                       {"event": "mock_prediction_completed", "route": selected_route}]}
+            label = label_by_id[incident_id]
+            truth = {"decidable": label["decidable"], "active_causes": label.get("active_causes", []),
+                     "gold_evidence_ids": label.get("gold_evidence_ids", [])}
+            # Join independent truth only after prediction; strategies receive no labels.
+            case["truth"] = truth
             paired[strategy].append(case)
             if case["status"] != "completed":
-                failure_reason = "mock_cancelled" if case["status"] == "cancelled" else "mock_execution_failure"
+                failure_reason = {"cancelled": "mock_cancelled", "timed_out": "mock_timeout",
+                                  "failed": "mock_execution_failure"}[case["status"]]
             elif truth["decidable"] and set(case["prediction"]["root_causes"]) != set(truth.get("active_causes", [])):
                 failure_reason = "root_cause_set_mismatch"
             elif not truth["decidable"] and case["prediction"]["root_causes"]:
@@ -228,8 +267,13 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
             else:
                 failure_reason = None
             if failure_reason:
+                case["failure_reason"] = failure_reason
+                case["trajectory"].append({"event": "evaluation_failure", "reason": failure_reason})
                 failed_samples.append({"strategy": strategy, "incident_id": incident_id, "status": case["status"],
                                       "failure_reason": failure_reason,
+                                      "trajectory": case["trajectory"],
+                                      "query_count": case["query_count"],
+                                      "query_budget_exhausted": case["query_budget_exhausted"],
                                       "truth": {"decidable": truth["decidable"], "active_causes": truth["active_causes"]},
                                       "prediction": case["prediction"], "selected_route": case["selected_route"]})
     expected_ids = set(incidents)
@@ -246,6 +290,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
             "auto": "select_route; rules retains rules result; selected model routes use corresponding mock candidate count",
         },
         "model_calls": 0, "estimated_cost_usd": 0.0,
+        "truth_access": "post_prediction_scoring_only",
         "injected_faults": [{"strategy": strategy, "incident_id": incident_id, "outcome": fault}
                             for (strategy, incident_id), fault in sorted(faults.items())],
     }
@@ -272,6 +317,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
         "strategies": list(STRATEGIES),
         "case_count_per_strategy": len(incidents),
         "route_counts": route_counts,
+        "dataset_audit": _dataset_audit(incidents, label_by_id),
         "metric_definitions": {
             "root_cause_set_exact": "predicted cause set equals independent active_causes, among decidable cases",
             "top1_active_cause": "first predicted cause belongs to active_causes, among decidable cases",
@@ -283,7 +329,9 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
             "evidence_precision_recall": "micro set precision/recall against independent gold_evidence_ids, among decidable cases",
             "estimated_cost_usd": "always zero: runner makes no model/provider calls; not an agent cost estimate",
             "latency_ms": "observed local deterministic runner wall time; not model or end-to-end latency and excluded from reproducibility fingerprint",
-            "cancellations_failures": "count of explicitly injected mock outcomes; default run injects neither",
+            "cancellations_timeouts_failures": "counts of explicitly injected mock outcomes; default run injects none",
+            "query_budget": "per-strategy exhausted case count, maximum queries, and total investigator queries",
+            "truth_isolation": "strategy predictions are produced before labels join for scoring; mock runner makes no model calls",
         },
         "summaries": summaries,
         "cases": paired,
@@ -317,6 +365,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "s15-offline-mock-ablation.json")
     parser.add_argument("--failures-output", type=Path, default=ROOT / "reports" / "s15-offline-mock-ablation-failures.json")
     parser.add_argument("--inject-cancel", action="append", default=[], metavar="STRATEGY:INCIDENT_ID")
+    parser.add_argument("--inject-timeout", action="append", default=[], metavar="STRATEGY:INCIDENT_ID")
     parser.add_argument("--inject-failure", action="append", default=[], metavar="STRATEGY:INCIDENT_ID")
     args = parser.parse_args()
     faults = {}
@@ -325,6 +374,11 @@ def main() -> int:
         if not separator or strategy not in STRATEGIES:
             parser.error("--inject-cancel must be STRATEGY:INCIDENT_ID")
         faults[(strategy, incident_id)] = "cancel"
+    for value in args.inject_timeout:
+        strategy, separator, incident_id = value.partition(":")
+        if not separator or strategy not in STRATEGIES:
+            parser.error("--inject-timeout must be STRATEGY:INCIDENT_ID")
+        faults[(strategy, incident_id)] = "timeout"
     for value in args.inject_failure:
         strategy, separator, incident_id = value.partition(":")
         if not separator or strategy not in STRATEGIES:

@@ -29,3 +29,13 @@
 另外用本地 fake call gate 拒绝 Auto single 路由预算申请：不调用 FakeChatModel，记录 `fallback_route=rules`，输入全空时保持 `insufficient_evidence`。真实 RunBudget/provider 行为仍需单独受控验证；本轮不访问模型 API。
 
 之后另完成 OP-1 slow SQL 实时切片：rules、single、Multi、auto 均命中该例 oracle；Multi 与 single 没有增加根因或证据命中。完整计时、precision/recall 和成本见[垂直切片学习记录](OP1-vertical-slice.md)。这仍是单例证据，不代表泛化。
+
+## 2026-11-13 OP-3 离线评测边界复核
+
+冻结 S15 test 已有 30 例，五个机制族各 6 例：pool 根因、配置根因伴随下游症状、下游超时伴随 pool 压力、独立双故障、证据不足/冲突。每族的独立真值记录根因及 gold evidence ID；输入含 metrics/logs/traces，deployments 按机制变化。四种策略共用相同冻结输入，manifest/data/labels SHA-256 已锁定。生成器复用共同记录构造器和干扰项，所以这是因果机制与遥测来源层面的合成异质性，不是独立真实事件或生成来源多样性的证明。
+
+`labels/test.json` 与 `test.jsonl` 分离。离线 runner 先运行 investigator 和策略预测，再将 label 接入评分；labels 不传给 investigator、route policy 或预测适配器。报告 manifest 明确 `truth_access=post_prediction_scoring_only`，每族的机制及来源覆盖计数也进入 `dataset_audit`。预测仍由确定性 mock policy 生成，不是 Agent/模型输出。
+
+runner 逐例保留 investigate、预测或注入取消/超时/失败的 trajectory；汇总包含取消、超时、失败和 query budget exhausted/最大/总查询数。注入超时使用 `--inject-timeout STRATEGY:INCIDENT_ID`。固定集默认预算 8 时各策略均未耗尽，最大 4 次查询、总计 120 次。mock 固定零模型调用与零费用；本轮禁止模型请求、Docker 和推送。
+
+定向 `python -m unittest tests.test_s15_mock_ablation -v`：8 项通过。该阶段补强证明评测隔离与 runner 报告契约，不构成真实模型质量比较。真实模型对照仍须用户明确授权。
