@@ -66,7 +66,8 @@ foreach ($case in $truth.cases) {
     if (-not $latestOrdersDeployment -or $latestOrdersDeployment.version -ne $expectedVersion) {
         throw "Expected orders $expectedVersion deployment observation: $($case.case_id)"
     }
-    $observed += [pscustomobject]@{ case_id = $case.case_id; start=$windowStart; end=$windowEnd; status = $status; order_log_records = $logs.count; deployment_records = $deployments.count; trace_count = $traces.data.Count; prometheus_series = $metrics.data.result.Count }
+    $deploymentEvidence = @($deployments.records | Where-Object { $_.service -eq "orders" } | Sort-Object timestamp | Select-Object record_id,timestamp,service,version)
+    $observed += [pscustomobject]@{ case_id = $case.case_id; start=$windowStart; end=$windowEnd; status = $status; order_log_records = $logs.count; deployment_records = $deployments.count; deployment_evidence=$deploymentEvidence; expected_deployment_version=$expectedVersion; observed_deployment_version=$latestOrdersDeployment.version; trace_count = $traces.data.Count; prometheus_series = $metrics.data.result.Count }
 }
 
 $observed | ConvertTo-Json -Depth 4

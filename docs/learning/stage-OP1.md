@@ -74,3 +74,5 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 用户回传的 orders 日志包含 `inventory-v2` DNS 失败（日志时间 `2026-11-11T14:06:22Z`），与 bad_release 注入一致。随后部署查询应使用 gateway `127.0.0.1:18080/deployments`；orders `127.0.0.1:18081` 只提供 `/logs`，`18081/deployments` 是错误路径。后来正确端口查询返回空，但它使用的五分钟窗口未覆盖 deployment 记录 `2026-11-11T13:47:23Z`；这不是部署证据缺失的结论。
 
 复现时先记录 UTC `start`，再运行 `run-scenario.ps1 -Scenario bad_release`。该脚本在 readiness 后写 deployment timestamp。触发 checkout，等待 DNS 日志落盘，再记录 UTC `end`；logs 与 deployments 查询复用同一半开区间 `[start,end)`。必须核对 `start <= 13:47:23Z < end`（针对该次记录）及 orders/v2；不要用之后以当前时间计算的短窗判定缺失。手动步骤见 [bad_release 宿主验收卡](op1-bad-release-host-card.md)。离线回归只检查步骤顺序、端口和窗口参数，不启动 Docker。
+
+宿主 `smoke.ps1` 的最终 JSON 除部署总数外，也保留 `deployment_evidence` 的 `record_id/timestamp/service/version` 与 expected/observed version。新增合成 JSONL 回归从写入字段、部署文件、gateway response shape 到 smoke 筛选字段逐段核对；不读取或覆盖用户已有输出。
