@@ -19,6 +19,13 @@ SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
 SHA256 = re.compile(r"^[0-9a-f]{64}$", re.I)
 STATUSES = {"completed", "failed", "cancelled", "budget_exceeded"}
 EVENT_TYPES = {"timeout", "retry", "budget_exceeded", "unsafe_action_blocked", "cancel", "checkpoint_resume"}
+OP_RUN_MANIFEST_VERSION = 1
+OP_RUN_MANIFEST_REQUIRED = {
+    "schema_version", "project", "run_id", "evaluation_id", "dataset_id", "dataset_sha256",
+    "truth_sha256", "split", "evaluator_sha256", "result_fingerprint_sha256", "status",
+}
+OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split")
+OP_RUN_HASH_FIELDS = ("dataset_sha256", "truth_sha256", "evaluator_sha256", "result_fingerprint_sha256")
 
 
 def validate_run_manifest(value: Any) -> list[str]:
@@ -83,3 +90,53 @@ def validate_run_manifest(value: Any) -> list[str]:
         if field in value and not optional_model_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
             errors.append(f"{field} must be a positive integer")
     return errors
+
+
+def validate_op_run_manifest(value: Any) -> list[str]:
+    """Validate the minimal identity and reproducibility contract for new OP runs."""
+    if not isinstance(value, dict):
+        return ["OP run manifest must be an object"]
+    errors: list[str] = []
+    missing = OP_RUN_MANIFEST_REQUIRED - value.keys()
+    if missing:
+        errors.append("missing required OP run fields: " + ", ".join(sorted(missing)))
+    version = value.get("schema_version")
+    if not isinstance(version, int) or isinstance(version, bool) or version != OP_RUN_MANIFEST_VERSION:
+        errors.append("unsupported OP run schema_version")
+    for field in OP_RUN_IDENTITY_FIELDS:
+        if field in value and (not isinstance(value[field], str) or not value[field].strip()):
+            errors.append(f"{field} must be a non-empty string")
+    for field in OP_RUN_HASH_FIELDS:
+        if field in value and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
+            errors.append(f"{field} must be 64 hexadecimal characters")
+    if "status" in value and (not isinstance(value["status"], str) or value["status"] not in STATUSES):
+        errors.append("status is not supported")
+    return errors
+
+
+def build_op_run_manifest(*, project: str, run_id: str, evaluation_id: str, dataset_id: str,
+                          dataset_sha256: str, truth_sha256: str, split: str,
+                          evaluator_sha256: str, result_fingerprint_sha256: str,
+                          status: str = "completed") -> dict[str, Any]:
+    """Build and validate a new OP manifest before its report is written."""
+    value = {
+        "schema_version": OP_RUN_MANIFEST_VERSION, "project": project, "run_id": run_id,
+        "evaluation_id": evaluation_id, "dataset_id": dataset_id,
+        "dataset_sha256": dataset_sha256, "truth_sha256": truth_sha256, "split": split,
+        "evaluator_sha256": evaluator_sha256, "result_fingerprint_sha256": result_fingerprint_sha256,
+        "status": status,
+    }
+    errors = validate_op_run_manifest(value)
+    if errors:
+        raise ValueError("invalid OP run manifest: " + "; ".join(errors))
+    return value
+
+
+def validate_op_run_artifact(value: Any, *, is_new_run: bool) -> list[str]:
+    """Keep historical reports readable; require a valid manifest for new runs."""
+    if not isinstance(value, dict):
+        return ["OP run artifact must be an object"]
+    manifest = value.get("op_run_manifest")
+    if manifest is None:
+        return ["new OP run requires op_run_manifest"] if is_new_run else []
+    return validate_op_run_manifest(manifest)

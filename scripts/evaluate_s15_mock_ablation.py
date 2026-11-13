@@ -10,6 +10,7 @@ import platform
 import statistics
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 from opspilot.cli import load_incidents  # noqa: E402
 from opspilot.investigator import investigate  # noqa: E402
 from opspilot.routing import select_route  # noqa: E402
+from opspilot.run_manifest import build_op_run_manifest, validate_op_run_artifact  # noqa: E402
 
 STRATEGIES = ("rules", "single", "always-multi", "auto")
 QUERY_BUDGET = 8
@@ -302,6 +304,18 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     report = {key: value for key, value in result.items() if key not in {"cases", "failure_samples"}}
     report["failure_sample_count"] = len(result["failure_samples"])
+    report["op_run_manifest"] = build_op_run_manifest(
+        project="OpsPilot", run_id=str(uuid.uuid4()), evaluation_id=result["evaluation"],
+        dataset_id=result["benchmark"]["manifest"]["benchmark_id"],
+        dataset_sha256=result["benchmark"]["data_sha256"],
+        truth_sha256=result["benchmark"]["labels_sha256"],
+        split=result["parameters"]["split"],
+        evaluator_sha256=result["code_sha256"]["evaluator"],
+        result_fingerprint_sha256=result["deterministic_result_sha256"],
+    )
+    manifest_errors = validate_op_run_artifact(report, is_new_run=True)
+    if manifest_errors:
+        raise ValueError("refusing to write unmanifested OP run: " + "; ".join(manifest_errors))
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     args.failures_output.parent.mkdir(parents=True, exist_ok=True)
     args.failures_output.write_text(json.dumps(result["failure_samples"], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
