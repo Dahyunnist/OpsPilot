@@ -44,6 +44,53 @@ def _signed_payload(approval: dict[str, Any]) -> bytes:
         ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
+def _digest(value: Any) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def approval_binding(report: dict[str, Any], *, action: str, target: str,
+                     environment: str) -> dict[str, str]:
+    """Summarize one unique investigation, its evidence pointers, and proposed action."""
+    case_id = report.get("incident_id")
+    run_id = report.get("run_id")
+    recommendation = report.get("recommendation")
+    if not isinstance(case_id, str) or not case_id.strip():
+        raise ActionRejected("investigation_case_id_missing")
+    if not isinstance(run_id, str) or not run_id.strip():
+        raise ActionRejected("investigation_run_id_missing")
+    if not isinstance(recommendation, dict) or not recommendation:
+        raise ActionRejected("investigation_recommendation_missing")
+
+    references = []
+    for ref in report.get("evidence_refs", []):
+        if isinstance(ref, dict) and isinstance(ref.get("source"), str) and isinstance(ref.get("record_id"), str):
+            references.append({"source": ref["source"], "record_id": ref["record_id"]})
+    query_summary = []
+    for query in report.get("query_trace", []):
+        if not isinstance(query, dict):
+            continue
+        source = query.get("source")
+        rows = query.get("records", [])
+        if not isinstance(source, str) or not isinstance(rows, list):
+            continue
+        ids = sorted(row["record_id"] for row in rows
+            if isinstance(row, dict) and isinstance(row.get("record_id"), str))
+        references.extend({"source": source, "record_id": record_id} for record_id in ids)
+        query_summary.append({"source": source, "status": query.get("status"),
+            "params": query.get("params"), "record_ids": ids})
+    references = sorted({(ref["source"], ref["record_id"]) for ref in references})
+    if not references:
+        raise ActionRejected("investigation_evidence_missing")
+    evidence_sha256 = _digest({"case_id": case_id, "run_id": run_id,
+        "references": [{"source": source, "record_id": record_id} for source, record_id in references],
+        "queries": sorted(query_summary, key=lambda item: item["source"])})
+    recommendation_sha256 = _digest({"recommendation": recommendation, "action": action,
+        "target": target, "environment": environment})
+    return {"case_id": case_id, "investigation_run_id": run_id,
+        "evidence_sha256": evidence_sha256, "recommendation_sha256": recommendation_sha256}
+
+
 def load_or_create_key(path: Path) -> bytes:
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -61,7 +108,9 @@ def load_or_create_key(path: Path) -> bytes:
 
 
 def issue_approval(*, case_id: str, action: str, target: str, environment: str,
-                   role: str, approved_by: str, key: bytes, ttl_seconds: int = 120,
+                   role: str, approved_by: str, investigation_run_id: str,
+                   evidence_sha256: str, recommendation_sha256: str,
+                   key: bytes, ttl_seconds: int = 120,
                    now: datetime | None = None) -> dict[str, Any]:
     if not case_id or len(case_id) > 100:
         raise ActionRejected("invalid_case_id")
@@ -73,6 +122,11 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
         raise ActionRejected("role_scope_denied")
     if not approved_by or len(approved_by) > 120:
         raise ActionRejected("approver_required")
+    if not isinstance(investigation_run_id, str) or not investigation_run_id.strip():
+        raise ActionRejected("investigation_run_id_missing")
+    for digest in (evidence_sha256, recommendation_sha256):
+        if not isinstance(digest, str) or len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest.lower()):
+            raise ActionRejected("investigation_digest_invalid")
     if not isinstance(ttl_seconds, int) or isinstance(ttl_seconds, bool) or not 30 <= ttl_seconds <= 300:
         raise ActionRejected("approval_ttl_out_of_range")
     if len(key) != 32:
@@ -82,6 +136,9 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
         "approval_id": str(uuid.uuid4()), "nonce": secrets.token_urlsafe(24),
         "case_id": case_id, "action": action, "target": target,
         "environment": environment, "role": role, "approved_by": approved_by,
+        "investigation_run_id": investigation_run_id, "evidence_sha256": evidence_sha256,
+        "recommendation_sha256": recommendation_sha256,
+        "target_environment": environment,
         "issued_at": _iso(issued), "expires_at": _iso(issued + timedelta(seconds=ttl_seconds)),
     }
     approval["signature"] = hmac.new(key, _signed_payload(approval), hashlib.sha256).hexdigest()
@@ -107,7 +164,8 @@ def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetim
 
 
 def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
-                    ledger_path: Path, now: datetime | None = None) -> dict[str, Any]:
+                    ledger_path: Path, investigation_report: dict[str, Any],
+                    now: datetime | None = None) -> dict[str, Any]:
     instant = _time(now)
     if len(key) != 32:
         raise ValueError("approval signing key must be exactly 32 bytes")
@@ -130,6 +188,20 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
         _reject(ledger_path, approval, "approval_expired_or_invalid", instant)
     if not approval.get("nonce") or not approval.get("approval_id"):
         _reject(ledger_path, approval, "approval_identity_missing", instant)
+    required_binding = ("investigation_run_id", "evidence_sha256", "recommendation_sha256", "target_environment")
+    if any(not approval.get(field) for field in required_binding):
+        _reject(ledger_path, approval, "approval_binding_missing", instant)
+    try:
+        current_binding = approval_binding(investigation_report, action=approval["action"],
+            target=approval["target"], environment=environment)
+    except ActionRejected as exc:
+        _reject(ledger_path, approval, exc.code, instant)
+    if (approval.get("case_id") != current_binding["case_id"]
+            or approval.get("investigation_run_id") != current_binding["investigation_run_id"]
+            or approval.get("evidence_sha256") != current_binding["evidence_sha256"]
+            or approval.get("recommendation_sha256") != current_binding["recommendation_sha256"]
+            or approval.get("target_environment") != environment):
+        _reject(ledger_path, approval, "approval_investigation_mismatch", instant)
     if approval["action"] == "rollback_release":
         simulated = {"before_version": "v2", "after_version": "v1", "rollback": "simulated"}
         checks = ["target_service_matches", "previous_version_selected", "health_check_simulated"]

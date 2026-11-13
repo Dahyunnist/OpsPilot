@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from opspilot.action_safety import ActionRejected, execute_dry_run, issue_approval, load_or_create_key
+from opspilot.action_safety import ActionRejected, approval_binding, execute_dry_run, issue_approval, load_or_create_key
 
 
 NOW = datetime(2026, 10, 23, 10, 0, tzinfo=timezone.utc)
@@ -28,13 +28,26 @@ class ActionSafetyTests(unittest.TestCase):
             "environment": "test", "role": "release_manager", "approved_by": "human-operator",
             "key": self.key, "ttl_seconds": 120, "now": NOW}
         values.update(overrides)
+        report = values.pop("investigation_report", self.report())
+        binding = approval_binding(report, action=values["action"], target=values["target"],
+            environment=values["environment"])
+        values.setdefault("investigation_run_id", binding["investigation_run_id"])
+        values.setdefault("evidence_sha256", binding["evidence_sha256"])
+        values.setdefault("recommendation_sha256", binding["recommendation_sha256"])
         return issue_approval(**values)
+
+    def report(self):
+        return {"incident_id": "lab-release-01", "run_id": "run-01",
+            "evidence_refs": [{"source": "logs", "record_id": "log-01"}],
+            "query_trace": [{"source": "deployments", "status": "ok", "params": {"limit": 100},
+                "records": [{"record_id": "deploy-01"}]}],
+            "recommendation": {"action_id": "rollback_order_config", "risk": "high"}}
 
     def events(self) -> list[dict]:
         return [json.loads(line) for line in self.ledger.read_text(encoding="utf-8").splitlines()]
 
     def test_signed_rollback_is_test_only_and_reports_simulated_verification(self) -> None:
-        result = execute_dry_run(self.approval(), key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+        result = execute_dry_run(self.approval(), key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual(result["status"], "simulated_execution")
         self.assertEqual(result["external_system_calls"], 0)
         self.assertEqual(result["external_writes"], 0)
@@ -45,7 +58,7 @@ class ActionSafetyTests(unittest.TestCase):
         result = self.approval()
         with self.assertRaisesRegex(ActionRejected, "approval_expired_or_invalid"):
             execute_dry_run(result, key=self.key, environment="test", ledger_path=self.ledger,
-                now=NOW + timedelta(seconds=121))
+                investigation_report=self.report(), now=NOW + timedelta(seconds=121))
         self.assertEqual(self.events()[0]["reason"], "approval_expired_or_invalid")
         self.assertEqual(0, self.events()[0]["external_system_calls"])
 
@@ -53,25 +66,25 @@ class ActionSafetyTests(unittest.TestCase):
         approval = self.approval(ttl_seconds=120)
         with self.assertRaisesRegex(ActionRejected, "approval_expired_or_invalid"):
             execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
-                now=NOW + timedelta(seconds=120))
+                investigation_report=self.report(), now=NOW + timedelta(seconds=120))
         self.assertEqual("approval_expired_or_invalid", self.events()[0]["reason"])
         self.assertEqual(0, self.events()[0]["external_system_calls"])
 
     def test_replayed_approval_is_rejected_after_first_consumption(self) -> None:
         approval = self.approval()
-        execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+        execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         with self.assertRaisesRegex(ActionRejected, "approval_replayed"):
-            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual([event["event_type"] for event in self.events()], ["dry_run_completed", "dry_run_rejected"])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
     def test_wrong_environment_and_tampered_signature_are_rejected(self) -> None:
         approval = self.approval()
         with self.assertRaisesRegex(ActionRejected, "environment_mismatch"):
-            execute_dry_run(approval, key=self.key, environment="production", ledger_path=self.ledger, now=NOW)
+            execute_dry_run(approval, key=self.key, environment="production", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         altered = dict(approval, target="payment")
         with self.assertRaisesRegex(ActionRejected, "approval_signature_invalid"):
-            execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+            execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual(len(self.events()), 2)
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
@@ -81,7 +94,7 @@ class ActionSafetyTests(unittest.TestCase):
         altered_target = dict(approval, target="payment")
         for field, altered in (("action", altered_action), ("target", altered_target)):
             with self.subTest(field=field), self.assertRaisesRegex(ActionRejected, "approval_signature_invalid"):
-                execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+                execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
     def test_recommendation_signed_approval_dry_run_audit_chain(self) -> None:
@@ -89,7 +102,7 @@ class ActionSafetyTests(unittest.TestCase):
         approval = self.approval(case_id=recommendation["case_id"], action=recommendation["action"],
             target=recommendation["target"], role="release_manager")
         self.assertEqual((recommendation["action"], recommendation["target"]), (approval["action"], approval["target"]))
-        result = execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
+        result = execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual("simulated_execution", result["status"])
         self.assertFalse(result["rollback_verification"]["real_environment_verified"])
         self.assertEqual(0, result["external_system_calls"])
@@ -97,6 +110,27 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual("dry_run_completed", self.events()[0]["event_type"])
         self.assertEqual("simulated_execution", self.events()[0]["status"])
         self.assertEqual(approval["approval_id"], self.events()[0]["approval_id"])
+
+    def test_changed_run_evidence_or_recommendation_rejects_old_approval(self) -> None:
+        approval = self.approval()
+        variants = []
+        changed_evidence = self.report()
+        changed_evidence["evidence_refs"][0]["record_id"] = "log-02"
+        variants.append(changed_evidence)
+        changed_recommendation = self.report()
+        changed_recommendation["recommendation"]["risk"] = "critical"
+        variants.append(changed_recommendation)
+        changed_run = self.report()
+        changed_run["run_id"] = "run-02"
+        variants.append(changed_run)
+        for report in variants:
+            with self.subTest(report=report), self.assertRaisesRegex(ActionRejected, "approval_investigation_mismatch"):
+                execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                    investigation_report=report, now=NOW)
+        self.assertEqual(["approval_investigation_mismatch"] * 3,
+            [event["reason"] for event in self.events()])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in self.events()))
 
     def test_agent_or_wrong_role_cannot_escalate_action_scope(self) -> None:
         with self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
@@ -117,10 +151,10 @@ class ActionSafetyTests(unittest.TestCase):
         approval = self.approval()
         with self.assertRaisesRegex(ActionRejected, "environment_mismatch"):
             execute_dry_run(dict(approval, environment="production"), key=self.key, environment="test",
-                ledger_path=self.ledger, now=NOW)
+                ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         with self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
             execute_dry_run(dict(approval, role="agent"), key=self.key, environment="test",
-                ledger_path=self.ledger, now=NOW)
+                ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual(["environment_mismatch", "role_scope_denied"], [event["reason"] for event in self.events()])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
@@ -133,7 +167,7 @@ class ActionSafetyTests(unittest.TestCase):
     def test_executor_rejects_short_signing_key_before_audit_or_execution(self) -> None:
         approval = self.approval()
         with self.assertRaisesRegex(ValueError, "approval signing key must be exactly 32 bytes"):
-            execute_dry_run(approval, key=b"short", environment="test", ledger_path=self.ledger, now=NOW)
+            execute_dry_run(approval, key=b"short", environment="test", ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertFalse(self.ledger.exists())
 
     def test_corrupt_ledger_fails_closed_without_overwriting_it(self) -> None:
@@ -141,7 +175,7 @@ class ActionSafetyTests(unittest.TestCase):
         self.ledger.write_bytes(corrupted)
         with self.assertRaisesRegex(ActionRejected, "action_ledger_unreadable"):
             execute_dry_run(self.approval(), key=self.key, environment="test",
-                ledger_path=self.ledger, now=NOW)
+                ledger_path=self.ledger, investigation_report=self.report(), now=NOW)
         self.assertEqual(self.ledger.read_bytes(), corrupted)
 
     def test_simulator_has_no_network_or_process_execution_dependency(self) -> None:

@@ -8,6 +8,7 @@ from time import perf_counter
 from typing import Any
 from pathlib import Path
 import hashlib
+import uuid
 
 SOURCES = ("metrics", "logs", "traces", "deployments")
 HYPOTHESES = (
@@ -327,6 +328,7 @@ def investigate(
         item["disposition"] = "leading" if conclusion and item["title"] == conclusion else ("rejected" if item["against"] and item["score"] < 0 else "open")
     return {
         "incident_id": incident["incident_id"],
+        "run_id": str(uuid.uuid4()),
         "status": status,
         "conclusion": conclusion,
         "hypotheses": hypotheses,

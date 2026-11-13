@@ -17,6 +17,10 @@ class ActionCliTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.approvals = self.root / "approvals"
         self.ledger = self.root / "audit.jsonl"
+        self.report_path = self.root / "investigation.json"
+        self.report_path.write_text(json.dumps({"incident_id": "case-01", "run_id": "run-01",
+            "evidence_refs": [{"source": "logs", "record_id": "log-01"}],
+            "recommendation": {"action_id": "rollback_order_config", "risk": "high"}}), encoding="utf-8")
         self.patches = [
             patch.object(action_cli, "KEY_PATH", self.root / "approval.key"),
             patch.object(action_cli, "APPROVAL_DIR", self.approvals),
@@ -32,7 +36,8 @@ class ActionCliTests(unittest.TestCase):
 
     def approve_args(self) -> list[str]:
         return ["approve", "--case-id", "case-01", "--action", "rollback_release", "--target", "orders",
-                "--environment", "test", "--role", "release_manager", "--approved-by", "human-1"]
+                "--environment", "test", "--role", "release_manager", "--approved-by", "human-1",
+                "--investigation-report", str(self.report_path)]
 
     def test_wrong_human_confirmation_creates_no_approval(self) -> None:
         error_output = StringIO()
@@ -54,6 +59,7 @@ class ActionCliTests(unittest.TestCase):
         dry_run_output = StringIO()
         with redirect_stdout(dry_run_output):
             result = action_cli.main(["dry-run", "--approval-file", str(approval_files[0]),
+                                      "--investigation-report", str(self.report_path),
                                       "--environment", "test", "--dry-run"])
         self.assertEqual(0, result)
         response = json.loads(dry_run_output.getvalue())
@@ -65,6 +71,26 @@ class ActionCliTests(unittest.TestCase):
         self.assertFalse(event["rollback_verification"]["real_environment_verified"])
         self.assertEqual(0, event["external_system_calls"])
         self.assertEqual(0, event["external_writes"])
+
+    def test_changed_investigation_report_rejects_old_ticket(self) -> None:
+        approval_output = StringIO()
+        with patch("builtins.input", return_value="APPROVE case-01"), redirect_stdout(approval_output):
+            self.assertEqual(0, action_cli.main(self.approve_args()))
+        approval_file = next(self.approvals.glob("*.json"))
+        report = json.loads(self.report_path.read_text(encoding="utf-8"))
+        report["recommendation"]["risk"] = "critical"
+        self.report_path.write_text(json.dumps(report), encoding="utf-8")
+
+        error_output = StringIO()
+        with redirect_stderr(error_output):
+            result = action_cli.main(["dry-run", "--approval-file", str(approval_file),
+                "--investigation-report", str(self.report_path), "--environment", "test", "--dry-run"])
+        self.assertEqual(2, result)
+        self.assertEqual("approval_investigation_mismatch", json.loads(error_output.getvalue())["reason"])
+        event = json.loads(self.ledger.read_text(encoding="utf-8").splitlines()[0])
+        self.assertEqual("dry_run_rejected", event["event_type"])
+        self.assertEqual(0, event["external_system_calls"])
+        self.assertEqual(0, event.get("external_writes", 0))
 
 
 if __name__ == "__main__":

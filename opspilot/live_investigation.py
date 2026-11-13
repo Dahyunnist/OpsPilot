@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any
+import uuid
 
 from .telemetry import LabTelemetry
 
@@ -245,7 +246,8 @@ def investigate_live(start: str, end: str, limit: int = 100,
         }
 
     return {
-        "window": {"start": start, "end": end}, "status": "concluded" if sufficient else "insufficient_evidence",
+        "run_id": str(uuid.uuid4()), "window": {"start": start, "end": end},
+        "status": "concluded" if sufficient else "insufficient_evidence",
         "root_causes": claimed, "confidence": "high" if sufficient else "abstain",
         "hypotheses": hypotheses, "source_status": source_status, "sources": source_details,
         "evidence_refs": [{"source": row["source"], "record_id": row["record_id"]} for row in records],
