@@ -84,3 +84,9 @@ Host manifest audit:
 The source has no standardized `events` array. `timeout`, `retry`, `budget_exceeded`, `unsafe_action_blocked` (safe-action rejection), `cancel`, and `checkpoint_resume` each report count 0 / `not_covered`. This does not claim no similar log or span signal occurred; host telemetry was recorded as `span_observed`, not these standard trace events. Manifest has 48 telemetry spans; their span trace IDs remain distinct from run correlation `trace_id`.
 
 `scripts/normalize_public_host_manifest.py` recreates the safe view and checks source, report, and truth file hashes. `tests/test_public_run_manifest.py` rejects unknown fillers, missing identity, inverted time, sensitive keys, and null scorer hashes without explicit blocked state. The root document named `Agent四项目_JD对标与升级路线` was not present in the accessible workspace; this mapping uses the shared Papertrail schema and field requirements supplied in the task.
+
+## 2026-11-13 verification
+
+Verified code commit `a8016819d677c81c583833f54347471e7d23db9b`. Full suite command:
+`\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp .pytest-full-suite-run`
+Result: 209 passed, 58 subtests passed. The run required local loopback and a workspace-local pytest temp directory; earlier sandbox attempts failed on loopback or OS temp permissions, not application assertions. `\.venv\Scripts\python.exe -m compileall -q opspilot scripts lab tests` and `git diff --check` passed. `docker compose -f .\lab\compose.yaml ps --all --quiet` returned no container IDs. No container or model was started. Removed `.pytest-full-suite-run`; existing `.tmp/` was preserved.
