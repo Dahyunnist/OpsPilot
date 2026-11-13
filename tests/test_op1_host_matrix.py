@@ -39,6 +39,9 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "$priorLabFault = $env:LAB_FAULT" in script
     assert "$env:LAB_FAULT=$priorLabFault" in script
     assert "expected_deployment_observed" in script and "scenario_passed=$scenarioPassed" in script
+    assert "$telemetryObserved=$logsObserved -and $tracesObserved" in script
+    assert "logs_observed=$logsObserved" in script and "traces_observed=$tracesObserved" in script
+    assert "$expectedStatusObserved -and $versionObserved -and $dnsObserved -and $telemetryObserved" in script
     assert "$settleAttempts=if ($case.fault -eq \"bad_release\") { 10 } else { 2 }" in script
     assert "for ($settle=0; $settle -le $settleAttempts; $settle++)" in script
     assert "@(502, 504)" in script and "expected_http_statuses=$expectedStatuses" in script

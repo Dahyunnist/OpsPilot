@@ -97,8 +97,11 @@ try {
         $expectedFailure=$case.fault -in @("db_pool_exhaustion", "dependency_timeout", "bad_release", "double_root", "payment_reject", "redis_unavailable")
         $expectedStatuses=if ($case.fault -eq "bad_release") { @(502, 504) } elseif ($expectedFailure) { @(400, 401, 403, 404, 408, 409, 429, 500, 502, 503, 504) } else { @(200) }
         $expectedStatusObserved=$status -in $expectedStatuses
-        $scenarioPassed=($expectedStatusObserved -and $versionObserved -and $dnsObserved)
-        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.count;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$traceCount;expected_signals=$case.must_observe;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
+        $logsObserved=$logs.count -gt 0
+        $tracesObserved=$traceCount -gt 0
+        $telemetryObserved=$logsObserved -and $tracesObserved
+        $scenarioPassed=($expectedStatusObserved -and $versionObserved -and $dnsObserved -and $telemetryObserved)
+        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.count;logs_observed=$logsObserved;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$traceCount;traces_observed=$tracesObserved;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
       }
     }
 } finally {
