@@ -23,9 +23,12 @@ OP_RUN_MANIFEST_VERSION = 1
 OP_RUN_MANIFEST_REQUIRED = {
     "schema_version", "project", "run_id", "evaluation_id", "dataset_id", "dataset_sha256",
     "truth_sha256", "split", "evaluator_sha256", "result_fingerprint_sha256", "status",
+    "git_sha", "model_id", "prompt_sha", "tool_schema_sha", "runtime_digest", "max_steps",
+    "max_tokens", "scorer_sha", "gold_source", "cost_usd_estimate", "trace_id", "started_at", "ended_at",
+    "parameters",
 }
-OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split")
-OP_RUN_HASH_FIELDS = ("dataset_sha256", "truth_sha256", "evaluator_sha256", "result_fingerprint_sha256")
+OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split", "model_id", "gold_source", "trace_id")
+OP_RUN_HASH_FIELDS = ("dataset_sha256", "truth_sha256", "evaluator_sha256", "result_fingerprint_sha256", "prompt_sha", "tool_schema_sha", "runtime_digest", "scorer_sha")
 
 
 def validate_run_manifest(value: Any) -> list[str]:
@@ -107,8 +110,42 @@ def validate_op_run_manifest(value: Any) -> list[str]:
         if field in value and (not isinstance(value[field], str) or not value[field].strip()):
             errors.append(f"{field} must be a non-empty string")
     for field in OP_RUN_HASH_FIELDS:
-        if field in value and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
+        optional_mock_hash = value.get("model_id") == "none" and field in {"prompt_sha", "tool_schema_sha", "runtime_digest"} and value.get(field) is None
+        if field in value and not optional_mock_hash and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
             errors.append(f"{field} must be 64 hexadecimal characters")
+    if "git_sha" in value and (not isinstance(value["git_sha"], str) or not SHA.fullmatch(value["git_sha"])):
+        errors.append("git_sha must be 40 hexadecimal characters")
+    for field in ("max_steps", "max_tokens"):
+        optional_mock_tokens = field == "max_tokens" and value.get("model_id") == "none" and value.get(field) is None
+        if field in value and not optional_mock_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
+            errors.append(f"{field} must be a positive integer")
+    if "cost_usd_estimate" in value:
+        cost = value["cost_usd_estimate"]
+        if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost < 0:
+            errors.append("cost_usd_estimate must be a non-negative number")
+        elif value.get("model_id") == "none" and cost != 0:
+            errors.append("model_id none requires zero estimated cost")
+    if "parameters" in value and (not isinstance(value["parameters"], dict) or not value["parameters"]):
+        errors.append("parameters must be a non-empty object")
+    if value.get("model_id") == "none":
+        if value.get("gold_source") != "independent":
+            errors.append("model_id none requires gold_source independent")
+        for field in ("prompt_sha", "tool_schema_sha", "runtime_digest"):
+            if field in value and value[field] is not None:
+                errors.append(f"model_id none requires {field} null")
+    elif isinstance(value.get("model_id"), str) and value.get("model_id").lower() in {"unknown", "n/a", ""}:
+        errors.append("model_id must identify the model or be none")
+    for field in ("started_at", "ended_at"):
+        if field in value:
+            try:
+                stamp = datetime.fromisoformat(str(value[field]).replace("Z", "+00:00"))
+                if stamp.tzinfo is None:
+                    raise ValueError
+            except (TypeError, ValueError):
+                errors.append(f"{field} must be an ISO-8601 timestamp with timezone")
+    if "started_at" in value and "ended_at" in value and not any(e.startswith("started_at") or e.startswith("ended_at") for e in errors):
+        if datetime.fromisoformat(value["ended_at"].replace("Z", "+00:00")) < datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")):
+            errors.append("ended_at must not precede started_at")
     if "status" in value and (not isinstance(value["status"], str) or value["status"] not in STATUSES):
         errors.append("status is not supported")
     return errors
@@ -117,6 +154,10 @@ def validate_op_run_manifest(value: Any) -> list[str]:
 def build_op_run_manifest(*, project: str, run_id: str, evaluation_id: str, dataset_id: str,
                           dataset_sha256: str, truth_sha256: str, split: str,
                           evaluator_sha256: str, result_fingerprint_sha256: str,
+                          git_sha: str, model_id: str, prompt_sha: str | None, tool_schema_sha: str | None,
+                          runtime_digest: str | None, max_steps: int, max_tokens: int | None,
+                          scorer_sha: str, gold_source: str, cost_usd_estimate: float,
+                          trace_id: str, started_at: str, ended_at: str, parameters: dict[str, Any],
                           status: str = "completed") -> dict[str, Any]:
     """Build and validate a new OP manifest before its report is written."""
     value = {
@@ -124,7 +165,12 @@ def build_op_run_manifest(*, project: str, run_id: str, evaluation_id: str, data
         "evaluation_id": evaluation_id, "dataset_id": dataset_id,
         "dataset_sha256": dataset_sha256, "truth_sha256": truth_sha256, "split": split,
         "evaluator_sha256": evaluator_sha256, "result_fingerprint_sha256": result_fingerprint_sha256,
-        "status": status,
+        "git_sha": git_sha, "model_id": model_id, "prompt_sha": prompt_sha,
+        "tool_schema_sha": tool_schema_sha, "runtime_digest": runtime_digest,
+        "max_steps": max_steps, "max_tokens": max_tokens, "scorer_sha": scorer_sha,
+        "gold_source": gold_source, "cost_usd_estimate": cost_usd_estimate,
+        "trace_id": trace_id, "started_at": started_at, "ended_at": ended_at,
+        "parameters": parameters, "status": status,
     }
     errors = validate_op_run_manifest(value)
     if errors:

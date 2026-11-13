@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
+import inspect
 import json
 import math
 import platform
 import statistics
+import subprocess
 import sys
 import time
 import uuid
@@ -300,10 +303,14 @@ def main() -> int:
         if not separator or strategy not in STRATEGIES:
             parser.error("--inject-failure must be STRATEGY:INCIDENT_ID")
         faults[(strategy, incident_id)] = "failure"
+    started_at = datetime.now(timezone.utc).isoformat()
     result = evaluate(args.benchmark_dir, faults)
+    ended_at = datetime.now(timezone.utc).isoformat()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     report = {key: value for key, value in result.items() if key not in {"cases", "failure_samples"}}
     report["failure_sample_count"] = len(result["failure_samples"])
+    git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    scorer_sha = hashlib.sha256(inspect.getsource(_summarize).encode("utf-8")).hexdigest()
     report["op_run_manifest"] = build_op_run_manifest(
         project="OpsPilot", run_id=str(uuid.uuid4()), evaluation_id=result["evaluation"],
         dataset_id=result["benchmark"]["manifest"]["benchmark_id"],
@@ -312,6 +319,10 @@ def main() -> int:
         split=result["parameters"]["split"],
         evaluator_sha256=result["code_sha256"]["evaluator"],
         result_fingerprint_sha256=result["deterministic_result_sha256"],
+        git_sha=git_sha, model_id="none", prompt_sha=None, tool_schema_sha=None,
+        runtime_digest=None, max_steps=QUERY_BUDGET, max_tokens=None, scorer_sha=scorer_sha,
+        gold_source="independent", cost_usd_estimate=0.0, trace_id=str(uuid.uuid4()),
+        started_at=started_at, ended_at=ended_at, parameters=result["parameters"],
     )
     manifest_errors = validate_op_run_artifact(report, is_new_run=True)
     if manifest_errors:
