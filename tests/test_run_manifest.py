@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
 import unittest
 
 from opspilot.run_manifest import validate_run_manifest
@@ -57,6 +60,39 @@ class RunManifestTests(unittest.TestCase):
         errors = validate_run_manifest(manifest)
         self.assertIn("event has unsupported event_type", errors)
         self.assertIn("event requires run_id, trace_id, and span_id", errors)
+
+    def test_telemetry_evidence_requires_real_trace_identity_and_timing(self):
+        manifest = valid_manifest()
+        manifest["telemetry_evidence"] = [{
+            "event_type": "span_observed", "run_id": "matrix-run", "trace_id": "trace-1",
+            "span_id": "span-1", "service": "orders", "operation": "orders/orders",
+            "order_id": "matrix-order-1", "start_unix_us": 1794553063608593,
+            "duration_us": 800000,
+        }]
+        self.assertEqual([], validate_run_manifest(manifest))
+        manifest["telemetry_evidence"][0]["span_id"] = ""
+        errors = validate_run_manifest(manifest)
+        self.assertIn("telemetry evidence requires run_id, trace_id, span_id, service, operation, and order_id", errors)
+
+    def test_unknown_telemetry_fields_are_explicit_values(self):
+        manifest = valid_manifest()
+        manifest.update(prompt_sha="unknown", tool_schema_sha="unknown", runtime_digest="Engine unknown")
+        self.assertEqual([], validate_run_manifest(manifest))
+
+    def test_op1_host_manifest_matches_committed_matrix_evidence(self):
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((root / "reports/op1-host-matrix-run-manifest.json").read_text(encoding="utf-8"))
+        report = (root / manifest["report_path"]).read_bytes()
+        truth = (root / "lab/scenarios/truth.json").read_bytes()
+        self.assertEqual([], validate_run_manifest(manifest))
+        self.assertEqual(hashlib.sha256(report).hexdigest(), manifest["report_sha256"])
+        self.assertEqual(hashlib.sha256(truth).hexdigest(), manifest["dataset_sha256"])
+        self.assertEqual("967a4ecd65dd58a37680cff3cdf707c6174a3cae", manifest["git_sha"])
+        self.assertEqual("unknown", manifest["docker_engine_server"])
+        self.assertEqual("none", manifest["model_id"])
+        self.assertEqual(48, len(manifest["telemetry_evidence"]))
+        self.assertEqual(25, len(manifest["signal_evidence"]))
+        self.assertEqual((12, 12, 0), (manifest["case_count"], manifest["passed_count"], manifest["failed_count"]))
 
 
 if __name__ == "__main__":

@@ -65,7 +65,21 @@ def validate_run_manifest(value: Any) -> list[str]:
                     errors.append("event has unsupported event_type")
                 if not isinstance(event, dict) or not event.get("run_id") or not event.get("trace_id") or not event.get("span_id"):
                     errors.append("event requires run_id, trace_id, and span_id")
+    if "telemetry_evidence" in value:
+        evidence = value["telemetry_evidence"]
+        if not isinstance(evidence, list):
+            errors.append("telemetry_evidence must be a list")
+        else:
+            for item in evidence:
+                required_evidence = ("run_id", "trace_id", "span_id", "service", "operation", "order_id")
+                if not isinstance(item, dict) or any(not item.get(key) for key in required_evidence):
+                    errors.append("telemetry evidence requires run_id, trace_id, span_id, service, operation, and order_id")
+                elif item.get("event_type") != "span_observed":
+                    errors.append("telemetry evidence event_type must be span_observed")
+                if isinstance(item, dict) and (not isinstance(item.get("start_unix_us"), int) or not isinstance(item.get("duration_us"), int) or item["duration_us"] < 0):
+                    errors.append("telemetry evidence requires integer start_unix_us and non-negative duration_us")
     for field in ("max_steps", "max_tokens"):
-        if field in value and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
+        optional_model_tokens = field in value and field == "max_tokens" and value.get("model_id") == "none" and value[field] is None
+        if field in value and not optional_model_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
             errors.append(f"{field} must be a positive integer")
     return errors
