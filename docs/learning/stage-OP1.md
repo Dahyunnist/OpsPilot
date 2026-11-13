@@ -39,6 +39,8 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 十二场景宿主矩阵由 `lab/run-host-matrix.ps1` 执行，结果写入 `reports/op1-host-matrix.json`；需用户本机启动 Docker Desktop 后运行。启动前检查 Engine、七个映射端口、Compose 配置及渲染后的全部服务镜像和 Dockerfile 基础镜像；缺镜像时拒绝运行、不自动拉取。该 runner 先跑 `none` 正常基线，再跑十二个故障；每次启动后最多等待 60 秒，检查 gateway/orders/inventory health 与 payment ready，再发 checkout，排除服务启动竞争。runner 会逐场调用 `run-scenario.ps1`，后者执行 `docker compose up --build`；预检通过后仍需预留矩阵构建与运行时间。矩阵采用独立 Compose project，结束时停止该 project，不删除数据卷。每个案例检查 HTTP 状态、orders 版本，并逐项核对 `must_observe` 的日志与 trace 信号。
 
+针对用户回传的 bad_release 504/无部署记录，`run-scenario.ps1 -Scenario bad_release` 现先用正常 `inventory` DNS 启动实验台并发起唯一 ID checkout，要求 200；失败则在注入前停止。随后清理基线订单、重建 orders 为 v2 并注入唯一错误主机 `inventory-v2`。smoke 的 DNS 日志轮询现在同时匹配场景订单 ID，避免邻近请求的日志误作证据。新增进程内服务端 E2E 回归调用真实 Handler：正常 checkout 成功，bad_release 返回 502/504 类失败，orders `/logs` 回出对应 order ID/错误 hostname，gateway `/deployments` 回出时间窗内 orders/v2 记录。此合成回归不替代 Docker Compose DNS 实测。
+
 当前矩阵进一步逐项评估全部 `must_observe`：数据库池压力/错误与订单日志匹配；支付延迟、SQL 和订单延迟与同一订单 ID 的 trace span 匹配；重试风暴要求 payment 503 和 orders 失败日志各至少 3 条；发布版本查 deployment；缓存、库存、拒付与重复投递查服务日志及订单 ID。每项写入 `signal_results`，附证据来源和记录引用；缺失项列入 `missing_signals`。缺少窗口内日志、同订单 trace span、或任一必需信号均判失败。Jaeger trace 需带 `opspilot.order_id` tag，避免邻近案例的 trace 冒充当前证据。
 
 宿主验收只需运行一条命令：

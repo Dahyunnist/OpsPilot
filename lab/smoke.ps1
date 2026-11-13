@@ -39,7 +39,7 @@ foreach ($case in $truth.cases) {
         for ($attempt = 0; $attempt -lt 10; $attempt++) {
             $pollEnd = [DateTime]::UtcNow.ToString("o")
             $logs = Invoke-RestMethod -Uri "http://127.0.0.1:18081/logs?start=$([uri]::EscapeDataString($windowStart))&end=$([uri]::EscapeDataString($pollEnd))&limit=1000" -TimeoutSec 3
-            $dnsObserved = @($logs.records | Where-Object { $_.service -eq "orders" -and ($_.dependency_host -eq "inventory-v2" -or $_.error_reason -match "No address associated|Name or service not known" -or $_.message -match "inventory-v2|No address associated") }).Count -gt 0
+            $dnsObserved = @($logs.records | Where-Object { $_.service -eq "orders" -and $_.order_id -eq $case.case_id -and ($_.dependency_host -eq "inventory-v2" -or $_.error_reason -match "No address associated|Name or service not known" -or $_.message -match "inventory-v2|No address associated") }).Count -gt 0
             if ($dnsObserved) { break }
             Start-Sleep -Seconds 1
         }

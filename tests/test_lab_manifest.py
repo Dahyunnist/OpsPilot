@@ -109,6 +109,12 @@ class LabManifestTests(unittest.TestCase):
         self.assertLess(runner.index('$env:LAB_INVENTORY_URL ='), runner.index('docker compose @composeFiles up'))
         self.assertIn('SERVICE_VERSION: ${LAB_ORDERS_VERSION:-v1}', orders)
         self.assertIn('$env:LAB_ORDERS_VERSION = if ($Scenario -eq "bad_release") { "v2" } else { "v1" }', runner)
+        self.assertIn('$scenarioBuildFlag = if ($Scenario -eq "bad_release") { "--no-build" } else { "--build" }', runner)
+        self.assertIn('Healthy baseline checkout failed before bad_release injection', runner)
+        self.assertLess(runner.index('Healthy baseline checkout failed before bad_release injection'),
+            runner.index('$env:LAB_FAULT = $Scenario'))
+        self.assertLess(runner.index('Could not reset deterministic lab state after baseline'),
+            runner.index('$env:LAB_FAULT = $Scenario'))
 
     def test_smoke_expected_http_outcomes_cover_all_twelve_faults(self) -> None:
         truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))

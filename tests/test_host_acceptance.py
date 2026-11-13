@@ -39,5 +39,6 @@ def test_bad_release_acceptance_orders_utc_window_and_queries_correct_services()
     assert '18081/logs?start=$from&end=$to' in smoke
     assert '18080/deployments?start=$from&end=$to' in smoke
     assert "18081/deployments" not in smoke
+    assert '$_.order_id -eq $case.case_id' in smoke
 
 
