@@ -65,3 +65,9 @@ python -m unittest tests.test_s15_mock_ablation -v
 需覆盖中断路径时，可用 `--inject-cancel auto:opx-...` 或 `--inject-failure single:opx-...` 注入已冻结病例；未知病例、策略或结果类型会被拒绝。汇总同时报告证据不足集的错误确定与正确弃答数。
 
 默认报告输出到 `reports/s15-offline-mock-ablation.json` 与 `reports/s15-offline-mock-ablation-failures.json`。这轮离线准备不调用付费模型；任何 live-model 配对实验须另行授权，并单独记录实际 Agent 结果。
+
+## 复现性审计补正
+
+双跑审计确认冻结输入、逐例预测和非延迟评分一致；本地 wall-time 会变化，所以旧报告完整 JSON 不能字节级复现。现报告固定记录 `max_rows_per_source=100`、`query_budget=8`、四策略、各 mock policy、评分器版本、manifest/data/labels hash、Python 版本，以及 evaluator/investigator/routing/incident-loader 源码 SHA-256。`deterministic_result_sha256` 绑定这些输入、固定参数、逐案预测/真值和非延迟汇总；本地观察延迟保留展示，但不纳入该指纹。manifest 或 labels hash 被改动时会在评分前拒绝运行。
+
+因此可复现验收对象是固定指纹及根因/证据评分，不是整份 JSON 的字节相等或毫秒级时延。报告仍是确定性 mock 的路由机制检查，不能代表 Agent 或模型效果。

@@ -34,9 +34,41 @@
         }
       }
     },
+    "manifest_sha256": "4894e54ca0b9c2ea8b5d470d6e33af88e96bf874f4e94e5f28f6099f250ae1e6",
     "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
     "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1"
   },
+  "parameters": {
+    "split": "test",
+    "max_rows_per_source": 100,
+    "query_budget": 8,
+    "strategies": [
+      "rules",
+      "single",
+      "always-multi",
+      "auto"
+    ],
+    "scorer_version": "s15-mock-scorer-v1",
+    "mock_policy_version": "s15-mock-policies-v1",
+    "mock_policies": {
+      "rules": "use deterministic investigation conclusion and support",
+      "single": "first positive strong-support candidate",
+      "always-multi": "up to three positive strong-support candidates",
+      "auto": "select_route; rules retains rules result; selected model routes use corresponding mock candidate count"
+    },
+    "model_calls": 0,
+    "estimated_cost_usd": 0.0,
+    "injected_faults": []
+  },
+  "code_sha256": {
+    "evaluator": "c5887118d4af710a39f6521070e6c9286f2c32f6b36ec3defd2600bfcc9feb36",
+    "investigator": "936a6c0ae4f2c71678cc32f080cb3a2ac2538693fc12dac37f9322acdd92a4ba",
+    "routing": "8c57a80f14dac9acb893cbdd9ecdc105ddc7bc1863c3f841c31e8042f23ccabd",
+    "incident_loader": "d2d8b2cd536683da96c670f7b190403fc6e10ae57e2077000fc5ed5898767cfc"
+  },
+  "python_version": "3.13.11",
+  "deterministic_result_sha256": "8a22a39bcf7f697ea604ad7c91722023acd4f4c2113ceb384a2da88e6297d5a4",
+  "latency_note": "Observed local runner wall time varies by execution and is excluded from deterministic_result_sha256; it is not model or end-to-end latency.",
   "strategies": [
     "rules",
     "single",
@@ -44,6 +76,22 @@
     "auto"
   ],
   "case_count_per_strategy": 30,
+  "route_counts": {
+    "rules": {
+      "rules": 30
+    },
+    "single": {
+      "single": 30
+    },
+    "always-multi": {
+      "multi": 30
+    },
+    "auto": {
+      "multi-agent": 6,
+      "rules": 18,
+      "single-agent": 6
+    }
+  },
   "metric_definitions": {
     "root_cause_set_exact": "predicted cause set equals independent active_causes, among decidable cases",
     "top1_active_cause": "first predicted cause belongs to active_causes, among decidable cases",
@@ -54,7 +102,7 @@
     "insufficient_evidence_abstentions": "number of insufficient-evidence cases with no predicted cause",
     "evidence_precision_recall": "micro set precision/recall against independent gold_evidence_ids, among decidable cases",
     "estimated_cost_usd": "always zero: runner makes no model/provider calls; not an agent cost estimate",
-    "latency_ms": "local deterministic runner wall time; not model or end-to-end latency",
+    "latency_ms": "observed local deterministic runner wall time; not model or end-to-end latency and excluded from reproducibility fingerprint",
     "cancellations_failures": "count of explicitly injected mock outcomes; default run injects neither"
   },
   "summaries": {
@@ -133,7 +181,7 @@
       "model_calls": 0,
       "latency_ms": {
         "mean_local_runner": 0.002,
-        "p95_local_runner": 0.003
+        "p95_local_runner": 0.002
       },
       "cancellations": 0,
       "failures": 0
@@ -173,7 +221,7 @@
       "model_calls": 0,
       "latency_ms": {
         "mean_local_runner": 0.003,
-        "p95_local_runner": 0.005
+        "p95_local_runner": 0.004
       },
       "cancellations": 0,
       "failures": 0
@@ -212,8 +260,8 @@
       "estimated_cost_usd": 0.0,
       "model_calls": 0,
       "latency_ms": {
-        "mean_local_runner": 0.007,
-        "p95_local_runner": 0.011
+        "mean_local_runner": 0.005,
+        "p95_local_runner": 0.008
       },
       "cancellations": 0,
       "failures": 0

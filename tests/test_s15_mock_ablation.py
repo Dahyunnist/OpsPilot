@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+import shutil
+import tempfile
 import unittest
 from unittest.mock import patch
 
 from opspilot.model_client import ChatModel
-from scripts.evaluate_s15_mock_ablation import STRATEGIES, _candidate_predictions, evaluate
+from scripts.evaluate_s15_mock_ablation import ROOT, STRATEGIES, _candidate_predictions, evaluate
 
 
 class S15MockAblationTests(unittest.TestCase):
@@ -14,10 +17,22 @@ class S15MockAblationTests(unittest.TestCase):
             second = evaluate()
         self.assertEqual(30, first["case_count_per_strategy"])
         self.assertEqual(list(STRATEGIES), first["strategies"])
+        self.assertEqual(first["benchmark"]["manifest_sha256"], second["benchmark"]["manifest_sha256"])
         self.assertEqual(first["benchmark"]["data_sha256"], second["benchmark"]["data_sha256"])
+        self.assertEqual(first["benchmark"]["labels_sha256"], second["benchmark"]["labels_sha256"])
+        self.assertEqual(first["deterministic_result_sha256"], second["deterministic_result_sha256"])
+        self.assertEqual({"evaluator", "investigator", "routing", "incident_loader"}, set(first["code_sha256"]))
+        self.assertTrue(all(len(value) == 64 for value in first["code_sha256"].values()))
+        self.assertEqual("test", first["parameters"]["split"])
+        self.assertEqual(100, first["parameters"]["max_rows_per_source"])
+        self.assertEqual(8, first["parameters"]["query_budget"])
+        self.assertEqual(list(STRATEGIES), first["parameters"]["strategies"])
+        self.assertEqual({"rules", "single", "always-multi", "auto"}, set(first["parameters"]["mock_policies"]))
+        paired_ids = [case["incident_id"] for case in first["cases"]["rules"]]
         for strategy in STRATEGIES:
             left, right = first["cases"][strategy], second["cases"][strategy]
             self.assertEqual([case["incident_id"] for case in left], [case["incident_id"] for case in right])
+            self.assertEqual(paired_ids, [case["incident_id"] for case in left])
             self.assertEqual([case["prediction"] for case in left], [case["prediction"] for case in right])
             summary = first["summaries"][strategy]
             self.assertEqual(0, summary["model_calls"])
@@ -51,6 +66,19 @@ class S15MockAblationTests(unittest.TestCase):
     def test_unknown_fault_target_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "known strategy"):
             evaluate(injected_faults={("rules", "not-in-frozen-split"): "cancel"})
+
+    def test_modified_manifest_or_truth_file_is_rejected_before_scoring(self):
+        source = ROOT / "data" / "causal-benchmark"
+        for modified in ("manifest.json", "labels/test.json"):
+            with self.subTest(modified=modified), tempfile.TemporaryDirectory() as temporary:
+                benchmark = Path(temporary)
+                (benchmark / "labels").mkdir()
+                for relative in ("manifest.json", "test.jsonl", "labels/test.json"):
+                    shutil.copyfile(source / relative, benchmark / relative)
+                tampered = benchmark / modified
+                tampered.write_bytes(tampered.read_bytes() + b"\n")
+                with self.assertRaisesRegex(ValueError, "frozen S15 test inputs changed"):
+                    evaluate(benchmark)
 
     def test_single_mock_cites_only_selected_candidate_evidence(self):
         report = {"hypotheses": [

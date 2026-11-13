@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import math
+import platform
 import statistics
 import sys
 import time
@@ -20,7 +21,18 @@ from opspilot.investigator import investigate  # noqa: E402
 from opspilot.routing import select_route  # noqa: E402
 
 STRATEGIES = ("rules", "single", "always-multi", "auto")
+QUERY_BUDGET = 8
+MAX_ROWS = 100
+SCORER_VERSION = "s15-mock-scorer-v1"
+MOCK_POLICY_VERSION = "s15-mock-policies-v1"
+SOURCE_FILES = {
+    "evaluator": Path(__file__),
+    "investigator": ROOT / "opspilot" / "investigator.py",
+    "routing": ROOT / "opspilot" / "routing.py",
+    "incident_loader": ROOT / "opspilot" / "cli.py",
+}
 FROZEN_TEST_HASHES = {
+    "manifest_sha256": "4894e54ca0b9c2ea8b5d470d6e33af88e96bf874f4e94e5f28f6099f250ae1e6",
     "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
     "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1",
 }
@@ -32,15 +44,19 @@ CAUSE_NAMES = {
 
 
 def _load_frozen_cases(benchmark_dir: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]], dict[str, Any]]:
-    manifest = json.loads((benchmark_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest_path = benchmark_dir / "manifest.json"
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes.decode("utf-8"))
     split_manifest = manifest["splits"]["test"]
     data_path = benchmark_dir / "test.jsonl"
     labels_path = benchmark_dir / "labels" / "test.json"
     actual_hashes = {
+        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
         "data_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
         "labels_sha256": hashlib.sha256(labels_path.read_bytes()).hexdigest(),
     }
-    if actual_hashes != FROZEN_TEST_HASHES or any(split_manifest.get(key) != value for key, value in actual_hashes.items()):
+    split_keys = ("data_sha256", "labels_sha256")
+    if actual_hashes != FROZEN_TEST_HASHES or any(split_manifest.get(key) != actual_hashes[key] for key in split_keys):
         raise ValueError("frozen S15 test inputs changed; refusing paired comparison")
     incidents = load_incidents(data_path)
     labels = json.loads(labels_path.read_text(encoding="utf-8"))["labels"]
@@ -134,6 +150,31 @@ def _summarize(cases: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _reproducibility_digest(benchmark: dict[str, Any], parameters: dict[str, Any],
+                            summaries: dict[str, dict[str, Any]],
+                            cases: dict[str, list[dict[str, Any]]],
+                            code_hashes: dict[str, str], python_version: str) -> str:
+    stable_summaries = {
+        strategy: {key: value for key, value in summary.items() if key != "latency_ms"}
+        for strategy, summary in summaries.items()
+    }
+    stable_cases = {
+        strategy: [{"incident_id": case["incident_id"], "status": case["status"],
+                    "truth": {"decidable": case["truth"]["decidable"],
+                              "active_causes": case["truth"]["active_causes"]},
+                    "prediction": case["prediction"], "selected_route": case["selected_route"]}
+                   for case in rows]
+        for strategy, rows in cases.items()
+    }
+    payload = {"benchmark": {"manifest_sha256": benchmark["manifest_sha256"],
+                              "data_sha256": benchmark["data_sha256"],
+                              "labels_sha256": benchmark["labels_sha256"]},
+               "parameters": parameters, "code_sha256": code_hashes,
+               "python_version": python_version, "summaries": stable_summaries, "cases": stable_cases}
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str, str], str] | None = None) -> dict[str, Any]:
     data_dir = benchmark_dir or ROOT / "data" / "causal-benchmark"
     incidents, label_by_id, frozen = _load_frozen_cases(data_dir)
@@ -148,7 +189,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
         label = label_by_id[incident_id]
         truth = {"decidable": label["decidable"], "active_causes": label.get("active_causes", []),
                  "gold_evidence_ids": label.get("gold_evidence_ids", [])}
-        report = investigate(incident, query_budget=8)
+        report = investigate(incident, max_rows=MAX_ROWS, query_budget=QUERY_BUDGET)
         available = {row["record_id"] for records in incident["signals"].values() for row in records}
         for strategy in STRATEGIES:
             started = time.perf_counter()
@@ -181,12 +222,43 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
     expected_ids = set(incidents)
     if any({case["incident_id"] for case in cases} != expected_ids for cases in paired.values()):
         raise RuntimeError("paired strategies did not evaluate identical frozen cases")
+    parameters = {
+        "split": "test", "max_rows_per_source": MAX_ROWS, "query_budget": QUERY_BUDGET,
+        "strategies": list(STRATEGIES),
+        "scorer_version": SCORER_VERSION, "mock_policy_version": MOCK_POLICY_VERSION,
+        "mock_policies": {
+            "rules": "use deterministic investigation conclusion and support",
+            "single": "first positive strong-support candidate",
+            "always-multi": "up to three positive strong-support candidates",
+            "auto": "select_route; rules retains rules result; selected model routes use corresponding mock candidate count",
+        },
+        "model_calls": 0, "estimated_cost_usd": 0.0,
+        "injected_faults": [{"strategy": strategy, "incident_id": incident_id, "outcome": fault}
+                            for (strategy, incident_id), fault in sorted(faults.items())],
+    }
+    summaries = {strategy: _summarize(cases) for strategy, cases in paired.items()}
+    code_hashes = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in SOURCE_FILES.items()}
+    python_version = platform.python_version()
+    route_counts = {
+        strategy: {
+            route: sum((case["selected_route"] or "rules") == route for case in cases)
+            for route in sorted({case["selected_route"] or "rules" for case in cases})
+        }
+        for strategy, cases in paired.items()
+    }
     return {
         "evaluation": "s15_offline_mock_paired_ablation_v1",
         "runner": "deterministic_mock_no_model_calls",
         "benchmark": frozen,
+        "parameters": parameters,
+        "code_sha256": code_hashes,
+        "python_version": python_version,
+        "deterministic_result_sha256": _reproducibility_digest(
+            frozen, parameters, summaries, paired, code_hashes, python_version),
+        "latency_note": "Observed local runner wall time varies by execution and is excluded from deterministic_result_sha256; it is not model or end-to-end latency.",
         "strategies": list(STRATEGIES),
         "case_count_per_strategy": len(incidents),
+        "route_counts": route_counts,
         "metric_definitions": {
             "root_cause_set_exact": "predicted cause set equals independent active_causes, among decidable cases",
             "top1_active_cause": "first predicted cause belongs to active_causes, among decidable cases",
@@ -197,10 +269,10 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
             "insufficient_evidence_abstentions": "number of insufficient-evidence cases with no predicted cause",
             "evidence_precision_recall": "micro set precision/recall against independent gold_evidence_ids, among decidable cases",
             "estimated_cost_usd": "always zero: runner makes no model/provider calls; not an agent cost estimate",
-            "latency_ms": "local deterministic runner wall time; not model or end-to-end latency",
+            "latency_ms": "observed local deterministic runner wall time; not model or end-to-end latency and excluded from reproducibility fingerprint",
             "cancellations_failures": "count of explicitly injected mock outcomes; default run injects neither",
         },
-        "summaries": {strategy: _summarize(cases) for strategy, cases in paired.items()},
+        "summaries": summaries,
         "cases": paired,
         "failure_samples": failed_samples,
         "interpretation": "Harness mechanics and route-policy behavior only. Mock predictions are not Agent outputs or evidence of model quality.",
