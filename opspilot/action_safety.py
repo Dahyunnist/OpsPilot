@@ -109,6 +109,8 @@ def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetim
 def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
                     ledger_path: Path, now: datetime | None = None) -> dict[str, Any]:
     instant = _time(now)
+    if len(key) != 32:
+        raise ValueError("approval signing key must be exactly 32 bytes")
     if environment != ALLOWED_ENVIRONMENT or approval.get("environment") != environment:
         _reject(ledger_path, approval, "environment_mismatch", instant)
     if approval.get("action") not in ACTION_SCOPES or approval.get("target") not in SERVICE_TARGETS:

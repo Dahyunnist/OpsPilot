@@ -15,6 +15,8 @@ python -m opspilot.action_cli dry-run --approval-file var/action-approvals/<appr
 
 Dry-run 只在本地模拟并写本地审计；不会对业务系统执行写入。报告固定 `external_system_calls=0`、`external_writes=0`。回滚结果与健康检查都标为模拟；不访问 Docker、MCP、生产 API 或业务系统。
 
+签发与执行都要求 32-byte HMAC key；执行入口独立拒绝短密钥，避免调用方绕过签发器后使用弱密钥验票。
+
 ## 攻击测试
 
 回归覆盖过期批准、票据重放、production 环境错配、签名篡改、agent 角色越权、错误角色与 production 票据签发。测试验证拒绝原因留在本地审计，且没有外部调用。live MCP 工具清单只含查询与调查工具；没有签发或执行动作工具。

@@ -102,6 +102,12 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(len(first), 32)
         self.assertEqual(first, load_or_create_key(key_path))
 
+    def test_executor_rejects_short_signing_key_before_audit_or_execution(self) -> None:
+        approval = self.approval()
+        with self.assertRaisesRegex(ValueError, "approval signing key must be exactly 32 bytes"):
+            execute_dry_run(approval, key=b"short", environment="test", ledger_path=self.ledger, now=NOW)
+        self.assertFalse(self.ledger.exists())
+
     def test_corrupt_ledger_fails_closed_without_overwriting_it(self) -> None:
         corrupted = b'{"event_type":"incomplete"\n'
         self.ledger.write_bytes(corrupted)
