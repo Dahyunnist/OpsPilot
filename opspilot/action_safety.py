@@ -12,6 +12,8 @@ import threading
 from typing import Any
 import uuid
 
+from .identity import Principal
+
 
 ALLOWED_ENVIRONMENT = "test"
 ACTION_SCOPES = {
@@ -108,7 +110,7 @@ def load_or_create_key(path: Path) -> bytes:
 
 
 def issue_approval(*, case_id: str, action: str, target: str, environment: str,
-                   role: str, approved_by: str, investigation_run_id: str,
+                   principal: Principal, investigation_run_id: str,
                    evidence_sha256: str, recommendation_sha256: str,
                    key: bytes, ttl_seconds: int = 120,
                    now: datetime | None = None) -> dict[str, Any]:
@@ -118,10 +120,14 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
         raise ActionRejected("environment_not_allowed")
     if action not in ACTION_SCOPES or target not in SERVICE_TARGETS:
         raise ActionRejected("action_or_target_not_allowed")
-    if role not in ACTION_SCOPES[action]:
+    if not isinstance(principal, Principal) or not principal.authenticated:
+        raise ActionRejected("actor_identity_unverified")
+    allowed_roles = ACTION_SCOPES[action].intersection(principal.roles)
+    if not allowed_roles:
         raise ActionRejected("role_scope_denied")
-    if not approved_by or len(approved_by) > 120:
+    if not principal.subject or len(principal.subject) > 120:
         raise ActionRejected("approver_required")
+    role = sorted(allowed_roles)[0]
     if not isinstance(investigation_run_id, str) or not investigation_run_id.strip():
         raise ActionRejected("investigation_run_id_missing")
     for digest in (evidence_sha256, recommendation_sha256):
@@ -135,7 +141,7 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
     approval = {
         "approval_id": str(uuid.uuid4()), "nonce": secrets.token_urlsafe(24),
         "case_id": case_id, "action": action, "target": target,
-        "environment": environment, "role": role, "approved_by": approved_by,
+        "environment": environment, "role": role, "approved_by": principal.subject,
         "investigation_run_id": investigation_run_id, "evidence_sha256": evidence_sha256,
         "recommendation_sha256": recommendation_sha256,
         "target_environment": environment,
@@ -165,6 +171,7 @@ def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetim
 
 def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
                     ledger_path: Path, investigation_report: dict[str, Any],
+                    principal: Principal,
                     now: datetime | None = None) -> dict[str, Any]:
     instant = _time(now)
     if len(key) != 32:
@@ -175,6 +182,10 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
         _reject(ledger_path, approval, "action_or_target_not_allowed", instant)
     if approval.get("role") not in ACTION_SCOPES[approval["action"]]:
         _reject(ledger_path, approval, "role_scope_denied", instant)
+    if (not isinstance(principal, Principal) or not principal.authenticated
+            or principal.subject != approval.get("approved_by")
+            or approval.get("role") not in principal.roles):
+        _reject(ledger_path, approval, "actor_principal_mismatch", instant)
     signature = approval.get("signature")
     expected = hmac.new(key, _signed_payload(approval), hashlib.sha256).hexdigest()
     if not isinstance(signature, str) or not hmac.compare_digest(signature, expected):

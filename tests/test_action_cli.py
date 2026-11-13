@@ -36,8 +36,8 @@ class ActionCliTests(unittest.TestCase):
 
     def approve_args(self) -> list[str]:
         return ["approve", "--case-id", "case-01", "--action", "rollback_release", "--target", "orders",
-                "--environment", "test", "--role", "release_manager", "--approved-by", "human-1",
-                "--investigation-report", str(self.report_path)]
+                "--environment", "test", "--investigation-report", str(self.report_path),
+                "--identity-mode", "local-test", "--actor-id", "local-release-manager"]
 
     def test_wrong_human_confirmation_creates_no_approval(self) -> None:
         error_output = StringIO()
@@ -60,7 +60,8 @@ class ActionCliTests(unittest.TestCase):
         with redirect_stdout(dry_run_output):
             result = action_cli.main(["dry-run", "--approval-file", str(approval_files[0]),
                                       "--investigation-report", str(self.report_path),
-                                      "--environment", "test", "--dry-run"])
+                                      "--environment", "test", "--dry-run", "--identity-mode", "local-test",
+                                      "--actor-id", "local-release-manager"])
         self.assertEqual(0, result)
         response = json.loads(dry_run_output.getvalue())
         self.assertEqual(0, response["external_system_calls"])
@@ -84,13 +85,40 @@ class ActionCliTests(unittest.TestCase):
         error_output = StringIO()
         with redirect_stderr(error_output):
             result = action_cli.main(["dry-run", "--approval-file", str(approval_file),
-                "--investigation-report", str(self.report_path), "--environment", "test", "--dry-run"])
+                "--investigation-report", str(self.report_path), "--environment", "test", "--dry-run",
+                "--identity-mode", "local-test", "--actor-id", "local-release-manager"])
         self.assertEqual(2, result)
         self.assertEqual("approval_investigation_mismatch", json.loads(error_output.getvalue())["reason"])
         event = json.loads(self.ledger.read_text(encoding="utf-8").splitlines()[0])
         self.assertEqual("dry_run_rejected", event["event_type"])
         self.assertEqual(0, event["external_system_calls"])
         self.assertEqual(0, event.get("external_writes", 0))
+
+    def test_approval_fails_closed_without_resolver(self) -> None:
+        error_output = StringIO()
+        with redirect_stderr(error_output):
+            result = action_cli.main([arg for arg in self.approve_args()
+                if arg not in ("--identity-mode", "local-test", "--actor-id", "local-release-manager")])
+        self.assertEqual(2, result)
+        self.assertEqual("actor_resolver_unconfigured", json.loads(error_output.getvalue())["reason"])
+        self.assertFalse(self.approvals.exists())
+
+    def test_local_resolver_rejects_actor_without_required_role(self) -> None:
+        error_output = StringIO()
+        args = [item for item in self.approve_args() if item not in ("--actor-id", "local-release-manager")]
+        args.extend(["--actor-id", "local-operator"])
+        with patch("builtins.input", return_value="APPROVE case-01"), redirect_stderr(error_output):
+            result = action_cli.main(args)
+        self.assertEqual(2, result)
+        self.assertEqual("role_scope_denied", json.loads(error_output.getvalue())["reason"])
+        self.assertFalse(self.approvals.exists())
+
+    def test_request_cannot_supply_release_manager_role(self) -> None:
+        args = self.approve_args() + ["--role", "release_manager"]
+        with self.assertRaises(SystemExit) as raised:
+            action_cli.main(args)
+        self.assertEqual(2, raised.exception.code)
+        self.assertFalse(self.approvals.exists())
 
 
 if __name__ == "__main__":

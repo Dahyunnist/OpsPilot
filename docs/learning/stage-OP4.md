@@ -9,8 +9,8 @@
 模拟执行命令必须带 `--dry-run`：
 
 ```powershell
-python -m opspilot.action_cli approve --case-id lab-release-01 --action rollback_release --target orders --environment test --role release_manager --approved-by operator-1 --investigation-report reports/investigation.json
-python -m opspilot.action_cli dry-run --approval-file var/action-approvals/<approval-id>.json --investigation-report reports/investigation.json --environment test --dry-run
+python -m opspilot.action_cli approve --case-id lab-release-01 --action rollback_release --target orders --environment test --actor-id local-release-manager --identity-mode local-test --investigation-report reports/investigation.json
+python -m opspilot.action_cli dry-run --approval-file var/action-approvals/<approval-id>.json --investigation-report reports/investigation.json --environment test --dry-run --actor-id local-release-manager --identity-mode local-test
 ```
 
 Dry-run 只在本地模拟并写本地审计；不会对业务系统执行写入。报告固定 `external_system_calls=0`、`external_writes=0`。回滚结果与健康检查都标为模拟；不访问 Docker、MCP、生产 API 或业务系统。
@@ -31,9 +31,9 @@ Dry-run 只在本地模拟并写本地审计；不会对业务系统执行写入
 
 `simulated_pass` 只表示模拟检查通过；没有独立的人类复核状态，也没有真实回滚或复核证据。审批人角色仍由本地调用者声明，未接身份提供者。本阶段仅做离线测试与文档审计。
 
-批准绑定的调查报告由本地调用者提供，run ID 也是报告内声明值。HMAC 保证票据内容未被改动，不证明报告或操作者身份真实；没有 IdP、签名报告来源验证或生产授权。改动 run、证据记录、查询摘要或建议摘要后，旧票据拒绝；有效票据仍只触发本地 dry-run。
+审批决策只读取 `ActorResolver` 返回的 `Principal`，CLI 不接收角色或审批人自报字段。主体不一致、主体缺少动作所需角色、resolver 未配置，均 fail-closed。CLI 必须显式选择 `local-test` 和固定测试主体；生产身份 resolver 尚未实现。此本地 resolver 只是合成身份，不等于接入 IdP，也不证明用户身份。批准绑定的调查报告仍由本地调用者提供，run ID 也是报告内声明值；HMAC 不证明报告来源。有效票据仍只触发本地 dry-run。
 
-定向命令 `python -m unittest tests.test_action_safety tests.test_action_cli tests.test_s3 -v`：`23 passed`。覆盖人工确认拒绝/通过、精确到期边界、重复消费、错环境、越权角色/动作和模拟回滚状态。无模型调用、Docker 服务或真实修复调用。
+定向命令 `python -m unittest tests.test_action_safety tests.test_action_cli tests.test_s3 -v`：本轮身份边界回归 29 项通过。覆盖人工确认拒绝/通过、精确到期边界、重复消费、主体错配、自报角色拒绝、缺 resolver、错环境、越权和模拟回滚。无模型调用、Docker 服务或真实修复调用。
 
 ## 限制
 
