@@ -44,3 +44,7 @@ OP-4 安全负例仍用固定 synthetic report、Principal 与内存 HMAC key。
 ## 限制
 
 这是本机演示安全闸，不是企业授权系统。没有接入身份提供者；签名账本适用于顺序运行，不提供跨进程分布式锁。模拟验证不能证明真实系统回滚成功。任何真实业务操作仍须另外设计并做独立安全审查。
+
+## 2026-11-13 OP-4 负例复核
+
+重跑 `\.\venv\Scripts\python.exe -m unittest tests.test_action_safety tests.test_action_cli tests.test_s3 -q`：32 项通过。覆盖过期/恰好到期、单次使用与重放拒绝、错误环境、越权角色、签名与调查绑定、dry-run 及模拟回滚检查。执行与拒绝审计均断言外部调用/写入为 0；真实环境回滚未执行。

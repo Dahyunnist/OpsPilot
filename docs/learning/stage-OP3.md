@@ -43,3 +43,11 @@ runner 逐例保留 investigate、预测或注入取消/超时/失败的 traject
 ## 2026-11-13 对照 harness 复现
 
 复用 `scripts/evaluate_s15_mock_ablation.py` 作为 OP-3 离线对照 harness：策略标签 `rules`、`single`、`always-multi`、`auto`；30 个冻结案例同输入配对，真值预测后评分，重复运行校验确定性结果 SHA-256。回归命令：`.\.venv\Scripts\python.exe -m unittest tests.test_s15_mock_ablation tests.test_strategy_eval -q`。mock runner 固定 0 模型调用、0 费用；只验证输入/评分隔离和路由控制，不评估模型质量或泛化。本轮未调模型。
+
+## 2026-11-13 OP-3 正式评测预检
+
+新增 `scripts/evaluate_op2_frozen.py`，为 OP-2 三个冻结快照执行真实策略对照。运行前校验注册快照 SHA-256、共用时间窗、固定模型、512 completion cap、DeepSeek 余额/模型只读预检及累计 `$0.60` 账本。报告保留逐案根因命中、证据 precision/recall、费用、p95 与失败。默认拒绝运行；必须显式传 `--execute`。
+
+离线核验：三份快照哈希与注册清单匹配；账本峰值 `$0.47833002`，注册最坏成本 `$0.0230226`，剩余预算 `$0.12166998`。DeepSeek `/user/balance` 返回 `is_available=true`；账户余额不写入仓库。尚无模型推理调用。自动审批拒绝将冻结遥测及派生内容发送给外部模型服务；真实 Agent 结果待明确批准后再跑。OP-3 mock harness 不替代此真实评测。
+
+`tests.test_op3_frozen_eval` 覆盖固定哈希清单和 `--execute` 显式闸门。宿主复跑命令：`.\.venv\Scripts\python.exe scripts\evaluate_op2_frozen.py --execute`。
