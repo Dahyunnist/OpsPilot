@@ -51,6 +51,8 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 2026-11-13 宿主矩阵首次运行：正常基线通过；12 个故障案例均未通过完整验收，尽管 HTTP/部署检查通过。报告见 [首次失败矩阵](../../reports/op1-host-matrix-039e015c-failed.json)。主要缺口是 Jaeger 查询未等待异步导出，且案例窗口回看 2 秒会混入前一案例发布记录。已将窗口起点改为注入前即时刻，并增加当前订单 trace 最多 10 秒轮询。此次执行环境无法连接宿主 Docker Desktop，因此修复后的矩阵尚未复跑；不得视为通过。
 
+后续宿主复跑 4/12 案例通过，8/12 失败。报告现保存 `query_scope`、`raw_matches`；此次发现轮询在任一 trace 出现时提前结束，未等齐场景要求的子 span。现在轮询直到所有 `must_observe` 日志/trace 信号出现或 10 秒上限，并在每案保存去敏窗口日志与 span 摘要。修复仍待用户宿主复跑确认。
+
 矩阵在每个故障窗口内用 gateway `127.0.0.1:18080/deployments` 取 orders 发布记录，用 orders `127.0.0.1:18081/logs` 取日志；二者共享同一实际 UTC `start/end` 窗口。`bad_release` 最多轮询日志 10 秒，等待下游 DNS 错误记录落盘。`18081` 是 orders 服务，`/deployments` 只由 gateway 提供，访问 `18081/deployments` 会得到 404。结果保留部署记录及版本是否匹配。正常基线要求 HTTP 200 和 v1 发布记录；`bad_release` 接受 gateway 的 502/504 上游失败状态，并要求 v2 发布记录及 inventory-v2 DNS 故障日志。
 
 用户宿主回传中 gateway HTTP 504、orders `inventory-v2` DNS 失败和 BrokenPipe，与配置故障一致；BrokenPipe 可能是 gateway 超时后下游才结束请求的次生现象。旧 gateway 对 orders 等待上限为 3 秒，可能早于下游 DNS 错误完成。现在上限改为 10 秒；orders 在 inventory 请求失败时也会记录脱敏后的目标 hostname 和错误原因。启动流程先做有界 readiness；目的是让下游失败先返回，避免过早断开连接。该解释基于源码和用户日志，修复效果仍需宿主复跑确认。故意错误的 `inventory-v2` 仍保留为 bad_release 注入。

@@ -87,20 +87,27 @@ try {
             }
             $end = [DateTime]::UtcNow.ToString("o")
             $to=[uri]::EscapeDataString($end)
-            $ordersLogs=Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$to&limit=100"
-            $logs=@($ordersLogs.records)
-            foreach ($port in @(18082,18083)) {
-                $serviceResult=Invoke-RestMethod "http://127.0.0.1:$port/logs?start=$from&end=$to&limit=100"
-                $logs+=@($serviceResult.records)
-            }
+            $traceData=@()
+            $logs=@()
             $deployments=Invoke-RestMethod "http://127.0.0.1:18080/deployments?start=$from&end=$to&limit=100"
             $deploymentRecords=@($deployments.records)
-            $traceData=@()
+            $traceSignals=@($case.must_observe | Where-Object { $_ -in @("payment_latency", "postgres_slow_query", "orders_latency", "inventory_duration") })
+            $logSignals=@($case.must_observe | Where-Object { $_ -notin @("payment_latency", "postgres_slow_query", "orders_latency", "inventory_duration") })
             for ($traceAttempt=0; $traceAttempt -le 10; $traceAttempt++) {
+                $end=[DateTime]::UtcNow.ToString("o")
+                $to=[uri]::EscapeDataString($end)
+                $logs=@()
+                foreach ($port in @(18081,18082,18083)) {
+                    $serviceResult=Invoke-RestMethod "http://127.0.0.1:$port/logs?start=$from&end=$to&limit=100"
+                    $logs+=@($serviceResult.records)
+                }
                 $traces=Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=1000"
                 $traceData=@($traces.data)
-                $windowSpans=@(Get-WindowSpans $traceData $start ([DateTime]::UtcNow.ToString("o")) $id)
-                if ($windowSpans.Count -gt 0 -or $traceAttempt -eq 10) { break }
+                $windowSpans=@(Get-WindowSpans $traceData $start $end $id)
+                $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
+                $missingTraceSignals=@($signals | Where-Object { $_.name -in $traceSignals -and -not $_.observed })
+                $missingLogSignals=@($signals | Where-Object { $_.name -in $logSignals -and -not $_.observed })
+                if (($missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0) -or $traceAttempt -eq 10) { break }
                 Start-Sleep -Seconds 1
             }
         } catch { $message=$_.Exception.Message }
@@ -116,7 +123,9 @@ try {
         $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
         $missingSignals=@($signals | Where-Object { -not $_.observed } | ForEach-Object { $_.name })
         $scenarioPassed=Test-MatrixScenarioPass @{ExpectedStatusObserved=$expectedStatusObserved;VersionObserved=$versionObserved;DnsObserved=$dnsObserved;Logs=$logs;TraceSpans=$windowSpans;SignalResults=$signals}
-        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
+        $safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,error_reason,dependency_host,status,attempt,remaining,path)
+        $safeSpans=@($windowSpans | Select-Object service,trace_id,span_id,operation,start,duration,status,order_id,attributes)
+        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;window_log_records=$safeLogs;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;window_trace_spans=$safeSpans;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
       }
     }
 } finally {
