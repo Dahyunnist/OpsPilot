@@ -194,6 +194,14 @@ class ActionSafetyTests(unittest.TestCase):
                 ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual(self.ledger.read_bytes(), corrupted)
 
+    def test_valid_json_with_invalid_event_shape_fails_closed(self) -> None:
+        corrupted = b'null\n'
+        self.ledger.write_bytes(corrupted)
+        with self.assertRaisesRegex(ActionRejected, "action_ledger_unreadable"):
+            execute_dry_run(self.approval(), key=self.key, environment="test",
+                ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
+        self.assertEqual(corrupted, self.ledger.read_bytes())
+
     def test_simulator_has_no_network_or_process_execution_dependency(self) -> None:
         source = Path(__file__).resolve().parents[1] / "opspilot" / "action_safety.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))

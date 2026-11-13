@@ -236,6 +236,9 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
                 events = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
             except (OSError, json.JSONDecodeError):
                 raise ActionRejected("action_ledger_unreadable")
+            if any(not isinstance(event, dict) or not isinstance(event.get("event_type"), str)
+                    for event in events):
+                raise ActionRejected("action_ledger_unreadable")
             if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == approval["nonce"] for event in events):
                 _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
                     "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
