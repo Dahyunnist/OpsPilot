@@ -7,7 +7,10 @@ import unittest
 from unittest.mock import patch
 
 from opspilot.model_client import ChatModel
-from scripts.evaluate_s15_mock_ablation import ROOT, STRATEGIES, _candidate_predictions, evaluate
+from opspilot.run_manifest import validate_op_run_artifact
+from scripts.evaluate_s15_mock_ablation import (
+    ROOT, STRATEGIES, _candidate_predictions, build_s15_op_manifest, evaluate,
+)
 
 
 class S15MockAblationTests(unittest.TestCase):
@@ -62,6 +65,22 @@ class S15MockAblationTests(unittest.TestCase):
         self.assertIn("false_certainty", result["metric_definitions"])
         self.assertEqual(set(result["cases"]["rules"][0]["truth"].keys()) & {"active_causes"}, {"active_causes"})
         self.assertNotIn("active_causes", result["cases"]["rules"][0]["prediction"])
+
+    def test_actual_mock_evaluation_flows_into_valid_shared_manifest(self):
+        with patch.object(ChatModel, "complete", side_effect=AssertionError("model calls forbidden")):
+            result = evaluate()
+        manifest = build_s15_op_manifest(
+            result, started_at="2026-11-13T01:00:00+00:00", ended_at="2026-11-13T01:01:00+00:00",
+            run_id="synthetic-run-01", trace_id="synthetic-trace-01", git_sha="a" * 40,
+        )
+        self.assertEqual([], validate_op_run_artifact({"op_run_manifest": manifest}, is_new_run=True))
+        self.assertEqual(result["benchmark"]["manifest"]["benchmark_id"], manifest["dataset_id"])
+        self.assertEqual(result["benchmark"]["data_sha256"], manifest["dataset_sha256"])
+        self.assertEqual(result["benchmark"]["labels_sha256"], manifest["truth_sha256"])
+        self.assertEqual(result["deterministic_result_sha256"], manifest["result_fingerprint_sha256"])
+        self.assertEqual(result["parameters"], manifest["parameters"])
+        self.assertEqual("none", manifest["model_id"])
+        self.assertEqual(0.0, manifest["cost_usd_estimate"])
 
     def test_unknown_fault_target_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "known strategy"):

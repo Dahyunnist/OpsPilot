@@ -50,6 +50,12 @@ digests must be null because those artifacts do not apply; never invent hashes.
 For model-backed runs, model identity is required and those three digests must
 be valid SHA-256 values. Unknown model identity is rejected.
 
+S15's `build_s15_op_manifest` maps the evaluator's actual frozen dataset,
+labels, evaluator hash, result fingerprint, and parameters into this schema.
+The offline regression executes the synthetic evaluator with model calls set
+to fail, builds an artifact in memory, and checks each mapped value. It writes
+no report.
+
 Writers must build and validate this object before writing a new report. Use
 `validate_op_run_artifact(report, is_new_run=True)` at the write boundary. For
 historical reports, `is_new_run=False` accepts reports without this field and
