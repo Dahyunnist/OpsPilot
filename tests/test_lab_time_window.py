@@ -40,8 +40,8 @@ def test_logs_and_deployments_share_service_window_filter_and_documented_ports()
     assert 'in_window(row["timestamp"], start, end)' in logs_route
     assert 'in_window(row.get("timestamp", ""), start, end)' in deployments_route
     compose = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")
-    gateway = compose.split("  gateway:", 1)[1].split("  orders:", 1)[0]
-    orders = compose.split("  orders:", 1)[1].split("  inventory:", 1)[0]
+    gateway = compose.split("\n  gateway:\n    build:", 1)[1].split("\n  orders:\n    build:", 1)[0]
+    orders = compose.split("\n  orders:\n    build:", 1)[1].split("\n  inventory:\n    build:", 1)[0]
     assert '"127.0.0.1:18080:8080"' in gateway
     assert '"127.0.0.1:18081:8080"' in orders
     dockerfile = (ROOT / "lab" / "service" / "Dockerfile").read_text(encoding="utf-8")

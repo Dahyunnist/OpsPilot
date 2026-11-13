@@ -95,6 +95,21 @@ class LabManifestTests(unittest.TestCase):
         self.assertEqual(["invalid_release_configuration"], release["root_causes"])
         self.assertIn("inventory_connection_errors", release["must_observe"])
 
+    def test_orders_waits_for_inventory_service_and_bad_release_remains_explicit_fault(self) -> None:
+        compose = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")
+        orders = compose.split("\n  orders:\n    build:", 1)[1].split("\n  inventory:\n    build:", 1)[0]
+        inventory = compose.split("\n  inventory:\n    build:", 1)[1].split("\n  payment:\n    build:", 1)[0]
+        self.assertIn("inventory:\n        condition: service_started", orders)
+        self.assertIn("networks: [backend]", orders)
+        self.assertIn("networks: [backend]", inventory)
+        self.assertIn("INVENTORY_URL: ${LAB_INVENTORY_URL:-http://inventory:8080}", orders)
+
+        runner = (ROOT / "lab" / "run-scenario.ps1").read_text(encoding="utf-8-sig")
+        self.assertIn('if ($Scenario -eq "bad_release") { "http://inventory-v2:8080" } else { "http://inventory:8080" }', runner)
+        self.assertLess(runner.index('$env:LAB_INVENTORY_URL ='), runner.index('docker compose @composeFiles up'))
+        self.assertIn('SERVICE_VERSION: ${LAB_ORDERS_VERSION:-v1}', orders)
+        self.assertIn('$env:LAB_ORDERS_VERSION = if ($Scenario -eq "bad_release") { "v2" } else { "v1" }', runner)
+
     def test_smoke_expected_http_outcomes_cover_all_twelve_faults(self) -> None:
         truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
         smoke = (ROOT / "lab" / "smoke.ps1").read_text(encoding="utf-8-sig")

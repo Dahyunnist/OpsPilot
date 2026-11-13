@@ -47,4 +47,6 @@ $timestamp -ge $startUtc -and $timestamp -lt $endUtc
 
 `18081/logs` 是 orders 日志端点；`18080/deployments` 是 gateway 部署端点。`18081/deployments` 不存在。两个查询必须用同一次运行的 UTC 半开区间 `[start,end)`；确认 `start <= deployment timestamp < end`。服务端和离线校验共用此边界，恰好等于 end 的记录不属于窗口。用户回传的 `inventory-v2` DNS 错误能证明请求失败线索；后来用五分钟窗口查到 0 条 deployment，是因为该窗不含 `13:47:23Z`，不能据此判定部署证据缺失。
 
+正常网络目标是 Compose 服务名 `inventory:8080`；orders 等待 inventory 容器启动，且两者加入同一 `backend` network。`bad_release` 通过 orders v2 的错误发布配置，明确改指不存在的 `inventory-v2:8080`；此 DNS 失败是合成故障本身，不能用给 `inventory-v2` 添加别名来“修复”，否则故障不再可注入。先运行 `-Scenario none` 应得到 checkout HTTP 200 和 orders/v1 部署记录；再运行本卡应观测 orders/v2 部署与 `inventory-v2` 失败日志，checkout 可返回 502 或 504。需要 Docker live 验证时，由用户在本机执行本卡命令并回传结果；代理不触碰现有容器。
+
 若记录为空，先核对该次场景记录中的 UTC 时间窗、服务、版本和 host 端口，再判断数据是否缺失。不得把不同运行的时间戳拼成一条证据链。

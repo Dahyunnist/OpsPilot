@@ -50,6 +50,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      inventory:
+        condition: service_started
     networks: [backend]
     ports:
       - "127.0.0.1:18081:8080"
