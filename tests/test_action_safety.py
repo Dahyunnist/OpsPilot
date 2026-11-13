@@ -47,6 +47,15 @@ class ActionSafetyTests(unittest.TestCase):
             execute_dry_run(result, key=self.key, environment="test", ledger_path=self.ledger,
                 now=NOW + timedelta(seconds=121))
         self.assertEqual(self.events()[0]["reason"], "approval_expired_or_invalid")
+        self.assertEqual(0, self.events()[0]["external_system_calls"])
+
+    def test_approval_expires_at_exact_boundary(self) -> None:
+        approval = self.approval(ttl_seconds=120)
+        with self.assertRaisesRegex(ActionRejected, "approval_expired_or_invalid"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                now=NOW + timedelta(seconds=120))
+        self.assertEqual("approval_expired_or_invalid", self.events()[0]["reason"])
+        self.assertEqual(0, self.events()[0]["external_system_calls"])
 
     def test_replayed_approval_is_rejected_after_first_consumption(self) -> None:
         approval = self.approval()
@@ -54,6 +63,7 @@ class ActionSafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(ActionRejected, "approval_replayed"):
             execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, now=NOW)
         self.assertEqual([event["event_type"] for event in self.events()], ["dry_run_completed", "dry_run_rejected"])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
     def test_wrong_environment_and_tampered_signature_are_rejected(self) -> None:
         approval = self.approval()
@@ -95,6 +105,24 @@ class ActionSafetyTests(unittest.TestCase):
             self.approval(role="operator")
         with self.assertRaisesRegex(ActionRejected, "environment_not_allowed"):
             self.approval(environment="production")
+
+    def test_role_action_matrix_rejects_every_out_of_scope_pair(self) -> None:
+        pairs = (("operator", "rollback_release"), ("release_manager", "restart_service"),
+                 ("agent", "restart_service"), ("agent", "rollback_release"))
+        for role, action in pairs:
+            with self.subTest(role=role, action=action), self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
+                self.approval(role=role, action=action)
+
+    def test_signed_approval_cannot_claim_production_or_agent_scope(self) -> None:
+        approval = self.approval()
+        with self.assertRaisesRegex(ActionRejected, "environment_mismatch"):
+            execute_dry_run(dict(approval, environment="production"), key=self.key, environment="test",
+                ledger_path=self.ledger, now=NOW)
+        with self.assertRaisesRegex(ActionRejected, "role_scope_denied"):
+            execute_dry_run(dict(approval, role="agent"), key=self.key, environment="test",
+                ledger_path=self.ledger, now=NOW)
+        self.assertEqual(["environment_mismatch", "role_scope_denied"], [event["reason"] for event in self.events()])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
     def test_key_creation_is_stable_and_exactly_32_bytes(self) -> None:
         key_path = self.root / "private" / "approval.key"
