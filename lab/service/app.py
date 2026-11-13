@@ -308,7 +308,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise redis.ConnectionError("synthetic redis unavailable")
             redis.Redis(host=REDIS_HOST, socket_connect_timeout=1).set(f"order:{order_id}", "accepted", ex=3600)
         try:
-            inventory = json_call(f"{INVENTORY_URL}/reserve", {"order_id": order_id}, timeout=0.5)
+            inventory_timeout = 1.5 if FAULT == "inventory_latency" else 0.5
+            inventory = json_call(f"{INVENTORY_URL}/reserve", {"order_id": order_id}, timeout=inventory_timeout)
             if not inventory.get("reserved", False):
                 emit("warning", "inventory reservation rejected", order_id=order_id,
                     remaining=inventory.get("remaining"))

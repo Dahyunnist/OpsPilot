@@ -133,6 +133,13 @@ class LabManifestTests(unittest.TestCase):
         matrix = (ROOT / "lab" / "run-host-matrix.ps1").read_text(encoding="utf-8-sig")
         self.assertIn("$windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0", matrix)
 
+    def test_inventory_latency_fault_timeout_allows_injected_delay_to_complete(self) -> None:
+        source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
+        self.assertIn('inventory_timeout = 1.5 if FAULT == "inventory_latency" else 0.5', source)
+        self.assertIn('time.sleep(0.8)', source)
+        contract = (ROOT / "lab" / "op1-matrix-contract.ps1").read_text(encoding="utf-8")
+        self.assertIn('"orders_latency" { $matches = @($spans | Where-Object { $_.service -eq "orders" -and $_.operation -match "orders" -and $_.duration -ge 750000 }) }', contract)
+
 
 if __name__ == "__main__":
     unittest.main()
