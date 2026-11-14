@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "audit_type": "op4_approval_safety_evidence_matrix",
+  "execution_scope": "local synthetic fixtures only",
+  "targeted_tests": {
+    "command": ".\\.venv\\Scripts\\python.exe -m unittest tests.test_action_safety tests.test_action_cli -q",
+    "passed": 24,
+    "failed": 0
+  },
+  "coverage": [
+    {
+      "boundary": "expired and exact-expiry approval",
+      "implementation": "opspilot/action_safety.py:execute_dry_run",
+      "tests": [
+        "tests/test_action_safety.py::test_expired_approval_is_rejected_and_audited",
+        "tests/test_action_safety.py::test_approval_expires_at_exact_boundary"
+      ],
+      "result": "covered"
+    },
+    {
+      "boundary": "duplicate request / replay",
+      "implementation": "opspilot/action_safety.py:nonce ledger check",
+      "tests": [
+        "tests/test_action_safety.py::test_replayed_approval_is_rejected_after_first_consumption"
+      ],
+      "result": "covered"
+    },
+    {
+      "boundary": "wrong environment, target, signature, identity and role",
+      "implementation": "opspilot/action_safety.py:issue_approval and execute_dry_run; opspilot/identity.py",
+      "tests": [
+        "tests/test_action_safety.py::test_wrong_environment_and_tampered_signature_are_rejected",
+        "tests/test_action_safety.py::test_role_action_matrix_rejects_every_out_of_scope_pair",
+        "tests/test_action_cli.py::test_request_cannot_supply_release_manager_role",
+        "tests/test_action_cli.py::test_local_resolver_rejects_actor_without_required_role"
+      ],
+      "result": "covered"
+    },
+    {
+      "boundary": "explicit human confirmation and dry-run switch",
+      "implementation": "opspilot/action_cli.py:main",
+      "tests": [
+        "tests/test_action_cli.py::test_wrong_human_confirmation_creates_no_approval",
+        "tests/test_action_cli.py::test_dry_run_requires_explicit_simulation_flag"
+      ],
+      "result": "covered"
+    },
+    {
+      "boundary": "rollback / verification state",
+      "implementation": "opspilot/action_safety.py:execute_dry_run",
+      "tests": [
+        "tests/test_action_safety.py::test_signed_rollback_is_test_only_and_reports_simulated_verification",
+        "tests/test_action_cli.py::test_confirmed_cli_ticket_reaches_simulated_review_only"
+      ],
+      "result": "covered; simulation only"
+    },
+    {
+      "boundary": "ledger fail-closed and manifest",
+      "implementation": "opspilot/action_safety.py:ledger validation and run manifest",
+      "tests": [
+        "tests/test_action_safety.py::test_corrupt_ledger_fails_closed_without_overwriting_it",
+        "tests/test_action_safety.py::test_valid_json_with_invalid_event_shape_fails_closed",
+        "tests/test_action_safety.py::test_signed_rollback_is_test_only_and_reports_simulated_verification"
+      ],
+      "result": "covered"
+    }
+  ],
+  "uncovered_boundaries": [
+    "cross-process atomic nonce consumption; current lock is process-local and ledger is sequential-use only",
+    "real IdP authentication and independent human review",
+    "real rollback, health verification, production system behavior"
+  ],
+  "external_system_calls": 0,
+  "production_validation": false,
+  "existing_learning_report_accuracy": "consistent: docs/learning/stage-OP4.md states no IdP, separate human-review state, real rollback, or production proof"
+}

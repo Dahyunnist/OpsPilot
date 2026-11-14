@@ -64,3 +64,8 @@ OP-4 复核确认过期/恰好到期、重复消费、错误环境、越权角�
 ## 2026-11-14 Dry-run 共享清单
 
 成功的本地 dry-run 审计事件现附带经 validator 校验的共享 `op_run_manifest`，绑定调查报告摘要、结果指纹、代码 revision 与 run/event ID；`truth_sha256` 明确为空且 artifact type 为 `action_dry_run`。本地回归覆盖该清单字段。没有读取或改写用户的 action ledger，也没有执行真实动作；外部调用和写入仍为 0。
+
+
+## 2026-11-14 安全证据矩阵
+
+定向 OP-4 回归 24 项通过。审批过期/恰好到期、重放、错环境、越权、人工确认、dry-run 必填、回滚模拟与账本损坏均有合成测试。证据映射及未覆盖边界见 [审批安全证据矩阵](../../reports/op4-approval-safety-evidence-matrix-2026-11-14.json)。既有学习记录准确：跨进程原子消费、真实 IdP/人工复核、真实回滚及生产验证仍未覆盖。
