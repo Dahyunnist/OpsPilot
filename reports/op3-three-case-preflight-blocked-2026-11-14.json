@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "benchmark": "op2_model_paired_subset",
+  "evaluation_status": "blocked_before_inference",
+  "run_attempted": true,
+  "provider_readonly_preflight": {
+    "status": "failed",
+    "error_type": "URLError",
+    "reason": "Windows network permission denied before inference request"
+  },
+  "frozen_dataset": {
+    "manifest": "reports/op2-model-subset.json",
+    "manifest_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "case_count": 3,
+    "cases": [
+      {
+        "sample_key": "normal_slow_sql",
+        "snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+        "manifest_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+        "hash_match": true
+      },
+      {
+        "sample_key": "missing_pool_evidence",
+        "snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+        "manifest_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+        "hash_match": true
+      },
+      {
+        "sample_key": "contradictory_payment",
+        "snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+        "manifest_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+        "hash_match": true
+      }
+    ]
+  },
+  "budget": {
+    "total_cap_usd": 0.6,
+    "prior_cumulative_peak_usd": 0.49932072,
+    "reserved_worst_case_usd": 0.0230226,
+    "remaining_before_reserve_usd": 0.10067928,
+    "within_total_cap": true
+  },
+  "execution": {
+    "inference_requests_started": false,
+    "model_calls": 0,
+    "incremental_cost_usd": 0.0,
+    "evaluation_report_created": false,
+    "request_checkpoint_created": false
+  },
+  "failed_cases": [],
+  "interpretation": "No inference result exists. Preserve prior partial report and predictions unchanged. No network retry or alternate route."
+}

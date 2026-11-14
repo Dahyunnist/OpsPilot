@@ -45,6 +45,10 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _total_cap_covers(prior_spent_usd: float, reserve_usd: Decimal, cap_usd: Decimal) -> bool:
+    return Decimal(str(prior_spent_usd)) + reserve_usd <= cap_usd
+
+
 def _request_key(case_id: str, system_sha256: str, user_sha256: str, token_budget: int) -> tuple[str, str, str, int]:
     return case_id, system_sha256, user_sha256, token_budget
 
@@ -256,7 +260,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     prior_eval_spend = _prior_subset_spend(ledger)
     reserved_case_cap = sum((Decimal(str(case["spec"]["worst_case_usd"])) for case in cases), Decimal("0"))
     budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap))
-    if budget.prior_spent_usd + reserved_case_cap > Decimal(str(CAP_USD)):
+    if not _total_cap_covers(budget.prior_spent_usd, reserved_case_cap, Decimal(str(CAP_USD))):
         raise ValueError("remaining project cap cannot cover the complete selected-case peak reserve; no inference calls sent")
 
     prior_report_paths = _prior_reports(output)

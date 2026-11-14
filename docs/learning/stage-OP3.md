@@ -96,3 +96,8 @@ Runner 现要求并读取冻结清单内全部哈希校验案例；成本仍按�
 ## 2026-11-14 预算停止状态复核
 
 固定报告原样保留。补充审计将 BudgetLimitExceeded 标为 blocked，将所有 PriorPaidResponseUnavailable 样本标为 not_run；不计作 Agent 质量失败。三样本、失败类型、账本汇总及三份冻结 SHA 可复现；子集余量仍为 .0020319，低于三案预留 .0230226。见 reports/op3-budget-stop-status-audit-2026-11-14.json。
+
+
+## 2026-11-14 三案评测预检阻断
+
+三案 SHA 与冻结清单匹配；账本总峰值 $0.49932072，总 cap 余 $0.10067928，三案预留 $0.0230226 在总 cap 内。修复预算 float/Decimal 比较后，供应商只读预检遭 Windows 网络权限错误（URLError）；推理未启动、调用 0、费用 0。未重试网络或改走其他路径。阻断记录见 reports/op3-three-case-preflight-blocked-2026-11-14.json。

@@ -9,11 +9,17 @@ from unittest.mock import patch
 from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
-    _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
+    _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
     _validate_prompt_payload, FROZEN_LIVE_CASES, main, run)
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
+    def test_total_cap_check_accepts_float_ledger_and_decimal_reserve(self):
+        from decimal import Decimal
+
+        self.assertTrue(_total_cap_covers(0.49932072, Decimal("0.0230226"), Decimal("0.60")))
+        self.assertFalse(_total_cap_covers(0.49932072, Decimal("0.12"), Decimal("0.60")))
+
     def test_preregistered_snapshots_and_shared_strategy_order_are_frozen(self):
         spec, cases = _load_frozen_cases()
         self.assertEqual(["rules", "single", "multi", "auto"], list(STRATEGIES))
