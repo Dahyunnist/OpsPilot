@@ -59,3 +59,8 @@ OP-4 安全负例仍用固定 synthetic report、Principal 与内存 HMAC key。
 | OP-4 | `opspilot/action_safety.py`、`opspilot/action_cli.py`、`opspilot/identity.py`；`tests/test_action_safety.py`、`tests/test_action_cli.py` | 默认只读；精确人工确认、限时签名、一次消费；过期、重放、错环境、越权及调查变更均拒绝；rollback 只模拟，外部写入 0。真实系统未执行。 |
 
 OP-4 复核确认过期/恰好到期、重复消费、错误环境、越权角色、dry-run/模拟回滚和审批后报告变更均有回归。新增 CLI 负例锁定 dry-run 必须显式传 `--dry-run`；未发现需改动作执行逻辑的缺口。
+
+
+## 2026-11-14 Dry-run 共享清单
+
+成功的本地 dry-run 审计事件现附带经 validator 校验的共享 `op_run_manifest`，绑定调查报告摘要、结果指纹、代码 revision 与 run/event ID；`truth_sha256` 明确为空且 artifact type 为 `action_dry_run`。本地回归覆盖该清单字段。没有读取或改写用户的 action ledger，也没有执行真实动作；外部调用和写入仍为 0。

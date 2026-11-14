@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 import re
+import subprocess
+from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = 1
@@ -39,6 +41,11 @@ OP_RUN_MANIFEST_REQUIRED = {
 }
 OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split", "model_id", "gold_source", "trace_id")
 OP_RUN_HASH_FIELDS = ("dataset_sha256", "truth_sha256", "evaluator_sha256", "result_fingerprint_sha256", "prompt_sha", "tool_schema_sha", "runtime_digest", "scorer_sha")
+
+
+def current_git_sha(repo_root: Path) -> str:
+    """Return the source revision for a new local run record."""
+    return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo_root, text=True).strip()
 
 
 def validate_run_manifest(value: Any) -> list[str]:
@@ -325,9 +332,15 @@ def validate_op_run_manifest(value: Any) -> list[str]:
     for field in OP_RUN_IDENTITY_FIELDS:
         if field in value and (not isinstance(value[field], str) or not value[field].strip()):
             errors.append(f"{field} must be a non-empty string")
+    parameters = value.get("parameters")
+    no_truth_artifact = (value.get("model_id") == "none"
+        and value.get("gold_source") == "not_applicable"
+        and isinstance(parameters, dict)
+        and parameters.get("artifact_type") in {"evidence_snapshot", "action_dry_run"})
     for field in OP_RUN_HASH_FIELDS:
         optional_mock_hash = value.get("model_id") == "none" and field in {"prompt_sha", "tool_schema_sha", "runtime_digest"} and value.get(field) is None
-        if field in value and not optional_mock_hash and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
+        optional_no_truth = field == "truth_sha256" and no_truth_artifact and value.get(field) is None
+        if field in value and not optional_mock_hash and not optional_no_truth and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
             errors.append(f"{field} must be 64 hexadecimal characters")
     if "git_sha" in value and (not isinstance(value["git_sha"], str) or not SHA.fullmatch(value["git_sha"])):
         errors.append("git_sha must be 40 hexadecimal characters")
@@ -344,8 +357,10 @@ def validate_op_run_manifest(value: Any) -> list[str]:
     if "parameters" in value and (not isinstance(value["parameters"], dict) or not value["parameters"]):
         errors.append("parameters must be a non-empty object")
     if value.get("model_id") == "none":
-        if value.get("gold_source") != "independent":
-            errors.append("model_id none requires gold_source independent")
+        if value.get("gold_source") != "independent" and not no_truth_artifact:
+            errors.append("model_id none requires independent gold or an explicit non-evaluative artifact type")
+        if value.get("gold_source") == "not_applicable" and not no_truth_artifact:
+            errors.append("not_applicable gold requires an evidence_snapshot or action_dry_run artifact type")
         for field in ("prompt_sha", "tool_schema_sha", "runtime_digest"):
             if field in value and value[field] is not None:
                 errors.append(f"model_id none requires {field} null")
@@ -368,7 +383,7 @@ def validate_op_run_manifest(value: Any) -> list[str]:
 
 
 def build_op_run_manifest(*, project: str, run_id: str, evaluation_id: str, dataset_id: str,
-                          dataset_sha256: str, truth_sha256: str, split: str,
+                          dataset_sha256: str, truth_sha256: str | None, split: str,
                           evaluator_sha256: str, result_fingerprint_sha256: str,
                           git_sha: str, model_id: str, prompt_sha: str | None, tool_schema_sha: str | None,
                           runtime_digest: str | None, max_steps: int, max_tokens: int | None,

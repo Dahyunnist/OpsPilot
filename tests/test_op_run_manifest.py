@@ -98,7 +98,18 @@ class OpRunManifestTests(unittest.TestCase):
         self.assertIn("model_id none requires tool_schema_sha null", errors)
         self.assertIn("model_id none requires runtime_digest null", errors)
         self.assertIn("model_id none requires zero estimated cost", errors)
-        self.assertIn("model_id none requires gold_source independent", errors)
+        self.assertIn("model_id none requires independent gold or an explicit non-evaluative artifact type", errors)
+
+    def test_non_evaluative_snapshot_and_dry_run_can_declare_truth_not_applicable(self):
+        for artifact_type in ("evidence_snapshot", "action_dry_run"):
+            with self.subTest(artifact_type=artifact_type):
+                manifest = valid_op_manifest()
+                manifest.update(evaluation_id=f"op-{artifact_type}", truth_sha256=None,
+                    gold_source="not_applicable", parameters={"artifact_type": artifact_type})
+                self.assertEqual([], validate_op_run_manifest(manifest))
+        invalid = valid_op_manifest()
+        invalid.update(truth_sha256=None, gold_source="not_applicable", parameters={"artifact_type": "other"})
+        self.assertTrue(any("truth_sha256" in error for error in validate_op_run_manifest(invalid)))
 
     def test_new_report_requires_manifest_but_historical_report_stays_readable(self):
         self.assertIn("new OP run requires op_run_manifest",

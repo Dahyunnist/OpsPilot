@@ -23,3 +23,4 @@ reports/*raw*.jsonl
 reports/*ledger*.jsonl
 reports/*.requests.jsonl
 .tmp/op1-host-matrix-host.json
+.tmp/op1-host-matrix-host.run-manifest.json

@@ -2,6 +2,11 @@ param([string]$OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "repor
 
 $ErrorActionPreference = "Continue"
 . (Join-Path $PSScriptRoot "op1-matrix-contract.ps1")
+. (Join-Path $PSScriptRoot "op1-run-manifest.ps1")
+$runStartedAt = [DateTime]::UtcNow.ToString("o")
+$runId = "opspilot-matrix-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+$traceId = [guid]::NewGuid().ToString("N")
+$manifestPath = [IO.Path]::ChangeExtension($OutputFile, ".run-manifest.json")
 $compose = Join-Path $PSScriptRoot "compose.yaml"
 $truth = Get-Content (Join-Path $PSScriptRoot "scenarios/truth.json") -Raw | ConvertFrom-Json
 $composeFiles = @("-f", $compose)
@@ -42,17 +47,21 @@ try {
     $preflightError = $_.Exception.Message
 }
 if ($preflightError) {
-    $preflightResult = @{project=$null;preflight=@{passed=$false;error=$preflightError;lab_started=$false};normal_control=$null;cases=@();cleanup=@{stop_exit=$null;stop_error=$null;remaining_error=$null;empty=$true};volume_deletion=$false}
+    $endedAt = [DateTime]::UtcNow.ToString("o")
+    $preflightResult = @{project=$null;run_id=$runId;trace_id=$traceId;started_at=$runStartedAt;ended_at=$endedAt;status="failed";run_manifest_path=$manifestPath;preflight=@{passed=$false;error=$preflightError;lab_started=$false};normal_control=$null;cases=@();cleanup=@{stop_exit=$null;stop_error=$null;remaining_error=$null;empty=$true};volume_deletion=$false}
     $parent = Split-Path -Parent $OutputFile
     New-Item -ItemType Directory -Force $parent | Out-Null
     $preflightResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 $OutputFile
+    Write-Op1RunManifestArtifact -ReportPath $OutputFile -ManifestPath $manifestPath -RunId $runId -TraceId $traceId `
+        -StartedAt $runStartedAt -EndedAt $endedAt -Phase "preflight" -Status "failed" `
+        -CaseCount 0 -PassedCount 0 -FailedCount 0 -PreflightPassed $false -LabStarted $false -CleanupEmpty $true
     exit 1
 }
 $priorProject = $env:COMPOSE_PROJECT_NAME
 $priorLabFault = $env:LAB_FAULT
 $priorOrdersVersion = $env:LAB_ORDERS_VERSION
 $priorInventoryUrl = $env:LAB_INVENTORY_URL
-$env:COMPOSE_PROJECT_NAME = "opspilot-matrix-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+$env:COMPOSE_PROJECT_NAME = $runId
 $projectName = $env:COMPOSE_PROJECT_NAME
 $runScript = Join-Path $PSScriptRoot "run-scenario.ps1"
 $rows = @()
@@ -155,8 +164,16 @@ try {
     if ($null -eq $priorOrdersVersion) { Remove-Item Env:LAB_ORDERS_VERSION -ErrorAction SilentlyContinue } else { $env:LAB_ORDERS_VERSION=$priorOrdersVersion }
     if ($null -eq $priorInventoryUrl) { Remove-Item Env:LAB_INVENTORY_URL -ErrorAction SilentlyContinue } else { $env:LAB_INVENTORY_URL=$priorInventoryUrl }
 }
-$result=@{project=$projectName;preflight=@{passed=$true;error=$null;lab_started=$true};normal_control=$normalControl;cases=$rows;cleanup=@{stop_exit=$stopCode;stop_error=$stopError;remaining_error=$remainingError;empty=$clean};volume_deletion=$false}
+$matrixPassed = ($clean -and $normalControl.passed -and @($rows | Where-Object { -not $_.scenario_passed }).Count -eq 0)
+$runStatus = if ($matrixPassed) { "completed" } else { "failed" }
+$endedAt = [DateTime]::UtcNow.ToString("o")
+$passedCount = @($rows | Where-Object { $_.scenario_passed }).Count
+$result=@{project=$projectName;run_id=$runId;trace_id=$traceId;started_at=$runStartedAt;ended_at=$endedAt;status=$runStatus;run_manifest_path=$manifestPath;preflight=@{passed=$true;error=$null;lab_started=$true};normal_control=$normalControl;cases=$rows;cleanup=@{stop_exit=$stopCode;stop_error=$stopError;remaining_error=$remainingError;empty=$clean};volume_deletion=$false}
 $parent=Split-Path -Parent $OutputFile; New-Item -ItemType Directory -Force $parent|Out-Null
 $result|ConvertTo-Json -Depth 10|Set-Content -Encoding utf8 $OutputFile
-if (-not $clean -or -not $normalControl.passed -or @($rows | Where-Object { -not $_.scenario_passed }).Count -gt 0) { exit 1 }
+Write-Op1RunManifestArtifact -ReportPath $OutputFile -ManifestPath $manifestPath -RunId $runId -TraceId $traceId `
+    -StartedAt $runStartedAt -EndedAt $endedAt -Phase "full_matrix" -Status $runStatus `
+    -CaseCount $rows.Count -PassedCount $passedCount -FailedCount ($rows.Count - $passedCount) `
+    -PreflightPassed $true -LabStarted $true -CleanupEmpty $clean
+if (-not $matrixPassed) { exit 1 }
 

@@ -25,3 +25,8 @@ trace adapter 要求 Jaeger span 同时带非空 `traceID` 与 `spanID`。缺任
 定向回归 `tests/test_live_telemetry.py tests/test_op2_telemetry_robustness.py tests/test_op2_source_status.py`：`41 passed, 8 subtests passed`。不启动 Docker/模型。宿主 Docker 验证先运行 `.\lab\smoke.ps1`，再运行 `.\scripts\run_mcp.ps1 -Source live`，并对同一 UTC 窗口调用 `investigate_live_incident`；本轮未跑宿主流程。
 
 MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 MCP 服务对真实 Docker 遥测执行工具调用。生产连接仍不支持。
+
+
+## 2026-11-14 证据快照清单
+
+`capture_lab_snapshot.py` 对成功快照及缺少来源的失败快照均写入共享 `op_run_manifest` 侧车记录，绑定原始快照哈希、来源数量、共同查询窗口和 Git revision；快照不适用真值，模型调用与费用均为 0。现有 OP-2 子集的三份冻结快照已在本地核对哈希、来源结构及查询窗口，逐例与汇总清单见 [快照清单审计](../../reports/op2-snapshot-manifest-audit-2026-11-14.json)。原始采集时间未记录，审计不评价外部授权，也没有调用模型。

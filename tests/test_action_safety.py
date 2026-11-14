@@ -9,6 +9,7 @@ import unittest
 
 from opspilot.action_safety import ActionRejected, approval_binding, execute_dry_run, issue_approval, load_or_create_key
 from opspilot.identity import Principal
+from opspilot.run_manifest import validate_op_run_artifact
 
 
 NOW = datetime(2026, 10, 23, 10, 0, tzinfo=timezone.utc)
@@ -56,6 +57,9 @@ class ActionSafetyTests(unittest.TestCase):
     def test_signed_rollback_is_test_only_and_reports_simulated_verification(self) -> None:
         result = execute_dry_run(self.approval(), key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual(result["status"], "simulated_execution")
+        self.assertEqual([], validate_op_run_artifact(result, is_new_run=True))
+        self.assertEqual("action_dry_run", result["op_run_manifest"]["parameters"]["artifact_type"])
+        self.assertIsNone(result["op_run_manifest"]["truth_sha256"])
         self.assertEqual(result["external_system_calls"], 0)
         self.assertEqual(result["external_writes"], 0)
         self.assertEqual(result["simulation"]["rollback"], "simulated")

@@ -36,6 +36,8 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert re.search(r"(?:^|\s)-v(?:\s|$)", script) is None and "docker volume rm" not in script
     assert "$preflightResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 $OutputFile" in script
     assert "lab_started=$false" in script and "lab_started=$true" in script
+    assert "Write-Op1RunManifestArtifact" in script and "op1-run-manifest.ps1" in script
+    assert "$manifestPath = [IO.Path]::ChangeExtension($OutputFile, \".run-manifest.json\")" in script
     for field in ("project", "preflight", "normal_control", "cases", "cleanup", "volume_deletion"):
         assert f"{field}=" in script
     assert "model_client" not in script.lower() and "chatmodel" not in script.lower()

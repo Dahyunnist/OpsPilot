@@ -13,6 +13,10 @@ from typing import Any
 import uuid
 
 from .identity import Principal
+from .run_manifest import build_op_run_manifest, current_git_sha, validate_op_run_artifact
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 ALLOWED_ENVIRONMENT = "test"
@@ -230,6 +234,22 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
         "rollback_verification": {"status": "simulated_pass", "checks": checks,
             "real_environment_verified": False},
     }
+    source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    result["op_run_manifest"] = build_op_run_manifest(
+        project="OpsPilot", run_id=result["event_id"], evaluation_id="op4_remediation_dry_run",
+        dataset_id="op4_investigation_report", dataset_sha256=_digest(investigation_report),
+        truth_sha256=None, split="test_dry_run", evaluator_sha256=source_sha,
+        result_fingerprint_sha256=_digest(result), git_sha=current_git_sha(ROOT), model_id="none",
+        prompt_sha=None, tool_schema_sha=None, runtime_digest=None, max_steps=1, max_tokens=None,
+        scorer_sha=source_sha, gold_source="not_applicable", cost_usd_estimate=0.0,
+        trace_id=result["event_id"], started_at=_iso(instant), ended_at=_iso(instant),
+        parameters={"artifact_type": "action_dry_run", "case_id": approval["case_id"],
+            "action": approval["action"], "target": approval["target"], "environment": environment,
+            "approval_id": approval["approval_id"], "external_system_calls": 0, "external_writes": 0,
+            "real_environment_verified": False}, status="completed")
+    manifest_errors = validate_op_run_artifact(result, is_new_run=True)
+    if manifest_errors:
+        raise ValueError("refusing to record unmanifested OP-4 dry run: " + "; ".join(manifest_errors))
     with _LEDGER_LOCK:
         if ledger_path.exists():
             try:

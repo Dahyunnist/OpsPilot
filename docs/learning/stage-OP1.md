@@ -96,3 +96,8 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 ## 2026-11-14 用户宿主 bad_release 冒烟
 
 用户回报从 Windows PowerShell 执行 `run-scenario.ps1 -Scenario bad_release`：构建/启动成功，唯一 checkout 返回 HTTP 502；窗口内 orders `/logs` 返回 v2 启动记录，gateway `/deployments` 返回 orders/v2 记录。随后 `stop.ps1` 成功移除 10 个容器和 1 个网络，`compose ps --all` 为空。该证据只是一轮 bad_release 宿主冒烟，不是 `run-host-matrix.ps1` 全矩阵，也不证明 Agent 根因诊断正确。回报未附原始 JSON、准确 start/end、order ID 或记录 ID，因此只能登记“用户报告窗口内有返回”，无法独立核验日志与部署记录是否精确关联同一订单/窗口。记录见 `reports/op1-bad-release-host-smoke-2026-11-14.json`；无需重复运行该场景。
+
+
+## 2026-11-14 共享运行清单覆盖
+
+宿主矩阵 runner 现在为预检失败和完整矩阵结束结果都写同名 `.run-manifest.json` 侧车记录；完整结果包含通过或失败状态、报告/真值/评估器/评分器哈希及 Git revision。离线 PowerShell 合约测试验证了预检失败、矩阵失败和矩阵通过三种路径的报告绑定。现有五份矩阵报告的本地哈希与结果覆盖审计见 [矩阵清单覆盖](../../reports/op1-host-matrix-manifest-coverage-2026-11-14.json)。这些离线检查不启动 Docker，也不能替代用户宿主重新运行全矩阵；最近用户提供的 bad_release 仍只是一例冒烟。
