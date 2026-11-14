@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-14",
+  "evaluation_status": "partial",
+  "source_report": "reports/op3-op2-subset-evaluation-fixed-2026-11-14.json",
+  "request_checkpoint": "reports\\op3-op2-subset-evaluation-fixed-2026-11-14.requests.jsonl",
+  "new_model_calls": 0,
+  "incremental_cost_usd": 0.0,
+  "offline_rescored_from_report_predictions": true,
+  "raw_provider_responses_available_in_checkpoint": 6,
+  "cases": [
+    {
+      "case_id": "normal_slow_sql",
+      "approved_snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "manifest_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "snapshot_matches_manifest": true,
+      "checkpoint_records": 8,
+      "checkpoint_response_bodies": 4,
+      "scores": {
+        "rules": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": true,
+          "top1_correct": null,
+          "top3_recall": 1.0
+        },
+        "single": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": true,
+          "top1_correct": null,
+          "top3_recall": 1.0
+        },
+        "multi": {
+          "evaluation_status": "failed",
+          "prediction_present": true,
+          "failures": 1,
+          "exact_root_set": null,
+          "top1_correct": null,
+          "top3_recall": null
+        },
+        "auto": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": true,
+          "top1_correct": null,
+          "top3_recall": 1.0
+        }
+      }
+    },
+    {
+      "case_id": "missing_pool_evidence",
+      "approved_snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "manifest_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "snapshot_matches_manifest": true,
+      "checkpoint_records": 4,
+      "checkpoint_response_bodies": 1,
+      "scores": {
+        "rules": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": false,
+          "top1_correct": null,
+          "top3_recall": 0.0
+        },
+        "single": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": false,
+          "top1_correct": null,
+          "top3_recall": 0.0
+        },
+        "multi": {
+          "evaluation_status": "failed",
+          "prediction_present": true,
+          "failures": 4,
+          "exact_root_set": null,
+          "top1_correct": null,
+          "top3_recall": null
+        },
+        "auto": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": false,
+          "top1_correct": null,
+          "top3_recall": 0.0
+        }
+      }
+    },
+    {
+      "case_id": "contradictory_payment",
+      "approved_snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "manifest_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "snapshot_matches_manifest": true,
+      "checkpoint_records": 2,
+      "checkpoint_response_bodies": 1,
+      "scores": {
+        "rules": {
+          "evaluation_status": "complete",
+          "prediction_present": true,
+          "failures": 0,
+          "exact_root_set": false,
+          "top1_correct": null,
+          "top3_recall": 0.0
+        },
+        "single": {
+          "evaluation_status": "failed",
+          "prediction_present": true,
+          "failures": 1,
+          "exact_root_set": null,
+          "top1_correct": null,
+          "top3_recall": null
+        },
+        "multi": {
+          "evaluation_status": "failed",
+          "prediction_present": true,
+          "failures": 3,
+          "exact_root_set": null,
+          "top1_correct": null,
+          "top3_recall": null
+        },
+        "auto": {
+          "evaluation_status": "failed",
+          "prediction_present": true,
+          "failures": 1,
+          "exact_root_set": null,
+          "top1_correct": null,
+          "top3_recall": null
+        }
+      }
+    }
+  ]
+}

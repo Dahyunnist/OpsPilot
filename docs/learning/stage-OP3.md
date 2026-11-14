@@ -70,6 +70,10 @@ Full test collection found 219 tests. `pytest -vv -s` stalled first at `tests/te
 
 User host `bad_release` JSONL confirms nine services started, healthy baseline passed, orders/v2 deployment observed, checkout HTTP 502, logs returned, then cleanup removed 10 containers and one network; `compose ps --all` was empty. Source is user-provided host summary. It lacks exact window, order ID, record contents/counts and detailed failure cause, so this does not establish an Agent root-cause hit. Evidence: `reports/op1-bad-release-host-result-2026-11-13.json`.
 
+## 2026-11-14 OP-3 冻结响应复用与离线重评分
+
+仅检查三份登记快照及其受控请求 checkpoint；三份快照 SHA 均逐字匹配 manifest。checkpoint 含 6 份成功 provider 响应正文（normal_slow_sql 4、missing_pool_evidence 1、contradictory_payment 1）。其余记录是 pending/失败状态，不作为可用响应，也未重发。使用 fixed 报告已保存的策略预测、冻结 truth 和快照派生 gold 证据运行 `score_case` 离线重评分，审计结果见 `reports/op3-op2-response-audit-2026-11-14.json`。本轮模型调用 0、新增费用 `$0`；OP-3 仍为 partial，只有 complete 项计为有效评分，失败策略不纳入命中比较。未访问 `.tmp/`。
+
 ## 2026-11-14 授权重试预检
 
 逐字节重算三份快照 SHA-256，均匹配冻结清单：slow SQL `d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8`；missing pool `d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7`；contradictory payment `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813`。官方余额接口报告可用，模型目录可达且 Flash 可用；账户余额不写入仓库。项目账本峰值 `$0.49932072 / $0.60`，项目余量 `$0.10067928`；但注册子集累计已用 `$0.02099070 / $0.02302260`，只余 `$0.00203190`，低于完整三例最坏预留 `$0.02302260`。本次未发送推理请求，新增调用 0、费用 0。冻结预登记文件不改；正式比较仍以 fixed 报告的 partial 结果为准，不推断策略提升。

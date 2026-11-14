@@ -61,6 +61,18 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             for reason in strategy["failures"]))
         self.assertEqual(0, report["strategy_summary"]["multi"]["model_calls"])
 
+    def test_frozen_response_audit_reuses_only_approved_hashes_at_zero_cost(self):
+        root = Path(__file__).resolve().parents[1]
+        audit = json.loads((root / "reports" /
+            "op3-op2-response-audit-2026-11-14.json").read_text(encoding="utf-8"))
+        _spec, cases = _load_frozen_cases()
+        self.assertEqual(0, audit["new_model_calls"])
+        self.assertEqual(0.0, audit["incremental_cost_usd"])
+        self.assertEqual(6, audit["raw_provider_responses_available_in_checkpoint"])
+        self.assertTrue(all(item["snapshot_matches_manifest"] for item in audit["cases"]))
+        self.assertEqual({case["spec"]["id"] for case in cases},
+            {item["case_id"] for item in audit["cases"]})
+
     def test_prior_successful_payloads_are_loaded_by_stable_request_key(self):
         with TemporaryDirectory() as temp:
             report_path = Path(temp) / "prior.json"
