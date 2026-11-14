@@ -101,3 +101,8 @@ Runner 现要求并读取冻结清单内全部哈希校验案例；成本仍按�
 ## 2026-11-14 三案评测预检阻断
 
 三案 SHA 与冻结清单匹配；账本总峰值 `$0.49932072`，总 cap 余 `$0.10067928`，三案预留 `$0.0230226` 在总 cap 内。修复预算 float/Decimal 比较后，供应商只读预检遭 Windows 网络权限错误（URLError）；推理未启动、调用 0、费用 0。未重试网络或改走其他路径。阻断记录见 reports/op3-three-case-preflight-blocked-2026-11-14.json。
+
+
+## 2026-11-14 三案评测授权范围
+
+Runner 的报告 uthorization_scope 改为 	hree_case_frozen_subset，run summary 与最终报告共用同一常量并由合约测试锁定。当前三案 hashes 匹配；账本峰值 $0.49932072，总 cap 余 $0.10067928，三案预留 $0.0230226 在上限内。待用户获准网络环境执行，当前不调用 API。

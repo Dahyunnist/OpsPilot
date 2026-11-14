@@ -10,10 +10,17 @@ from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
-    _validate_prompt_payload, FROZEN_LIVE_CASES, main, run)
+    _validate_prompt_payload, AUTHORIZATION_SCOPE, FROZEN_LIVE_CASES, main, run)
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
+    def test_run_reports_three_case_authorization_scope_consistently(self):
+        import inspect
+        from scripts.evaluate_op2_frozen import run as evaluation_run
+
+        self.assertEqual("three_case_frozen_subset", AUTHORIZATION_SCOPE)
+        self.assertEqual(2, inspect.getsource(evaluation_run).count("AUTHORIZATION_SCOPE"))
+
     def test_total_cap_check_accepts_float_ledger_and_decimal_reserve(self):
         from decimal import Decimal
 

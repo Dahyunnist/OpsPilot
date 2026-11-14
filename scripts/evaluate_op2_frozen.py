@@ -25,6 +25,7 @@ from scripts.evaluate_lab import _gold_evidence  # noqa: E402
 
 SUBSET_PATH = ROOT / "reports" / "op2-model-subset.json"
 CAP_USD = 0.60
+AUTHORIZATION_SCOPE = "three_case_frozen_subset"
 FIXED_WORST_CASE_USD = 0.0230226
 FIXED_COMPLETION_LIMIT = 512
 DEFAULT_OUTPUT = ROOT / "reports" / "op3-op2-subset-evaluation.json"
@@ -391,7 +392,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
         "provider_rate_estimate_usd": round(sum(item["provider_rate_estimate_usd"]
             for case in scored_cases for item in case["strategies"].values()), 8),
         "cumulative_peak_estimate_usd": cumulative, "limit_usd": CAP_USD,
-        "authorization_scope": "two_case_live_subset",
+        "authorization_scope": AUTHORIZATION_SCOPE,
         "authorized_case_reserve_usd": float(reserved_case_cap),
         "prior_op3_subset_spend_usd": float(prior_eval_spend),
         "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
@@ -415,7 +416,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
                 "gold_evidence_ids": sorted(_gold_evidence(case["spec"]["root_causes"], case["sources"]))}
                 for case in cases]},
         "budget": {"cap_usd": CAP_USD, "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
-            "authorization_scope": "two_case_live_subset",
+            "authorization_scope": AUTHORIZATION_SCOPE,
             "preregistered_worst_case_usd": float(reserved_case_cap),
             "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
             "remaining_after_full_reserve_usd": round(CAP_USD - budget.prior_spent_usd - float(reserved_case_cap), 8),
