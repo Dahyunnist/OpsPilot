@@ -18,7 +18,9 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "opspilot-matrix-" in script and "Set-Content -Encoding utf8 $OutputFile" in script
     assert "docker info --format" in script and "docker image inspect $image" in script
     assert "Missing local image; refusing network pull" in script and "config --format json" in script
+    assert "foreach ($port in @(18080, 18081, 18082, 18083, 14318, 16686, 19090))" in script
     assert script.index("docker info --format") < script.index("$runScript -Scenario none")
+    assert script.index("docker image inspect $image") < script.index('$env:COMPOSE_PROJECT_NAME = "opspilot-matrix-')
     assert "Get-NetTCPConnection -State Listen -LocalPort $port" in script
     assert "finally" in script and "stop.ps1" in script and "ps --all" in script
     assert "$env:COMPOSE_PROJECT_NAME = \"opspilot-matrix-" in script
@@ -32,10 +34,17 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "pgdata:/var/lib/postgresql/data" in compose and "redisdata:/data" in compose
     assert "volume_deletion=$false" in script
     assert re.search(r"(?:^|\s)-v(?:\s|$)", script) is None and "docker volume rm" not in script
+    assert "$preflightResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 $OutputFile" in script
+    assert "lab_started=$false" in script and "lab_started=$true" in script
+    for field in ("project", "preflight", "normal_control", "cases", "cleanup", "volume_deletion"):
+        assert f"{field}=" in script
+    assert "model_client" not in script.lower() and "chatmodel" not in script.lower()
     assert truth.count('"case_id"') == 12
     stage_doc = (ROOT / "docs/learning/stage-OP1.md").read_text(encoding="utf-8")
     assert "当前列出十二个" in stage_doc
     assert "run-host-matrix.ps1" in stage_doc and "docker compose up --build" in stage_doc
+    assert r".\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json" in stage_doc
+    assert ".tmp/op1-host-matrix-host.json" in (ROOT / ".gitignore").read_text(encoding="utf-8")
     assert "本执行环境无法连接 Docker Desktop Linux Engine" in stage_doc
     assert '18081/logs?start=$from&end=$settledTo' in script
     assert '18080/deployments?start=$from&end=$to' in script

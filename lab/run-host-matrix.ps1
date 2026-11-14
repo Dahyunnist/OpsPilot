@@ -6,35 +6,47 @@ $compose = Join-Path $PSScriptRoot "compose.yaml"
 $truth = Get-Content (Join-Path $PSScriptRoot "scenarios/truth.json") -Raw | ConvertFrom-Json
 $composeFiles = @("-f", $compose)
 if ($env:OPSPILOT_COMPOSE_OVERRIDE) { $composeFiles += @("-f", $env:OPSPILOT_COMPOSE_OVERRIDE) }
-$null = Get-Command docker -ErrorAction Stop
-docker info --format "{{.ServerVersion}}" | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Docker daemon unavailable; matrix was not started." }
-foreach ($port in @(18080, 18081, 18082, 18083, 14318, 16686, 19090)) {
-    if (Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue) {
-        throw "Required lab port $port is already in use; matrix was not started."
+$preflightError = $null
+try {
+    $null = Get-Command docker -ErrorAction Stop
+    docker info --format "{{.ServerVersion}}" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Docker daemon unavailable; matrix was not started." }
+    foreach ($port in @(18080, 18081, 18082, 18083, 14318, 16686, 19090)) {
+        if (Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue) {
+            throw "Required lab port $port is already in use; matrix was not started."
+        }
     }
-}
-$configOutput = docker compose @composeFiles config --format json
-if ($LASTEXITCODE -ne 0) { throw "Compose configuration invalid; matrix was not started." }
-$composeConfig = $configOutput | ConvertFrom-Json
-$requiredImages = @()
-foreach ($serviceProperty in $composeConfig.services.PSObject.Properties) {
-    $serviceConfig = $serviceProperty.Value
-    if ($serviceConfig.image) { $requiredImages += $serviceConfig.image }
-    if ($serviceConfig.build) {
-        $build = $serviceConfig.build
-        $dockerfile = if ($build.dockerfile) { $build.dockerfile } else { "Dockerfile" }
-        if (-not [IO.Path]::IsPathRooted($dockerfile)) { $dockerfile = Join-Path $build.context $dockerfile }
-        if (-not (Test-Path -LiteralPath $dockerfile)) { throw "Compose build Dockerfile is missing: $dockerfile" }
-        $baseImages = Select-String -Path $dockerfile -Pattern '^\s*FROM\s+(?:--platform=\S+\s+)?([^\s]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value }
-        if (-not $baseImages) { throw "Could not identify local base images in: $dockerfile" }
-        if ($baseImages | Where-Object { $_ -match '^\$' }) { throw "Dynamic Dockerfile base image cannot be preflighted: $dockerfile" }
-        $requiredImages += $baseImages
+    $configOutput = docker compose @composeFiles config --format json
+    if ($LASTEXITCODE -ne 0) { throw "Compose configuration invalid; matrix was not started." }
+    $composeConfig = $configOutput | ConvertFrom-Json
+    $requiredImages = @()
+    foreach ($serviceProperty in $composeConfig.services.PSObject.Properties) {
+        $serviceConfig = $serviceProperty.Value
+        if ($serviceConfig.image) { $requiredImages += $serviceConfig.image }
+        if ($serviceConfig.build) {
+            $build = $serviceConfig.build
+            $dockerfile = if ($build.dockerfile) { $build.dockerfile } else { "Dockerfile" }
+            if (-not [IO.Path]::IsPathRooted($dockerfile)) { $dockerfile = Join-Path $build.context $dockerfile }
+            if (-not (Test-Path -LiteralPath $dockerfile)) { throw "Compose build Dockerfile is missing: $dockerfile" }
+            $baseImages = Select-String -Path $dockerfile -Pattern '^\s*FROM\s+(?:--platform=\S+\s+)?([^\s]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value }
+            if (-not $baseImages) { throw "Could not identify local base images in: $dockerfile" }
+            if ($baseImages | Where-Object { $_ -match '^\$' }) { throw "Dynamic Dockerfile base image cannot be preflighted: $dockerfile" }
+            $requiredImages += $baseImages
+        }
     }
+    foreach ($image in ($requiredImages | Sort-Object -Unique)) {
+        docker image inspect $image --format "{{.Id}}" | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Missing local image; refusing network pull: $image" }
+    }
+} catch {
+    $preflightError = $_.Exception.Message
 }
-foreach ($image in ($requiredImages | Sort-Object -Unique)) {
-    docker image inspect $image --format "{{.Id}}" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Missing local image; refusing network pull: $image" }
+if ($preflightError) {
+    $preflightResult = @{project=$null;preflight=@{passed=$false;error=$preflightError;lab_started=$false};normal_control=$null;cases=@();cleanup=@{stop_exit=$null;stop_error=$null;remaining_error=$null;empty=$true};volume_deletion=$false}
+    $parent = Split-Path -Parent $OutputFile
+    New-Item -ItemType Directory -Force $parent | Out-Null
+    $preflightResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 $OutputFile
+    exit 1
 }
 $priorProject = $env:COMPOSE_PROJECT_NAME
 $priorLabFault = $env:LAB_FAULT
@@ -143,7 +155,7 @@ try {
     if ($null -eq $priorOrdersVersion) { Remove-Item Env:LAB_ORDERS_VERSION -ErrorAction SilentlyContinue } else { $env:LAB_ORDERS_VERSION=$priorOrdersVersion }
     if ($null -eq $priorInventoryUrl) { Remove-Item Env:LAB_INVENTORY_URL -ErrorAction SilentlyContinue } else { $env:LAB_INVENTORY_URL=$priorInventoryUrl }
 }
-$result=@{project=$projectName;normal_control=$normalControl;cases=$rows;cleanup=@{stop_exit=$stopCode;stop_error=$stopError;remaining_error=$remainingError;empty=$clean};volume_deletion=$false}
+$result=@{project=$projectName;preflight=@{passed=$true;error=$null;lab_started=$true};normal_control=$normalControl;cases=$rows;cleanup=@{stop_exit=$stopCode;stop_error=$stopError;remaining_error=$remainingError;empty=$clean};volume_deletion=$false}
 $parent=Split-Path -Parent $OutputFile; New-Item -ItemType Directory -Force $parent|Out-Null
 $result|ConvertTo-Json -Depth 10|Set-Content -Encoding utf8 $OutputFile
 if (-not $clean -or -not $normalControl.passed -or @($rows | Where-Object { -not $_.scenario_passed }).Count -gt 0) { exit 1 }

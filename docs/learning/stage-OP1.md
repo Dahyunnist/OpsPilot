@@ -37,7 +37,13 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 后续完成 [slow SQL 实时垂直切片](OP1-vertical-slice.md)：采集健康基线，注入 `pg_sleep(1.5)`，用 metrics/trace 交叉定位，再关闭注入并验证恢复。该切片冻结了时间线、oracle、独立问题和四路指标；不扩增合成 JSON。
 
-十二场景宿主矩阵由 `lab/run-host-matrix.ps1` 执行，结果写入 `reports/op1-host-matrix.json`；需用户本机启动 Docker Desktop 后运行。启动前检查 Engine、七个映射端口、Compose 配置及渲染后的全部服务镜像和 Dockerfile 基础镜像；缺镜像时拒绝运行、不自动拉取。该 runner 先跑 `none` 正常基线，再跑十二个故障；每次启动后最多等待 60 秒，检查 gateway/orders/inventory health 与 payment ready，再发 checkout，排除服务启动竞争。runner 会逐场调用 `run-scenario.ps1`，后者执行 `docker compose up --build`；预检通过后仍需预留矩阵构建与运行时间。矩阵采用独立 Compose project，结束时停止该 project，不删除数据卷。每个案例检查 HTTP 状态、orders 版本，并逐项核对 `must_observe` 的日志与 trace 信号。
+十二场景宿主矩阵由 `lab/run-host-matrix.ps1` 执行。用户宿主在仓库根目录运行最短命令：
+
+```powershell
+.\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json
+```
+
+需启动 Docker Desktop Linux Engine；七个映射 TCP 端口 `18080, 18081, 18082, 18083, 14318, 16686, 19090` 必须空闲；Compose 配置中的服务镜像及 Dockerfile `FROM` 基础镜像必须已在本地，缺镜像会拒绝运行且不自动拉取。需预留约 15–25 分钟，主要取决于本地镜像构建和各服务启动；每次启动最多等待 60 秒。结果写入 Git 忽略的 `.tmp/op1-host-matrix-host.json`；预检失败会写结构化错误结果并以非零码退出，场景失败也会保留逐案证据和 cleanup 状态。矩阵先跑 `none` 正常基线，再跑十二个故障；runner 逐场调用 `run-scenario.ps1`，通过 `docker compose up --build` 构建并启动服务。每次启动后检查 gateway/orders/inventory health 与 payment ready，再触发 checkout。每个案例检查 HTTP 状态、orders 版本，并逐项核对 `must_observe` 的日志与 trace 信号。矩阵使用唯一 Compose project；结束时停止该 project 的容器和网络，不删除其 PostgreSQL/Redis 数据卷，也不触及其他 project。脚本只调用本地服务与 Docker Compose，不调用付费模型。
 
 针对用户回传的 bad_release 504/无部署记录，`run-scenario.ps1 -Scenario bad_release` 现先用正常 `inventory` DNS 启动实验台并发起唯一 ID checkout，要求 200；失败则在注入前停止。随后清理基线订单、重建 orders 为 v2 并注入唯一错误主机 `inventory-v2`。smoke 的 DNS 日志轮询现在同时匹配场景订单 ID，避免邻近请求的日志误作证据。新增进程内服务端 E2E 回归调用真实 Handler：正常 checkout 成功，bad_release 返回 502/504 类失败，orders `/logs` 回出对应 order ID/错误 hostname，gateway `/deployments` 回出时间窗内 orders/v2 记录。此合成回归不替代 Docker Compose DNS 实测。
 
@@ -46,7 +52,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 宿主验收只需运行一条命令：
 
 ```powershell
-.\lab\run-host-matrix.ps1
+.\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json
 ```
 
 离线静态与 PowerShell 合约测试不代表宿主矩阵已运行。
