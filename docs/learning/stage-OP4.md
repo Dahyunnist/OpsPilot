@@ -53,9 +53,9 @@ OP-4 安全负例仍用固定 synthetic report、Principal 与内存 HMAC key。
 
 | 阶段 | 实现与验证 | 证据与状态 |
 | --- | --- | --- |
-| OP-1 | `lab/compose.yaml`、`lab/run-scenario.ps1`、`lab/service/app.py`；`tests/test_lab_time_window.py`、`tests/test_op1_host_matrix.py` | bad_release 用户宿主摘要：orders/v2 deployment、checkout 502、logs 可读；cleanup 移除 10 容器/1 网络，Compose 列表为空。未记录原始记录内容、窗口及 order ID；不声称 Agent 命中根因。 |
+| OP-1 | `lab/compose.yaml`、`lab/run-scenario.ps1`、`lab/service/app.py`；`tests/test_lab_time_window.py`、`tests/test_op1_host_matrix.py` | bad_release 用户宿主摘要：合成 Docker Compose 环境、checkout 502；同一 UTC `[start,end)` 窗口内 orders logs 与 orders/v2 deployment 均返回；logs 用 18081、deployments 用 18080；cleanup 移除 10 容器/1 网络，Compose 列表为空。绝对窗口、请求 ID、原始记录未提供；不声称生产证据或 Agent 命中根因。 |
 | OP-2 | `opspilot/telemetry.py`、`opspilot/live_investigation.py`；OP-2 source status/robustness tests | 冻结合成快照和确定性反例覆盖缺 trace、采样缺失、时钟偏移、矛盾发布、引用归因；不代表生产覆盖。 |
-| OP-3 | `opspilot/strategy_eval.py`、`scripts/evaluate_op2_frozen.py`；`tests/test_strategy_eval.py`、`tests/test_op3_frozen_eval.py` | fixed 报告 `reports/op3-op2-subset-evaluation-fixed-2026-11-14.json` 为 partial：3 个合成样本，rules 3/3、single 2/3、always-multi 0/3、auto 2/3。本次新增费用 0；失败含 `BudgetLimitExceeded` 与 `PriorPaidResponseUnavailable`。不得声称策略提升。 |
+| OP-3 | `opspilot/strategy_eval.py`、`scripts/evaluate_op2_frozen.py`；`tests/test_strategy_eval.py`、`tests/test_op3_frozen_eval.py` | fixed 离线报告仍为 partial，新增费用 0；真实三案 r2 报告也为 partial，multi 0/3，9 次请求，run peak `$0.01434911`、累计 `$0.51366983/$0.60`。报告 SHA、冻结数据 manifest SHA 与费用账本经独立审计核对。失败保留；不得声称策略提升。 |
 | OP-4 | `opspilot/action_safety.py`、`opspilot/action_cli.py`、`opspilot/identity.py`；`tests/test_action_safety.py`、`tests/test_action_cli.py` | 默认只读；精确人工确认、限时签名、一次消费；过期、重放、错环境、越权及调查变更均拒绝；rollback 只模拟，外部写入 0。真实系统未执行。 |
 
 OP-4 复核确认过期/恰好到期、重复消费、错误环境、越权角色、dry-run/模拟回滚和审批后报告变更均有回归。新增 CLI 负例锁定 dry-run 必须显式传 `--dry-run`；未发现需改动作执行逻辑的缺口。
