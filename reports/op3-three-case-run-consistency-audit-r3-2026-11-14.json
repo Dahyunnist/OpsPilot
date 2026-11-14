@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "audit_type": "op3_three_case_r3_report_ledger_manifest_consistency",
+  "run_id": "43acffa8-f254-40dd-99d3-cc23913de9cd",
+  "evaluation_status": "partial",
+  "source_report": {
+    "path": "reports/op3-op2-three-case-run-2026-11-14-r3.json",
+    "sha256": "90e82bb9e34fdc1585686cd81415bb18d015dadbfe9f00ab2d755957c978a02e"
+  },
+  "frozen_dataset_manifest": {
+    "path": "reports/op2-model-subset.json",
+    "sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "matches_source_report": true,
+    "case_count": 3
+  },
+  "preflight": {
+    "balance_available": true,
+    "positive_balance_currency": "CNY",
+    "flash_family_listed": true,
+    "configured_legacy_alias_listed": false,
+    "inference_requests_before_evaluation": 0
+  },
+  "ledger_consistency": {
+    "path": "reports/api-cost-ledger.jsonl",
+    "new_provider_attempts": 4,
+    "unique_request_keys": 4,
+    "completed_request_count": 3,
+    "failed_request_worst_case_count": 1,
+    "sum_request_peak_usd": 0.00752314,
+    "run_summary_peak_usd": 0.00752314,
+    "source_report_actual_run_peak_usd": 0.00752314,
+    "run_peak_fields_match": true,
+    "run_summary_cumulative_peak_usd": 0.52119297,
+    "source_report_cumulative_peak_usd": 0.52119297,
+    "cumulative_peak_fields_match": true
+  },
+  "strategy_outcome": {
+    "rules_completed_cases": 3,
+    "single_completed_cases": 3,
+    "multi_completed_cases": 0,
+    "multi_failed_cases": 3,
+    "auto_completed_cases": 3,
+    "failures_preserved": true
+  },
+  "checkpoint_boundary": {
+    "responses_reused": 13,
+    "reused_checkpoint_prompt_token_fields_redacted": 15,
+    "multi_value_errors_preserved": true
+  },
+  "gold_sent": false,
+  "real_logs_or_data_sent": false,
+  "model_rerun_after_report": false
+}

@@ -113,3 +113,5 @@ Runner 的报告 uthorization_scope 改为 	hree_case_frozen_subset，run summa
 Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3、multi 0/3、auto 2/3；失败均保留。整数 token 字符串可解析；损坏 usage 按请求峰值预留记账并标记 `unknown_estimated`，策略原始错误仍保留。第三案 BudgetLimitExceeded 是 per-run reserve 不足时的安全停止；不得写成成功。报告 SHA、冻结数据 manifest SHA、9 条唯一请求账目及 `$0.01434911` run peak 一致；策略费率汇总与保守峰值相差 `$0.00000001`，不改原始报告。审计见 `reports/op3-three-case-run-failure-audit-2026-11-14.json` 和 `reports/op3-three-case-run-consistency-audit-2026-11-14.json`。35 项 OP-3 离线定向测试通过；未重跑模型。
 
 为显式获准的新评测增加 `request_scope=run_id`：同一 scope 的恢复请求仍按请求键拒绝重复计费；独立获准的新 run 可重新请求。启动前优先载入所有 `op3-op2-*.requests.jsonl` 完成响应；待确认/失败项 fail closed。scope 只记在费用账本，不进入供应商提示。
+
+获准的 r3 运行使用同三份 SHA 固定合成快照，余额与 Flash 系列预检通过。复用 13 份先前响应，新增 4 次 provider 请求（3 成功、1 最坏预留失败）；本次峰值 `$0.00752314`，累计 `$0.52119297/$0.60`。rules、single、auto 各 3/3 完成；multi 0/3，三案 ValueError 全部保留。复用 checkpoint 的 token 字段已被脱敏为 `[REDACTED]`，因此不能继续解析 usage；该失败不能解释为模型质量。报告为 `reports/op3-op2-three-case-run-2026-11-14-r3.json`，费用与 manifest 核对见 `reports/op3-three-case-run-consistency-audit-r3-2026-11-14.json`。未在 r3 后再次调用模型。

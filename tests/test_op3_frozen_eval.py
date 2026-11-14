@@ -85,6 +85,39 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             self.assertEqual(2, len(rows))
             self.assertNotEqual(rows[0]["request_key"], rows[1]["request_key"])
 
+    def test_authorized_r3_report_cost_and_manifest_audit_match_committed_ledger(self):
+        import hashlib
+
+        root = Path(__file__).resolve().parents[1]
+        report_path = root / "reports" / "op3-op2-three-case-run-2026-11-14-r3.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        audit = json.loads((root / "reports" /
+            "op3-three-case-run-consistency-audit-r3-2026-11-14.json").read_text(encoding="utf-8"))
+        manifest_path = root / "reports" / "op2-model-subset.json"
+        ledger = [json.loads(line) for line in (root / "reports" / "api-cost-ledger.jsonl").read_text(
+            encoding="utf-8").splitlines() if line.strip()]
+        rows = [row for row in ledger if row.get("run_id") == report["run_id"]]
+        requests = [row for row in rows if row.get("kind") in {
+            "completed_request", "failed_request_worst_case"}]
+        summary = next(row for row in rows if row.get("kind") == "run_summary")
+        request_peak = round(sum(row.get("peak_rate_estimate_usd", row.get("reserve_usd", 0))
+            for row in requests), 8)
+
+        self.assertEqual("partial", report["evaluation_status"])
+        self.assertEqual(0, report["strategy_summary"]["multi"]["completed_cases"])
+        self.assertEqual(3, report["strategy_summary"]["multi"]["failed_cases"])
+        self.assertEqual(audit["source_report"]["sha256"],
+            hashlib.sha256(report_path.read_bytes()).hexdigest())
+        self.assertEqual(report["frozen_dataset"]["spec_sha256"],
+            hashlib.sha256(manifest_path.read_bytes()).hexdigest())
+        self.assertEqual(4, len(requests))
+        self.assertEqual(4, len({row["request_key"] for row in requests}))
+        self.assertEqual(request_peak, summary["peak_rate_estimate_usd"])
+        self.assertEqual(request_peak, report["budget"]["actual_run_peak_usd"])
+        self.assertEqual(0.52119297, report["budget"]["cumulative_peak_usd"])
+        self.assertFalse(audit["gold_sent"])
+        self.assertFalse(audit["real_logs_or_data_sent"])
+
     def test_checkpoint_completion_append_is_idempotent_by_request_key(self):
         from scripts.evaluate_op2_frozen import _append_request_checkpoint
 
