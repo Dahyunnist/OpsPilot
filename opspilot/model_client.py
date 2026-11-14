@@ -122,4 +122,6 @@ class ChatModel:
             raise ModelError("model returned JSON that was not an object", category="response_schema",
                 code="expected_object")
         usage = result.get("usage", {})
-        return {"data": parsed, "usage": usage, "duration_ms": round((time.monotonic() - started) * 1000, 1)}
+        return {"data": parsed, "usage": usage, "duration_ms": round((time.monotonic() - started) * 1000, 1),
+            "provider_model": result.get("model"),
+            "provider_system_fingerprint": result.get("system_fingerprint")}

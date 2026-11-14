@@ -33,6 +33,10 @@ ALLOWED_SNAPSHOT_HASHES = {
     "op2-missing_pool_evidence-snapshot.json": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
     "op2-contradictory_payment-snapshot.json": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
 }
+AUTHORIZED_LIVE_CASES = {
+    "normal_slow_sql": ALLOWED_SNAPSHOT_HASHES["op2-normal_slow_sql-snapshot.json"],
+    "missing_pool_evidence": ALLOWED_SNAPSHOT_HASHES["op2-missing_pool_evidence-snapshot.json"],
+}
 
 
 class PriorPaidResponseUnavailable(RuntimeError):
@@ -72,26 +76,28 @@ def _checkpoint_path(output: Path) -> Path:
     return output.with_suffix(".requests.jsonl")
 
 
-def _load_request_checkpoints(path: Path) -> tuple[dict[tuple[str, str, str, int], dict[str, Any]], set[tuple[str, str, str, int]]]:
+def _load_request_checkpoints(path: Path | list[Path]) -> tuple[dict[tuple[str, str, str, int], dict[str, Any]], set[tuple[str, str, str, int]]]:
     """Load durable paid responses; pending entries are treated as possibly billed."""
     responses: dict[tuple[str, str, str, int], dict[str, Any]] = {}
     uncertain: set[tuple[str, str, str, int]] = set()
-    if not path.exists():
-        return responses, uncertain
-    try:
-        records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("request checkpoint is unreadable; refusing paid requests") from exc
-    for record in records:
-        key = _request_key(record["case_id"], record["system_sha256"],
-            record["user_payload_sha256"], int(record["token_budget"]))
-        status = record.get("status")
-        if status == "completed" and isinstance(record.get("response"), dict):
-            responses[key] = record["response"]
-            uncertain.discard(key)
-        elif status in {"pending", "failed_or_blocked"}:
-            responses.pop(key, None)
-            uncertain.add(key)
+    paths = [path] if isinstance(path, Path) else path
+    for checkpoint in paths:
+        if not checkpoint.exists():
+            continue
+        try:
+            records = [json.loads(line) for line in checkpoint.read_text(encoding="utf-8").splitlines() if line.strip()]
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("request checkpoint is unreadable; refusing paid requests") from exc
+        for record in records:
+            key = _request_key(record["case_id"], record["system_sha256"],
+                record["user_payload_sha256"], int(record["token_budget"]))
+            status = record.get("status")
+            if status == "completed" and isinstance(record.get("response"), dict):
+                responses[key] = record["response"]
+                uncertain.discard(key)
+            elif status in {"pending", "failed_or_blocked"}:
+                responses.pop(key, None)
+                uncertain.add(key)
     return responses, uncertain
 
 
@@ -140,7 +146,7 @@ def _json_request(url: str, api_key: str) -> dict[str, Any]:
     return payload
 
 
-def _load_frozen_cases() -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _load_frozen_cases(case_ids: set[str] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     spec_bytes = SUBSET_PATH.read_bytes()
     spec = json.loads(spec_bytes)
     registered = {Path(item["snapshot"]).name: item["sha256"] for item in spec.get("cases", [])}
@@ -148,6 +154,8 @@ def _load_frozen_cases() -> tuple[dict[str, Any], list[dict[str, Any]]]:
         raise ValueError("frozen subset file allowlist differs")
     cases = []
     for item in spec["cases"]:
+        if case_ids is not None and item["id"] not in case_ids:
+            continue
         if item["snapshot"] != f"reports/{Path(item['snapshot']).name}":
             raise ValueError(f"snapshot path is outside allowlist: {item['id']}")
         path = ROOT / item["snapshot"]
@@ -163,6 +171,8 @@ def _load_frozen_cases() -> tuple[dict[str, Any], list[dict[str, Any]]]:
             raise ValueError(f"source windows differ: {item['id']}")
         cases.append({"spec": item, "snapshot_path": path, "snapshot_sha256": digest,
             "sources": sources, "start": next(iter(starts)), "end": next(iter(ends))})
+    if case_ids is not None and {case["spec"]["id"] for case in cases} != case_ids:
+        raise ValueError("selected cases differ from the authorized frozen snapshot allowlist")
     return {**spec, "spec_sha256": hashlib.sha256(spec_bytes).hexdigest()}, cases
 
 
@@ -221,9 +231,14 @@ def _validate_prompt_payload(system: str, user: str, records_by_id: dict[str, di
         raise ValueError("empty evaluation prompt")
 
 
-def run(output: Path) -> dict[str, Any]:
+def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
+    if case_ids is None or set(case_ids) != set(AUTHORIZED_LIVE_CASES) or len(case_ids) != len(AUTHORIZED_LIVE_CASES):
+        raise ValueError("live execution requires the exact two currently authorized frozen case ids")
+    checkpoint_path = _checkpoint_path(output)
+    if checkpoint_path.exists():
+        raise FileExistsError(f"refusing to overwrite prior request checkpoint: {checkpoint_path.name}")
     load_project_env(ROOT / ".env")
     configured_model = os.getenv("LLM_MODEL", "")
     base_url = os.getenv("LLM_BASE_URL", "").rstrip("/")
@@ -233,7 +248,7 @@ def run(output: Path) -> dict[str, Any]:
     if urlsplit(base_url).scheme != "https" or urlsplit(base_url).hostname != "api.deepseek.com" or not api_key:
         raise ValueError("provider must be official DeepSeek API with configured credentials")
 
-    frozen, cases = _load_frozen_cases()
+    frozen, cases = _load_frozen_cases(set(case_ids))
     if frozen.get("model") != configured_model or frozen.get("max_completion_tokens") != FIXED_COMPLETION_LIMIT:
         raise ValueError("frozen subset model or completion cap differs")
     if tuple(frozen.get("strategies", [])) != STRATEGIES:
@@ -241,17 +256,21 @@ def run(output: Path) -> dict[str, Any]:
 
     ledger = ROOT / "reports" / "api-cost-ledger.jsonl"
     prior_eval_spend = _prior_subset_spend(ledger)
-    remaining_eval_cap = Decimal(str(FIXED_WORST_CASE_USD)) - prior_eval_spend
-    if remaining_eval_cap <= 0:
-        raise ValueError("approved frozen-subset evaluation budget is exhausted; no inference calls sent")
-    budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(remaining_eval_cap))
-    if budget.prior_spent_usd + float(remaining_eval_cap) > CAP_USD:
-        raise ValueError("remaining project cap cannot cover approved subset reserve; no inference calls sent")
+    reserved_case_cap = sum((Decimal(str(case["spec"]["worst_case_usd"])) for case in cases), Decimal("0"))
+    budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap))
+    if budget.prior_spent_usd + reserved_case_cap > Decimal(str(CAP_USD)):
+        raise ValueError("remaining project cap cannot cover the complete selected-case peak reserve; no inference calls sent")
 
     prior_report_paths = _prior_reports(output)
     prior_completed_requests, prior_request_audit = _prior_completed_requests(prior_report_paths)
-    checkpoint_path = _checkpoint_path(output)
-    checkpoint_responses, checkpoint_uncertain = _load_request_checkpoints(checkpoint_path)
+    selected_ids = set(AUTHORIZED_LIVE_CASES)
+    prior_completed_requests = {key for key in prior_completed_requests if key[0] in selected_ids}
+    prior_request_audit = [item for item in prior_request_audit if item.get("case_id") in selected_ids]
+    reusable_checkpoints = sorted(path for path in ledger.parent.glob("op3-op2-subset-evaluation*.requests.jsonl")
+        if path.resolve() != checkpoint_path.resolve())
+    checkpoint_responses, checkpoint_uncertain = _load_request_checkpoints([*reusable_checkpoints, checkpoint_path])
+    checkpoint_responses = {key: value for key, value in checkpoint_responses.items() if key[0] in selected_ids}
+    checkpoint_uncertain = {key for key in checkpoint_uncertain if key[0] in selected_ids}
 
     # Both authenticated GETs are free preflight calls. No inference request is sent here.
     balance = _json_request("https://api.deepseek.com/user/balance", api_key)
@@ -272,6 +291,7 @@ def run(output: Path) -> dict[str, Any]:
     audit_lock = threading.Lock()
     checkpoint_lock = threading.Lock()
     in_run_responses: dict[tuple[str, str, str, int], dict[str, Any]] = {}
+    provider_response_metadata: dict[tuple[str, str, str, int], dict[str, Any]] = {}
     scored_cases = []
     for case in cases:
         records_by_id = {row["record_id"]: row for result in case["sources"].values()
@@ -291,16 +311,22 @@ def run(output: Path) -> dict[str, Any]:
                 if prior_checkpoint is not None:
                     request_audit.append({"case_id": key[0], "system_sha256": key[1],
                         "user_payload_sha256": key[2], "token_budget": token_budget, "status": "reused_checkpoint"})
+                    _append_request_checkpoint(checkpoint_path, {"case_id": key[0], "system_sha256": key[1],
+                        "user_payload_sha256": key[2], "token_budget": token_budget, "run_id": budget.run_id,
+                        "status": "completed", "reused_existing_checkpoint": True,
+                        "completed_at": datetime.now(timezone.utc).isoformat(), "response": redact(prior_checkpoint)},
+                        checkpoint_lock)
                     in_run_responses[key] = prior_checkpoint
+                    provider_response_metadata[key] = {"case_id": key[0], "system_sha256": key[1],
+                        "user_payload_sha256": key[2], "provider_model": prior_checkpoint.get("provider_model"),
+                        "provider_system_fingerprint": prior_checkpoint.get("provider_system_fingerprint"),
+                        "source": "reused_existing_checkpoint"}
                     return prior_checkpoint
             audit = {"case_id": case["spec"]["id"],
                 "system_sha256": key[1], "user_payload_sha256": key[2],
                 "token_budget": token_budget, "status": "pending"}
             if key in prior_completed_requests or key in checkpoint_uncertain:
-                audit.update({"status": "prior_paid_response_unavailable", "error_type": "PriorPaidResponseUnavailable"})
-                with audit_lock:
-                    request_audit.append(audit)
-                raise PriorPaidResponseUnavailable("matching request was already paid; prior response is not cached")
+                audit["previous_paid_response_unavailable"] = True
             with audit_lock:
                 request_audit.append(audit)
 
@@ -315,21 +341,29 @@ def run(output: Path) -> dict[str, Any]:
                     response = operation(target, fixed_system, fixed_user, fixed_budget)
                 except Exception as exc:
                     _append_request_checkpoint(checkpoint_path,
-                        {**request_record, "status": "failed_or_blocked", "error_type": type(exc).__name__},
+                        {**request_record, "status": "failed_or_blocked", "failed_at": datetime.now(timezone.utc).isoformat(),
+                            "error_type": type(exc).__name__},
                         checkpoint_lock)
                     raise
                 _append_request_checkpoint(checkpoint_path,
-                    {**request_record, "status": "completed", "response": response}, checkpoint_lock)
+                    {**request_record, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat(),
+                        "response": redact(response)}, checkpoint_lock)
                 return response
 
             try:
-                result = budget.call(checkpointed_operation, instance, system, user, token_budget)
+                result = budget.call(checkpointed_operation, instance, system, user, token_budget,
+                    request_metadata={"case_id": key[0], "system_sha256": key[1],
+                        "user_payload_sha256": key[2], "token_budget": token_budget})
             except Exception as exc:
                 audit.update({"status": "failed_or_blocked", "error_type": type(exc).__name__})
                 raise
             audit["status"] = "completed"
             with audit_lock:
                 in_run_responses[key] = result
+                provider_response_metadata[key] = {"case_id": key[0], "system_sha256": key[1],
+                    "user_payload_sha256": key[2], "provider_model": result.get("provider_model"),
+                    "provider_system_fingerprint": result.get("provider_system_fingerprint"),
+                    "source": "new_provider_response"}
             return result
 
         report = evaluate_snapshot(case["spec"]["id"], case["start"], case["end"],
@@ -355,10 +389,10 @@ def run(output: Path) -> dict[str, Any]:
         "provider_rate_estimate_usd": round(sum(item["provider_rate_estimate_usd"]
             for case in scored_cases for item in case["strategies"].values()), 8),
         "cumulative_peak_estimate_usd": cumulative, "limit_usd": CAP_USD,
-        "approved_subset_cap_usd": FIXED_WORST_CASE_USD,
-        "prior_subset_spend_usd": float(prior_eval_spend),
-        "subset_run_limit_usd": float(remaining_eval_cap),
-        "cumulative_subset_peak_estimate_usd": round(float(prior_eval_spend) + actual, 8),
+        "authorization_scope": "two_case_live_subset",
+        "authorized_case_reserve_usd": float(reserved_case_cap),
+        "prior_op3_subset_spend_usd": float(prior_eval_spend),
+        "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
         "stopped_before_overrun": stopped})
 
     report = {"schema_version": 1, "benchmark": "op2_model_paired_subset",
@@ -379,20 +413,22 @@ def run(output: Path) -> dict[str, Any]:
                 "gold_evidence_ids": sorted(_gold_evidence(case["spec"]["root_causes"], case["sources"]))}
                 for case in cases]},
         "budget": {"cap_usd": CAP_USD, "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
-            "preregistered_worst_case_usd": FIXED_WORST_CASE_USD,
-            "prior_subset_spend_usd": float(prior_eval_spend),
-            "subset_run_limit_usd": float(remaining_eval_cap), "actual_run_peak_usd": actual,
+            "authorization_scope": "two_case_live_subset",
+            "preregistered_worst_case_usd": float(reserved_case_cap),
+            "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
+            "remaining_after_full_reserve_usd": round(CAP_USD - budget.prior_spent_usd - float(reserved_case_cap), 8),
+            "prior_op3_subset_spend_usd": float(prior_eval_spend), "actual_run_peak_usd": actual,
             "cumulative_peak_usd": cumulative, "remaining_usd": round(CAP_USD - cumulative, 8),
-            "cumulative_subset_peak_usd": round(float(prior_eval_spend) + actual, 8),
-            "remaining_subset_cap_usd": round(FIXED_WORST_CASE_USD - float(prior_eval_spend) - actual, 8),
             "cost_ledger": str(ledger.relative_to(ROOT))},
         "code_sha256": {name: _sha256(ROOT / path) for name, path in {
             "runner": "scripts/evaluate_op2_frozen.py", "strategy_eval": "opspilot/strategy_eval.py",
             "model_client": "opspilot/model_client.py", "gold_scorer": "scripts/evaluate_lab.py"}.items()},
         "request_checkpoint": checkpoint_path.resolve().relative_to(ROOT.resolve()).as_posix(),
+        "provider_response_metadata": sorted(provider_response_metadata.values(),
+            key=lambda item: (item["case_id"], item["system_sha256"], item["user_payload_sha256"])),
         "request_payload_audit": [*prior_request_audit, *request_audit], "per_case": scored_cases,
         "strategy_summary": summarize_cases(scored_cases),
-        "interpretation": "真实固定快照 Agent 对照；三个合成/宿主冻结样本，不代表泛化。独立问题随案例记录，策略接收同一遥测快照。历史已计费请求若无持久化响应会被跳过并标记，不能声称完整策略对照。"}
+        "interpretation": "仅评估两份当前授权的合成冻结快照；独立问题随案例记录，策略接收同一遥测快照，gold 仅用于本地评分。保留请求哈希、时间、模型响应元数据、token 费用与原始非敏感 JSON 响应检查点。本两案小样本不代表泛化或策略整体优劣。"}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
@@ -402,11 +438,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true", help="send real model requests after preflight")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--case-ids", nargs="+", choices=sorted(AUTHORIZED_LIVE_CASES),
+        help="exact currently authorized snapshot cases (both must be listed)")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")
     try:
-        report = run(args.output)
+        report = run(args.output, case_ids=args.case_ids)
     except Exception as exc:
         print(json.dumps({"status": "stopped_before_or_during_run", "error": type(exc).__name__,
             "message": str(exc)}, ensure_ascii=False), file=sys.stderr)

@@ -80,7 +80,8 @@ class RunBudget:
         with self.ledger_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
-    def call(self, operation: Any, instance: Any, system: str, user: str, token_budget: int) -> dict[str, Any]:
+    def call(self, operation: Any, instance: Any, system: str, user: str, token_budget: int,
+             request_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         max_output = min(instance.max_tokens, max(64, token_budget))
         input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
         reserve = (input_reserve * 0.30 + max_output * 1.20) / 1_000_000
@@ -97,7 +98,9 @@ class RunBudget:
                 self.reserved_usd -= reserve
                 self.spent_usd += reserve
                 diagnostic = exc.diagnostic() if isinstance(exc, ModelError) else None
-                self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model, "reserve_usd": round(reserve, 8),
+                self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model,
+                              "recorded_at": datetime.now(timezone.utc).isoformat(),
+                              "request_metadata": request_metadata or {}, "reserve_usd": round(reserve, 8),
                               "run_peak_estimate_usd": round(self.spent_usd, 8), "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8), "limit_usd": self.limit_usd,
                               "error_type": type(exc).__name__,
                               "error_category": diagnostic["category"] if diagnostic else "internal",
@@ -115,6 +118,8 @@ class RunBudget:
             self.reserved_usd -= reserve
             self.spent_usd += actual
             self._append({"kind": "completed_request", "run_id": self.run_id, "model": self.model,
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+                "request_metadata": request_metadata or {},
                 "input_tokens": usage.get("prompt_tokens", 0), "cached_input_tokens": usage.get("prompt_tokens_details", {}).get("cached_tokens", 0),
                 "output_tokens": usage.get("completion_tokens", 0), "reserve_usd": round(reserve, 8),
                 "peak_rate_estimate_usd": round(actual, 8), "run_peak_estimate_usd": round(self.spent_usd, 8),

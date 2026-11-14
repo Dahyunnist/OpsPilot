@@ -9,7 +9,7 @@ from unittest.mock import patch
 from opspilot.strategy_eval import CAUSES, STRATEGIES
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
-    _validate_prompt_payload, main, run)
+    _validate_prompt_payload, AUTHORIZED_LIVE_CASES, main, run)
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
@@ -22,6 +22,20 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertTrue(all(case["start"] < case["end"] for case in cases))
         self.assertEqual(spec["total_worst_case_usd"], 0.0230226)
         self.assertEqual(spec["calls_made"], 0)
+
+    def test_live_selection_loads_only_the_two_exactly_authorized_snapshot_hashes(self):
+        _spec, cases = _load_frozen_cases(set(AUTHORIZED_LIVE_CASES))
+        self.assertEqual(["normal_slow_sql", "missing_pool_evidence"],
+            [case["spec"]["id"] for case in cases])
+        self.assertEqual(AUTHORIZED_LIVE_CASES,
+            {case["spec"]["id"]: case["snapshot_sha256"] for case in cases})
+
+    def test_live_run_requires_both_explicitly_authorized_case_ids(self):
+        with TemporaryDirectory() as temp:
+            with patch("scripts.evaluate_op2_frozen.load_project_env") as load_env:
+                with self.assertRaisesRegex(ValueError, "exact two currently authorized"):
+                    run(Path(temp) / "new-report.json")
+                load_env.assert_not_called()
 
     def test_prompt_allowlist_accepts_only_current_snapshot_records_without_gold(self):
         _spec, cases = _load_frozen_cases()
@@ -120,6 +134,23 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
                 "status": "completed", "response": response}) + "\n", encoding="utf-8")
 
             responses, uncertain = _load_request_checkpoints(checkpoint)
+
+        key = ("synthetic_case", "a" * 64, "b" * 64, 320)
+        self.assertEqual(response, responses[key])
+        self.assertNotIn(key, uncertain)
+
+    def test_completed_checkpoint_in_later_source_overrides_an_older_pending_entry(self):
+        with TemporaryDirectory() as temp:
+            older = Path(temp) / "older.jsonl"
+            newer = Path(temp) / "newer.jsonl"
+            base = {"case_id": "synthetic_case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 320}
+            older.write_text(json.dumps({**base, "status": "pending"}) + "\n", encoding="utf-8")
+            response = {"data": {"root_causes": ["example"]}, "usage": {"prompt_tokens": 1}}
+            newer.write_text(json.dumps({**base, "status": "completed", "response": response}) + "\n",
+                encoding="utf-8")
+
+            responses, uncertain = _load_request_checkpoints([older, newer])
 
         key = ("synthetic_case", "a" * 64, "b" * 64, 320)
         self.assertEqual(response, responses[key])

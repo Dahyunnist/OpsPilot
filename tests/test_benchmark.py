@@ -73,10 +73,14 @@ class BenchmarkTests(unittest.TestCase):
             budget = RunBudget(0.01, ledger, "deepseek-v4-flash")
             instance = SimpleNamespace(max_tokens=512)
             result = budget.call(lambda *_args: {"usage": {"prompt_tokens": 1000, "completion_tokens": 100}},
-                                 instance, "system", "user", 512)
+                                 instance, "system", "user", 512,
+                                 request_metadata={"case_id": "frozen-case", "user_payload_sha256": "b" * 64})
             self.assertEqual(1000, result["usage"]["prompt_tokens"])
             self.assertGreater(budget.spent_usd, 0)
             self.assertIn("completed_request", ledger.read_text(encoding="utf-8"))
+            ledger_row = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual("frozen-case", ledger_row["request_metadata"]["case_id"])
+            self.assertTrue(ledger_row["recorded_at"])
 
             blocked = RunBudget(0.00001, ledger, "deepseek-v4-flash")
             called = False
