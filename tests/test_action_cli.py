@@ -94,6 +94,13 @@ class ActionCliTests(unittest.TestCase):
         self.assertEqual(0, event["external_system_calls"])
         self.assertEqual(0, event.get("external_writes", 0))
 
+    def test_dry_run_requires_explicit_simulation_flag(self) -> None:
+        with self.assertRaises(SystemExit) as raised:
+            action_cli.main(["dry-run", "--approval-file", str(self.root / "missing.json"),
+                "--investigation-report", str(self.report_path), "--environment", "test"])
+        self.assertEqual(2, raised.exception.code)
+        self.assertFalse(self.ledger.exists())
+
     def test_approval_fails_closed_without_resolver(self) -> None:
         error_output = StringIO()
         with redirect_stderr(error_output):
