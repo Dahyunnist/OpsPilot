@@ -70,6 +70,12 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual(0.0, audit["incremental_cost_usd"])
         self.assertEqual(6, audit["raw_provider_responses_available_in_checkpoint"])
         self.assertTrue(all(item["snapshot_matches_manifest"] for item in audit["cases"]))
+        self.assertEqual([True, True, False], [item["authorization_hash_match"]
+            for item in audit["cases"]])
+        self.assertEqual("de76add2b1dc15e4da2207632d44c39c39ba813",
+            audit["cases"][2]["user_authorization_reference"])
+        self.assertEqual("de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+            audit["cases"][2]["local_snapshot_sha256"])
         self.assertEqual({case["spec"]["id"] for case in cases},
             {item["case_id"] for item in audit["cases"]})
 

@@ -12,8 +12,6 @@
     {
       "case_id": "normal_slow_sql",
       "approved_snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
-      "manifest_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
-      "snapshot_matches_manifest": true,
       "checkpoint_records": 8,
       "checkpoint_response_bodies": 4,
       "scores": {
@@ -49,13 +47,16 @@
           "top1_correct": null,
           "top3_recall": 1.0
         }
-      }
+      },
+      "user_authorization_reference": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "local_snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "authorization_hash_match": true,
+      "snapshot_matches_manifest": true,
+      "authorization_by_filename": true
     },
     {
       "case_id": "missing_pool_evidence",
       "approved_snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
-      "manifest_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
-      "snapshot_matches_manifest": true,
       "checkpoint_records": 4,
       "checkpoint_response_bodies": 1,
       "scores": {
@@ -91,13 +92,16 @@
           "top1_correct": null,
           "top3_recall": 0.0
         }
-      }
+      },
+      "user_authorization_reference": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "local_snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "authorization_hash_match": true,
+      "snapshot_matches_manifest": true,
+      "authorization_by_filename": true
     },
     {
       "case_id": "contradictory_payment",
       "approved_snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
-      "manifest_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
-      "snapshot_matches_manifest": true,
       "checkpoint_records": 2,
       "checkpoint_response_bodies": 1,
       "scores": {
@@ -133,7 +137,13 @@
           "top1_correct": null,
           "top3_recall": null
         }
-      }
+      },
+      "user_authorization_reference": "de76add2b1dc15e4da2207632d44c39c39ba813",
+      "local_snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "authorization_hash_match": false,
+      "snapshot_matches_manifest": true,
+      "authorization_by_filename": true
     }
-  ]
+  ],
+  "authorization_basis": "snapshot_filename; third authorization hash text differs from local SHA-256; existing checkpoint responses are used only for offline rescoring"
 }

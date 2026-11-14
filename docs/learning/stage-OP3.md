@@ -72,7 +72,7 @@ User host `bad_release` JSONL confirms nine services started, healthy baseline p
 
 ## 2026-11-14 OP-3 冻结响应复用与离线重评分
 
-仅检查三份登记快照及其受控请求 checkpoint；三份快照 SHA 均逐字匹配 manifest。checkpoint 含 6 份成功 provider 响应正文（normal_slow_sql 4、missing_pool_evidence 1、contradictory_payment 1）。其余记录是 pending/失败状态，不作为可用响应，也未重发。使用 fixed 报告已保存的策略预测、冻结 truth 和快照派生 gold 证据运行 `score_case` 离线重评分，审计结果见 `reports/op3-op2-response-audit-2026-11-14.json`。本轮模型调用 0、新增费用 `$0`；OP-3 仍为 partial，只有 complete 项计为有效评分，失败策略不纳入命中比较。未访问 `.tmp/`。
+仅检查三份登记快照及其受控请求 checkpoint；三份本地快照 SHA 均匹配 manifest。用户授权引用按文件名对应，但第三个授权哈希文本 `de76add2b1dc15e4da2207632d44c39c39ba813` 与本地 SHA-256 `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 不同，因此标记 `authorization_hash_match=false`，不得称三份哈希均获逐字授权。checkpoint 含 6 份历史成功 provider 响应正文（normal_slow_sql 4、missing_pool_evidence 1、contradictory_payment 1），仅用于离线重评分；没有新模型调用。使用 fixed 报告已保存的策略预测、冻结 truth 和快照派生 gold 证据运行 `score_case`，审计结果见 `reports/op3-op2-response-audit-2026-11-14.json`。本轮模型调用 0、新增费用 `$0`；OP-3 仍为 partial，只有 complete 项计为有效评分，失败策略不纳入命中比较。未访问 `.tmp/`。
 
 ## 2026-11-14 授权重试预检
 
