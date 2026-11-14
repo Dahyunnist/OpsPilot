@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 import ast
 import json
+import multiprocessing
 from pathlib import Path
 import tempfile
 import threading
@@ -15,6 +16,16 @@ from opspilot.run_manifest import validate_op_run_artifact
 
 
 NOW = datetime(2026, 10, 23, 10, 0, tzinfo=timezone.utc)
+
+
+def _consume_approval_process(approval, key, ledger_path, report, principal, gate, outcomes) -> None:
+    gate.wait(timeout=10)
+    try:
+        result = execute_dry_run(approval, key=key, environment="test", ledger_path=Path(ledger_path),
+            investigation_report=report, principal=principal, now=NOW)
+        outcomes.put(result["status"])
+    except ActionRejected as exc:
+        outcomes.put(exc.code)
 
 
 class ActionSafetyTests(unittest.TestCase):
@@ -114,6 +125,57 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(contenders - 1, sum(event.get("reason") == "approval_replayed" for event in events))
         self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
         self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+
+    def test_cross_process_replay_consumes_approval_once_on_local_ledger(self) -> None:
+        context = multiprocessing.get_context("spawn")
+        approval = self.approval()
+        process_count = 6
+        gate = context.Event()
+        outcomes = context.Queue()
+        processes = [context.Process(target=_consume_approval_process,
+            args=(approval, self.key, str(self.ledger), self.report(), self.principal(), gate, outcomes))
+            for _ in range(process_count)]
+        try:
+            for process in processes:
+                process.start()
+            gate.set()
+            results = [outcomes.get(timeout=20) for _ in processes]
+            for process in processes:
+                process.join(timeout=20)
+                self.assertEqual(0, process.exitcode)
+        finally:
+            for process in processes:
+                if process.is_alive():
+                    process.terminate()
+                    process.join(timeout=5)
+            outcomes.close()
+            outcomes.join_thread()
+
+        self.assertEqual(1, results.count("simulated_execution"))
+        self.assertEqual(process_count - 1, results.count("approval_replayed"))
+        events = self.events()
+        self.assertEqual(1, sum(event["event_type"] == "dry_run_completed" for event in events))
+        self.assertEqual(process_count - 1, sum(event.get("reason") == "approval_replayed" for event in events))
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+
+        recovery_gate = context.Event()
+        recovery_outcomes = context.Queue()
+        recovery = context.Process(target=_consume_approval_process,
+            args=(approval, self.key, str(self.ledger), self.report(), self.principal(),
+                recovery_gate, recovery_outcomes))
+        try:
+            recovery.start()
+            recovery_gate.set()
+            self.assertEqual("approval_replayed", recovery_outcomes.get(timeout=20))
+            recovery.join(timeout=20)
+            self.assertEqual(0, recovery.exitcode)
+        finally:
+            if recovery.is_alive():
+                recovery.terminate()
+                recovery.join(timeout=5)
+            recovery_outcomes.close()
+            recovery_outcomes.join_thread()
 
     def test_wrong_environment_and_tampered_signature_are_rejected(self) -> None:
         approval = self.approval()

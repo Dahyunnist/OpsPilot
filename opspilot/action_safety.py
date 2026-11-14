@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
 import json
+import os
 from pathlib import Path
 import secrets
 import threading
@@ -32,6 +34,36 @@ class ActionRejected(ValueError):
     def __init__(self, code: str) -> None:
         super().__init__(code)
         self.code = code
+
+
+@contextmanager
+def _ledger_file_lock(ledger_path: Path):
+    """Serialize ledger replay checks and appends across processes on one local filesystem."""
+    lock_path = ledger_path.with_name(ledger_path.name + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as stream:
+        if os.name == "nt":
+            import msvcrt
+
+            stream.seek(0, os.SEEK_END)
+            if stream.tell() == 0:
+                stream.write(b"\0")
+                stream.flush()
+            stream.seek(0)
+            msvcrt.locking(stream.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                stream.seek(0)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
 def _time(value: datetime | None = None) -> datetime:
@@ -157,7 +189,7 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
 
 def _audit(ledger_path: Path, event: dict[str, Any]) -> None:
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    with _LEDGER_LOCK:
+    with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
         _append_unlocked(ledger_path, event)
 
 
@@ -250,7 +282,7 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
     manifest_errors = validate_op_run_artifact(result, is_new_run=True)
     if manifest_errors:
         raise ValueError("refusing to record unmanifested OP-4 dry run: " + "; ".join(manifest_errors))
-    with _LEDGER_LOCK:
+    with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
         if ledger_path.exists():
             try:
                 events = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
