@@ -107,6 +107,18 @@ def _load_request_checkpoints(path: Path | list[Path]) -> tuple[dict[tuple[str, 
 def _append_request_checkpoint(path: Path, record: dict[str, Any], lock: threading.Lock) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with lock, path.open("a", encoding="utf-8") as handle:
+        if record.get("status") == "completed" and path.exists():
+            key = _request_key(record["case_id"], record["system_sha256"],
+                record["user_payload_sha256"], int(record["token_budget"]))
+            handle.flush()
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                prior = json.loads(line)
+                if prior.get("status") == "completed" and _request_key(prior["case_id"],
+                        prior["system_sha256"], prior["user_payload_sha256"],
+                        int(prior["token_budget"])) == key:
+                    return
         handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
 
@@ -348,9 +360,6 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
                             "error_type": type(exc).__name__},
                         checkpoint_lock)
                     raise
-                _append_request_checkpoint(checkpoint_path,
-                    {**request_record, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat(),
-                        "response": redact(response)}, checkpoint_lock)
                 return response
 
             try:
@@ -360,6 +369,9 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
             except Exception as exc:
                 audit.update({"status": "failed_or_blocked", "error_type": type(exc).__name__})
                 raise
+            _append_request_checkpoint(checkpoint_path,
+                {**request_record, "status": "completed", "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "response": redact(result)}, checkpoint_lock)
             audit["status"] = "completed"
             with audit_lock:
                 in_run_responses[key] = result

@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+from decimal import Decimal, InvalidOperation
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -58,6 +59,19 @@ class ModelError(RuntimeError):
         if self.completion_token_budget is not None:
             trace["completion_token_budget"] = max(0, self.completion_token_budget)
         return trace
+
+
+def usage_token_count(value: Any, field: str) -> int:
+    """Accept integral token counts and numeric strings; reject unknown values."""
+    if isinstance(value, bool) or value is None:
+        raise ValueError(f"invalid usage field: {field}")
+    try:
+        number = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        raise ValueError(f"invalid usage field: {field}") from None
+    if not number.is_finite() or number < 0 or number != number.to_integral_value():
+        raise ValueError(f"invalid usage field: {field}")
+    return int(number)
 
 
 class ChatModel:

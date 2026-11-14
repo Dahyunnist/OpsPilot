@@ -27,7 +27,7 @@ from opspilot.a2a import A2AClient, A2AError, A2AServer  # noqa: E402
 from opspilot.agents import investigate_multi_agent, investigate_single_agent  # noqa: E402
 from opspilot.cli import load_incidents  # noqa: E402
 from opspilot.investigator import investigate  # noqa: E402
-from opspilot.model_client import ModelError, load_project_env  # noqa: E402
+from opspilot.model_client import ModelError, load_project_env, usage_token_count  # noqa: E402
 from opspilot.routing import select_route  # noqa: E402
 
 CAUSES = {
@@ -38,6 +38,10 @@ CAUSES = {
 
 
 class BudgetLimitExceeded(RuntimeError):
+    pass
+
+
+class DuplicateBudgetRequest(RuntimeError):
     pass
 
 
@@ -56,6 +60,33 @@ class RunBudget:
         self.lock = threading.Lock()
         self.run_id = str(uuid.uuid4())
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        self.request_keys = self._request_keys_from_ledger()
+
+    @staticmethod
+    def _request_key(metadata: dict[str, Any] | None) -> str | None:
+        if not isinstance(metadata, dict):
+            return None
+        fields = ("case_id", "system_sha256", "user_payload_sha256", "token_budget")
+        if any(field not in metadata for field in fields):
+            return None
+        encoded = json.dumps([metadata[field] for field in fields], separators=(",", ":")).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
+    def _request_keys_from_ledger(self) -> set[str]:
+        if not self.ledger_path.exists():
+            return set()
+        try:
+            rows = [json.loads(line) for line in self.ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("cost ledger is unreadable; refusing paid requests") from exc
+        keys = set()
+        for row in rows:
+            if not isinstance(row, dict) or row.get("kind") not in {"completed_request", "failed_request_worst_case"}:
+                continue
+            key = row.get("request_key") or self._request_key(row.get("request_metadata"))
+            if key:
+                keys.add(key)
+        return keys
 
     def _prior_spend(self) -> float:
         if not self.ledger_path.exists():
@@ -82,15 +113,20 @@ class RunBudget:
 
     def call(self, operation: Any, instance: Any, system: str, user: str, token_budget: int,
              request_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+        request_key = self._request_key(request_metadata)
         max_output = min(instance.max_tokens, max(64, token_budget))
         input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
         reserve = (input_reserve * 0.30 + max_output * 1.20) / 1_000_000
         with self.lock:
+            if request_key and request_key in self.request_keys:
+                raise DuplicateBudgetRequest("request key already has a ledger charge")
             if self.run_limit_usd is not None and self.spent_usd + self.reserved_usd + reserve > self.run_limit_usd:
                 raise BudgetLimitExceeded(f"本次评测峰值预留将超过授权子集上限 ${self.run_limit_usd:.8f}")
             if self.prior_spent_usd + self.spent_usd + self.reserved_usd + reserve > self.limit_usd:
                 raise BudgetLimitExceeded(f"累计峰值费率预留将超过账本上限 ${self.limit_usd:.2f}")
             self.reserved_usd += reserve
+            if request_key:
+                self.request_keys.add(request_key)
         try:
             result = operation(instance, system, user, token_budget)
         except Exception as exc:
@@ -99,6 +135,7 @@ class RunBudget:
                 self.spent_usd += reserve
                 diagnostic = exc.diagnostic() if isinstance(exc, ModelError) else None
                 self._append({"kind": "failed_request_worst_case", "run_id": self.run_id, "model": self.model,
+                              "request_key": request_key,
                               "recorded_at": datetime.now(timezone.utc).isoformat(),
                               "request_metadata": request_metadata or {}, "reserve_usd": round(reserve, 8),
                               "run_peak_estimate_usd": round(self.spent_usd, 8), "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8), "limit_usd": self.limit_usd,
@@ -111,17 +148,38 @@ class RunBudget:
                               "error_completion_tokens": diagnostic.get("completion_tokens") if diagnostic else None})
             raise
         usage = result.get("usage", {})
-        actual = estimate_cost(self.model, usage.get("prompt_tokens", 0),
-            usage.get("prompt_tokens_details", {}).get("cached_tokens", 0), usage.get("completion_tokens", 0),
-            {"input_cache_hit_per_million": 0.006, "input_cache_miss_per_million": 0.30, "output_per_million": 1.20}) or 0.0
+        usage_status = "reported"
+        try:
+            if not isinstance(usage, dict):
+                raise ValueError("invalid usage object")
+            prompt_tokens = usage_token_count(usage.get("prompt_tokens", 0), "prompt_tokens")
+            output_tokens = usage_token_count(usage.get("completion_tokens", 0), "completion_tokens")
+            details = usage.get("prompt_tokens_details", {})
+            if isinstance(details, str):
+                details = json.loads(details)
+            if not isinstance(details, dict):
+                raise ValueError("invalid usage field: prompt_tokens_details")
+            cached_tokens = usage_token_count(details.get("cached_tokens", 0), "cached_tokens")
+            if cached_tokens > prompt_tokens:
+                raise ValueError("invalid usage field: cached_tokens")
+            actual = estimate_cost(self.model, prompt_tokens, cached_tokens, output_tokens,
+                {"input_cache_hit_per_million": 0.006, "input_cache_miss_per_million": 0.30,
+                 "output_per_million": 1.20}) or 0.0
+        except (ValueError, TypeError, json.JSONDecodeError):
+            prompt_tokens = cached_tokens = output_tokens = None
+            actual = reserve
+            usage_status = "unknown_estimated"
         with self.lock:
             self.reserved_usd -= reserve
             self.spent_usd += actual
             self._append({"kind": "completed_request", "run_id": self.run_id, "model": self.model,
+                "request_key": request_key,
                 "recorded_at": datetime.now(timezone.utc).isoformat(),
                 "request_metadata": request_metadata or {},
-                "input_tokens": usage.get("prompt_tokens", 0), "cached_input_tokens": usage.get("prompt_tokens_details", {}).get("cached_tokens", 0),
-                "output_tokens": usage.get("completion_tokens", 0), "reserve_usd": round(reserve, 8),
+                "input_tokens": prompt_tokens, "cached_input_tokens": cached_tokens,
+                "output_tokens": output_tokens, "usage_status": usage_status,
+                "cost_basis": "request_peak_reserve" if usage_status == "unknown_estimated" else "provider_usage",
+                "reserve_usd": round(reserve, 8),
                 "peak_rate_estimate_usd": round(actual, 8), "run_peak_estimate_usd": round(self.spent_usd, 8),
                 "cumulative_peak_estimate_usd": round(self.prior_spent_usd + self.spent_usd, 8),
                 "limit_usd": self.limit_usd})

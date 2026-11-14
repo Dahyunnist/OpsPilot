@@ -84,7 +84,7 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(report["strategies"]["single"]["prediction"]["root_causes"], [])
         self.assertEqual(report["strategies"]["single"]["prediction"]["withheld_claims"], ["slow_database_query"])
 
-    def test_malformed_optional_usage_metadata_does_not_fail_strategy(self) -> None:
+    def test_malformed_usage_metadata_fails_strategy_and_uses_peak_reserve(self) -> None:
         class MalformedUsageModel(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:
                 response = super().complete(system, user, budget)
@@ -96,9 +96,11 @@ class StrategyEvaluationTests(unittest.TestCase):
         report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model,
             lambda operation, instance, system, user, budget: operation(instance, system, user, budget),
             ("multi",))
-        self.assertEqual("complete", report["strategies"]["multi"]["evaluation_status"])
-        self.assertEqual([], report["strategies"]["multi"]["failures"])
-        self.assertEqual(3, report["strategies"]["multi"]["model_calls"])
+        self.assertEqual("failed", report["strategies"]["multi"]["evaluation_status"])
+        self.assertTrue(any("ValueError" in failure for failure in report["strategies"]["multi"]["failures"]))
+        self.assertEqual(len(model.calls), report["strategies"]["multi"]["model_calls"])
+        self.assertGreaterEqual(report["strategies"]["multi"]["model_calls"], 1)
+        self.assertGreater(report["strategies"]["multi"]["provider_rate_estimate_usd"], 0)
 
     def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
         class OneExpertFails(FakeChatModel):

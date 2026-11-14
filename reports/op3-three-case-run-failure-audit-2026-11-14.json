@@ -22,11 +22,11 @@
   "multi_value_error_cases": 2,
   "multi_value_error_schema": {
     "response_data": "object with hypotheses:list and missing_data:list",
-    "usage": "provider token counts were strings; strategy code coerced with int()",
+    "usage": "provider token counts were numeric strings; integral strings are accepted",
     "prompt_tokens_details": "string, not object",
     "raw_values_recorded": false
   },
-  "diagnosis": "ValueError is consistent with int() on non-integer-formatted usage metadata in strategy_eval.py. Tolerant parsing now treats invalid optional usage fields as zero; predictions remain unchanged.",
+  "diagnosis": "Integral numeric strings are parsed. Malformed usage metadata preserves the original strategy ValueError and is charged at the request peak reserve with usage_status=unknown_estimated. Stable request keys deduplicate ledger charges and completed checkpoints. The source model report remains unchanged.",
   "budget_stop_classification": "blocked_by_per_run_reserve",
   "budget": {
     "run_limit_usd": 0.0230226,

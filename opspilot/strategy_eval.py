@@ -13,7 +13,7 @@ from typing import Any, Callable
 import uuid
 
 from .live_investigation import CAUSES, investigate_live
-from .model_client import ChatModel, ModelError, redact
+from .model_client import ChatModel, ModelError, redact, usage_token_count
 
 
 STRATEGIES = ("rules", "single", "multi", "auto")
@@ -69,10 +69,7 @@ def _failure_diagnostic(exc: Exception) -> dict[str, Any]:
 
 
 def _usage_int(usage: dict[str, Any], field: str) -> int:
-    try:
-        return max(0, int(usage.get(field, 0) or 0))
-    except (TypeError, ValueError, OverflowError):
-        return 0
+    return usage_token_count(usage.get(field, 0), field)
 
 
 def _rules_prediction(live_report: dict[str, Any]) -> dict[str, Any]:
@@ -261,10 +258,24 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             raise
         if called:
             usage = response.get("usage", {})
-            prompt_tokens = _usage_int(usage, "prompt_tokens")
-            details = usage.get("prompt_tokens_details")
-            cached_tokens = _usage_int(details, "cached_tokens") if isinstance(details, dict) else 0
-            output_tokens = _usage_int(usage, "completion_tokens")
+            try:
+                if not isinstance(usage, dict):
+                    raise ValueError("invalid usage object")
+                prompt_tokens = _usage_int(usage, "prompt_tokens")
+                output_tokens = _usage_int(usage, "completion_tokens")
+                details = usage.get("prompt_tokens_details")
+                if isinstance(details, str):
+                    details = json.loads(details)
+                if details is not None and not isinstance(details, dict):
+                    raise ValueError("invalid usage field: prompt_tokens_details")
+                cached_tokens = _usage_int(details, "cached_tokens") if isinstance(details, dict) else 0
+                if cached_tokens > prompt_tokens:
+                    raise ValueError("invalid usage field: cached_tokens")
+            except (ValueError, json.JSONDecodeError):
+                with tracker_lock:
+                    tracker[active_strategy]["calls"] += 1
+                    tracker[active_strategy]["cost"] += reserve
+                raise
             price = (cached_tokens * 0.006 + max(0, prompt_tokens - cached_tokens) * 0.30 + output_tokens * 1.20) / 1_000_000
             with tracker_lock:
                 tracker[active_strategy]["calls"] += 1

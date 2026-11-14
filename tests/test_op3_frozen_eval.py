@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 import json
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 from tempfile import TemporaryDirectory
@@ -12,10 +13,69 @@ from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
     _validate_prompt_payload, AUTHORIZATION_SCOPE, FROZEN_LIVE_CASES, main, run)
-from scripts.evaluate_agents import BudgetLimitExceeded, RunBudget
+from scripts.evaluate_agents import BudgetLimitExceeded, DuplicateBudgetRequest, RunBudget
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
+    def test_budget_accepts_integer_strings_and_charges_provider_usage(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "ledger.jsonl"
+            budget = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            metadata = {"case_id": "case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 100}
+            response = {"usage": {"prompt_tokens": "100", "completion_tokens": "20",
+                "prompt_tokens_details": '{"cached_tokens":"25"}'}}
+            self.assertEqual(response, budget.call(lambda *_: response,
+                SimpleNamespace(max_tokens=100), "system", "user", 100, metadata))
+            row = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual("reported", row["usage_status"])
+            self.assertEqual(100, row["input_tokens"])
+            self.assertEqual(25, row["cached_input_tokens"])
+            self.assertEqual("provider_usage", row["cost_basis"])
+
+    def test_malformed_usage_charged_at_peak_and_request_key_blocks_recovery_recharge(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = root / "ledger.jsonl"
+            checkpoint = root / "requests.jsonl"
+            metadata = {"case_id": "case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 100}
+            budget = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            response = {"data": {"ok": True}, "usage": {"prompt_tokens": "bad",
+                "completion_tokens": "20", "prompt_tokens_details": "not-json"}}
+            self.assertEqual(response, budget.call(lambda *_: response,
+                SimpleNamespace(max_tokens=100), "system", "user", 100, metadata))
+            row = json.loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual("unknown_estimated", row["usage_status"])
+            self.assertEqual("request_peak_reserve", row["cost_basis"])
+            self.assertEqual(row["reserve_usd"], row["peak_rate_estimate_usd"])
+            self.assertIsNone(row["input_tokens"])
+
+            checkpoint.write_text(json.dumps({**metadata, "status": "completed", "response": response}) + "\n",
+                encoding="utf-8")
+            reused, uncertain = _load_request_checkpoints(checkpoint)
+            key = ("case", "a" * 64, "b" * 64, 100)
+            self.assertEqual(response, reused[key])
+            self.assertNotIn(key, uncertain)
+            resumed = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            with self.assertRaises(DuplicateBudgetRequest):
+                resumed.call(lambda *_: self.fail("duplicate request reached provider"),
+                    SimpleNamespace(max_tokens=100), "system", "user", 100, metadata)
+            self.assertEqual(1, len(ledger.read_text(encoding="utf-8").splitlines()))
+
+    def test_checkpoint_completion_append_is_idempotent_by_request_key(self):
+        from scripts.evaluate_op2_frozen import _append_request_checkpoint
+
+        with TemporaryDirectory() as temp:
+            checkpoint = Path(temp) / "requests.jsonl"
+            record = {"case_id": "case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 100,
+                "status": "completed", "response": {"usage": {"prompt_tokens": "bad"}}}
+            lock = threading.Lock()
+            _append_request_checkpoint(checkpoint, record, lock)
+            _append_request_checkpoint(checkpoint, record, lock)
+            self.assertEqual(1, len(checkpoint.read_text(encoding="utf-8").splitlines()))
+
     def test_run_reports_three_case_authorization_scope_consistently(self):
         import inspect
         from scripts.evaluate_op2_frozen import run as evaluation_run
