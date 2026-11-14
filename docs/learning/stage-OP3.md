@@ -74,6 +74,10 @@ User host `bad_release` JSONL confirms nine services started, healthy baseline p
 
 仅检查三份登记快照及其受控请求 checkpoint；三份本地快照 SHA 均匹配 manifest。用户授权引用按文件名对应，但第三个授权哈希文本 `de76add2b1dc15e4da2207632d44c39c39ba813` 与本地 SHA-256 `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 不同，因此标记 `authorization_hash_match=false`，不得称三份哈希均获逐字授权。checkpoint 含 6 份历史成功 provider 响应正文（normal_slow_sql 4、missing_pool_evidence 1、contradictory_payment 1），仅用于离线重评分；没有新模型调用。使用 fixed 报告已保存的策略预测、冻结 truth 和快照派生 gold 证据运行 `score_case`，审计结果见 `reports/op3-op2-response-audit-2026-11-14.json`。本轮模型调用 0、新增费用 `$0`；OP-3 仍为 partial，只有 complete 项计为有效评分，失败策略不纳入命中比较。未访问 `.tmp/`。
 
+## 2026-11-14 两份授权快照真实评测审批阻塞
+
+本轮仅核对授权 SHA 匹配的 `normal_slow_sql` 与 `missing_pool_evidence`。最新费用账本峰值 `$0.49932072 / $0.60`，剩余 `$0.10067928`；按两案注册峰值 `$0.01451580` 完整预留后余 `$0.08616348`。DeepSeek 余额和模型清单 GET 均成功，`is_available=true` 且 CNY 余额为正；清单列出 `deepseek-flash`，未精确列出配置 ID `deepseek-v4-flash`。真实评测启动命令被自动审批拒绝，因为审批器认为可信用户消息未明确授权这两份具体快照/提示发往 DeepSeek 并产生费用。命令进程未启动，账本行数未变（536），新模型调用 0、费用 `$0`，也未生成新响应检查点或评测报告。阻塞审计见 `reports/op3-op2-authorized-two-preflight-blocked-2026-11-14.json`。两案真实评测和 oracle 评分未完成；既有 checkpoint 仍只作为历史响应。
+
 ## 2026-11-14 授权重试预检
 
 逐字节重算三份快照 SHA-256，均匹配冻结清单：slow SQL `d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8`；missing pool `d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7`；contradictory payment `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813`。官方余额接口报告可用，模型目录可达且 Flash 可用；账户余额不写入仓库。项目账本峰值 `$0.49932072 / $0.60`，项目余量 `$0.10067928`；但注册子集累计已用 `$0.02099070 / $0.02302260`，只余 `$0.00203190`，低于完整三例最坏预留 `$0.02302260`。本次未发送推理请求，新增调用 0、费用 0。冻结预登记文件不改；正式比较仍以 fixed 报告的 partial 结果为准，不推断策略提升。

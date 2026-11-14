@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-14",
+  "status": "blocked_before_request_egress",
+  "case_ids": [
+    "normal_slow_sql",
+    "missing_pool_evidence"
+  ],
+  "authorized_snapshot_sha256": {
+    "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+    "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7"
+  },
+  "reserve": {
+    "project_cap_usd": 0.6,
+    "prior_ledger_peak_usd": 0.49932072,
+    "project_remaining_before_reserve_usd": 0.10067928,
+    "selected_cases_full_peak_reserve_usd": 0.0145158,
+    "project_remaining_after_reserve_usd": 0.08616348,
+    "ledger_rows": 536
+  },
+  "provider_read_only_preflight": {
+    "balance_endpoint": "ok",
+    "models_endpoint": "ok",
+    "is_available": true,
+    "positive_balance_currencies": [
+      "CNY"
+    ],
+    "configured_model_id": "deepseek-v4-flash",
+    "provider_listed_model_ids": [
+      "deepseek-flash",
+      "deepseek-v4-pro"
+    ],
+    "exact_configured_model_id_listed": false,
+    "flash_family_alias_listed": true
+  },
+  "execution": {
+    "request_command_process_started": false,
+    "new_model_calls": 0,
+    "incremental_cost_usd": 0.0,
+    "evaluation_report_created": false,
+    "response_checkpoint_created": false
+  },
+  "automatic_review": {
+    "status": "rejected",
+    "reason": "该命令会把两份本地快照及评测提示发送到外部 DeepSeek 并产生费用；当前可信用户消息未明确授权这些具体数据向该目的地的外发。"
+  },
+  "interpretation": "供应商只读预检成功且总 cap 可覆盖完整峰值预留；但评测命令在创建进程前被自动审批拒绝，因此没有发送快照或提示，账本未变化。此前的原始非敏感响应仍只保存在历史 checkpoint，本次两案评测和评分尚未完成。"
+}

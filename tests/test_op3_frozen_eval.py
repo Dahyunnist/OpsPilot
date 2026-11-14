@@ -93,6 +93,16 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual({case["spec"]["id"] for case in cases},
             {item["case_id"] for item in audit["cases"]})
 
+    def test_live_evaluation_preflight_rejection_records_zero_egress_and_cost(self):
+        from pathlib import Path
+        audit = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+            "op3-op2-authorized-two-preflight-blocked-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual("blocked_before_request_egress", audit["status"])
+        self.assertEqual(0, audit["execution"]["new_model_calls"])
+        self.assertEqual(0.0, audit["execution"]["incremental_cost_usd"])
+        self.assertFalse(audit["execution"]["request_command_process_started"])
+        self.assertFalse(audit["provider_read_only_preflight"]["exact_configured_model_id_listed"])
+
     def test_prior_successful_payloads_are_loaded_by_stable_request_key(self):
         with TemporaryDirectory() as temp:
             report_path = Path(temp) / "prior.json"
