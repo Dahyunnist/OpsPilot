@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "audit_type": "op3_frozen_manifest_preflight",
+  "model_calls": 0,
+  "ledger_read": false,
+  "cases": [
+    {
+      "sample_key": "normal_slow_sql",
+      "snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "manifest_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "hash_match": true,
+      "source_count": 4,
+      "record_count": 78
+    },
+    {
+      "sample_key": "missing_pool_evidence",
+      "snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "manifest_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "hash_match": true,
+      "source_count": 4,
+      "record_count": 72
+    },
+    {
+      "sample_key": "contradictory_payment",
+      "snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "manifest_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "hash_match": true,
+      "source_count": 4,
+      "record_count": 73
+    }
+  ],
+  "case_count": 3,
+  "registered_worst_case_usd": 0.0230226
+}

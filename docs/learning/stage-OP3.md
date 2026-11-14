@@ -85,3 +85,9 @@ User host `bad_release` JSONL confirms nine services started, healthy baseline p
 ## 2026-11-14 冻结输入与失败报告离线预检
 
 新增离线审计核对三份登记快照的 SHA、查询窗/条数、OP-2 共享快照 manifest、既有 fixed partial 评测报告及此前被自动审核拦截的预检失败报告。失败记录仍为 `blocked_before_request_egress`：进程未启动、模型调用 0、费用 0、未生成新评测报告或请求检查点。审计以共享 `op_run_manifest` 绑定冻结数据清单和审计结果；原始 OP-3 报告及其 Agent 预测/评分不改写。没有读取 `.env`、费用账本或请求检查点，也未重试出站请求。审计见 [OP-2/OP-3 冻结输入审计](../../reports/op2-op3-offline-preflight-audit-2026-11-14.json)。定向回归 72 项通过。
+
+
+## 2026-11-14 三案冻结清单预检
+
+Runner 现要求并读取冻结清单内全部哈希校验案例；成本仍按各案 worst-case 求和。报告仅含哈希/计数/样本键，未读账本、未调用模型。三案预检见 reports/op3-three-case-preflight-2026-11-14.json。第三案外发仍待用户确认完整哈希。
+

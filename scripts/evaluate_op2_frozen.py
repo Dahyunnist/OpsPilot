@@ -33,10 +33,8 @@ ALLOWED_SNAPSHOT_HASHES = {
     "op2-missing_pool_evidence-snapshot.json": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
     "op2-contradictory_payment-snapshot.json": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
 }
-AUTHORIZED_LIVE_CASES = {
-    "normal_slow_sql": ALLOWED_SNAPSHOT_HASHES["op2-normal_slow_sql-snapshot.json"],
-    "missing_pool_evidence": ALLOWED_SNAPSHOT_HASHES["op2-missing_pool_evidence-snapshot.json"],
-}
+FROZEN_LIVE_CASES = {Path(name).stem.removeprefix("op2-").removesuffix("-snapshot"): digest
+    for name, digest in ALLOWED_SNAPSHOT_HASHES.items()}
 
 
 class PriorPaidResponseUnavailable(RuntimeError):
@@ -234,8 +232,8 @@ def _validate_prompt_payload(system: str, user: str, records_by_id: dict[str, di
 def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     if output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
-    if case_ids is None or set(case_ids) != set(AUTHORIZED_LIVE_CASES) or len(case_ids) != len(AUTHORIZED_LIVE_CASES):
-        raise ValueError("live execution requires the exact two currently authorized frozen case ids")
+    if case_ids is None or set(case_ids) != set(FROZEN_LIVE_CASES) or len(case_ids) != len(FROZEN_LIVE_CASES):
+        raise ValueError("live execution requires every case in the hash-verified frozen manifest")
     checkpoint_path = _checkpoint_path(output)
     if checkpoint_path.exists():
         raise FileExistsError(f"refusing to overwrite prior request checkpoint: {checkpoint_path.name}")
@@ -263,7 +261,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
 
     prior_report_paths = _prior_reports(output)
     prior_completed_requests, prior_request_audit = _prior_completed_requests(prior_report_paths)
-    selected_ids = set(AUTHORIZED_LIVE_CASES)
+    selected_ids = set(case_ids)
     prior_completed_requests = {key for key in prior_completed_requests if key[0] in selected_ids}
     prior_request_audit = [item for item in prior_request_audit if item.get("case_id") in selected_ids]
     reusable_checkpoints = sorted(path for path in ledger.parent.glob("op3-op2-subset-evaluation*.requests.jsonl")
@@ -428,7 +426,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
             key=lambda item: (item["case_id"], item["system_sha256"], item["user_payload_sha256"])),
         "request_payload_audit": [*prior_request_audit, *request_audit], "per_case": scored_cases,
         "strategy_summary": summarize_cases(scored_cases),
-        "interpretation": "仅评估两份当前授权的合成冻结快照；独立问题随案例记录，策略接收同一遥测快照，gold 仅用于本地评分。保留请求哈希、时间、模型响应元数据、token 费用与原始非敏感 JSON 响应检查点。本两案小样本不代表泛化或策略整体优劣。"}
+        "interpretation": "评估哈希校验通过的三份合成冻结快照；独立问题随案例记录，策略接收同一遥测快照，gold 仅用于本地评分。保留请求哈希、时间、模型响应元数据、token 费用与原始非敏感 JSON 响应检查点。本三案小样本不代表泛化或策略整体优劣。"}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
@@ -438,8 +436,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true", help="send real model requests after preflight")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--case-ids", nargs="+", choices=sorted(AUTHORIZED_LIVE_CASES),
-        help="exact currently authorized snapshot cases (both must be listed)")
+    parser.add_argument("--case-ids", nargs="+", choices=sorted(FROZEN_LIVE_CASES),
+        help="all hash-verified cases in the frozen manifest must be listed")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")

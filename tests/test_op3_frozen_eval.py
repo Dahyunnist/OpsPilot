@@ -10,7 +10,7 @@ from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
-    _validate_prompt_payload, AUTHORIZED_LIVE_CASES, main, run)
+    _validate_prompt_payload, FROZEN_LIVE_CASES, main, run)
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
@@ -24,11 +24,11 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual(spec["total_worst_case_usd"], 0.0230226)
         self.assertEqual(spec["calls_made"], 0)
 
-    def test_live_selection_loads_only_the_two_exactly_authorized_snapshot_hashes(self):
-        _spec, cases = _load_frozen_cases(set(AUTHORIZED_LIVE_CASES))
-        self.assertEqual(["normal_slow_sql", "missing_pool_evidence"],
+    def test_live_selection_loads_all_manifest_hash_verified_cases(self):
+        _spec, cases = _load_frozen_cases(set(FROZEN_LIVE_CASES))
+        self.assertEqual(["normal_slow_sql", "missing_pool_evidence", "contradictory_payment"],
             [case["spec"]["id"] for case in cases])
-        self.assertEqual(AUTHORIZED_LIVE_CASES,
+        self.assertEqual(FROZEN_LIVE_CASES,
             {case["spec"]["id"]: case["snapshot_sha256"] for case in cases})
 
     def test_frozen_preflight_rejects_changed_registry_and_snapshot_path(self):
@@ -52,7 +52,7 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
     def test_live_run_requires_both_explicitly_authorized_case_ids(self):
         with TemporaryDirectory() as temp:
             with patch("scripts.evaluate_op2_frozen.load_project_env") as load_env:
-                with self.assertRaisesRegex(ValueError, "exact two currently authorized"):
+                with self.assertRaisesRegex(ValueError, "every case in the hash-verified frozen manifest"):
                     run(Path(temp) / "new-report.json")
                 load_env.assert_not_called()
 
