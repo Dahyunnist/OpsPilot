@@ -228,6 +228,17 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
                     run(output)
                 load_env.assert_not_called()
 
+    def test_latest_three_case_preflight_blocked_before_inference(self):
+        root = Path(__file__).resolve().parents[1]
+        report = json.loads((root / "reports" /
+            "op3-three-case-preflight-blocked-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual(3, report["frozen_dataset"]["case_count"])
+        self.assertTrue(all(case["hash_match"] for case in report["frozen_dataset"]["cases"]))
+        self.assertTrue(report["budget"]["within_total_cap"])
+        self.assertEqual(0, report["execution"]["model_calls"])
+        self.assertFalse(report["execution"]["inference_requests_started"])
+        self.assertEqual("blocked_before_inference", report["evaluation_status"])
+
 
 if __name__ == "__main__":
     unittest.main()
