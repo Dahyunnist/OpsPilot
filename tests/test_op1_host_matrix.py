@@ -82,6 +82,19 @@ def test_every_truth_signal_has_a_report_mapping():
     assert "missing_signals=$missingSignals" in matrix
 
 
+def test_user_host_bad_release_smoke_does_not_claim_full_matrix_or_agent_diagnosis():
+    import json
+
+    evidence = json.loads((ROOT / "reports/op1-bad-release-host-smoke-2026-11-14.json").read_text(encoding="utf-8"))
+    assert evidence["scenario"] == "bad_release"
+    assert evidence["checkout"]["http_status"] == 502
+    assert evidence["deployments"]["orders_v2_record_returned"] is True
+    assert evidence["cleanup"]["compose_ps_all_empty"] is True
+    assert evidence["full_matrix_run"] is False
+    assert evidence["agent_root_cause_diagnosis_verified"] is False
+    assert evidence["logs"]["order_id_correlation_verifiable"] is False
+
+
 def test_matrix_contract_rejects_missing_logs_or_trace_spans():
     powershell = shutil.which("pwsh") or shutil.which("powershell")
     if not powershell:

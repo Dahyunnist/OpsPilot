@@ -92,3 +92,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 `lab/compose.yaml` 声明 9 个服务：gateway、orders、inventory、payment、PostgreSQL、Redis、OTel Collector、Jaeger、Prometheus。`truth.json` 固定 12 类不同 fault/root cause 标签，包含 db_pool_exhaustion、dependency_timeout、slow_sql、retry_storm 和 double_root 双根因。对应场景脚本已存在；`run-op1-case.ps1` 记录 baseline/fault/recovery、清理故障并检查恢复，测试覆盖注入配置、健康结果、truth 隔离和重置契约。三例 OP-3 同模板评测不作为独立泛化证据。
 
 本执行环境 Docker Desktop pipe 不存在；只读 `docker compose ps --all` 返回 `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.`。本轮未启动 Docker，Compose 运行状态未验收。用户宿主 bad_release cleanup 报告只证明该次移除 10 容器/1 网络且 Compose 列表为空，不外推到当前宿主或其他场景。新增 Compose 服务清单离线契约测试。
+
+## 2026-11-14 用户宿主 bad_release 冒烟
+
+用户回报从 Windows PowerShell 执行 `run-scenario.ps1 -Scenario bad_release`：构建/启动成功，唯一 checkout 返回 HTTP 502；窗口内 orders `/logs` 返回 v2 启动记录，gateway `/deployments` 返回 orders/v2 记录。随后 `stop.ps1` 成功移除 10 个容器和 1 个网络，`compose ps --all` 为空。该证据只是一轮 bad_release 宿主冒烟，不是 `run-host-matrix.ps1` 全矩阵，也不证明 Agent 根因诊断正确。回报未附原始 JSON、准确 start/end、order ID 或记录 ID，因此只能登记“用户报告窗口内有返回”，无法独立核验日志与部署记录是否精确关联同一订单/窗口。记录见 `reports/op1-bad-release-host-smoke-2026-11-14.json`；无需重复运行该场景。

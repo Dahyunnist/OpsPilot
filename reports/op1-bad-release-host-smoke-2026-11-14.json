@@ -1,0 +1,54 @@
+{
+  "evidence_schema_version": 1,
+  "project": "OpsPilot",
+  "scenario": "bad_release",
+  "evidence_source": "user-provided Windows PowerShell host execution summary dated 2026-11-14",
+  "execution_context": "user host; separate from Codex execution environment",
+  "invocation": ".\\lab\\run-scenario.ps1 -Scenario bad_release",
+  "build": {
+    "status": "passed",
+    "services_started": true,
+    "service_count": null
+  },
+  "checkout": {
+    "order_id": null,
+    "unique_order_id_used": true,
+    "host": "127.0.0.1:18080",
+    "path": "/checkout",
+    "http_status": 502
+  },
+  "logs": {
+    "host": "127.0.0.1:18081",
+    "path": "/logs",
+    "orders_v2_startup_record_returned": true,
+    "record_count": null,
+    "time_window_reported": true,
+    "exact_start_end": null,
+    "order_id_correlation_verifiable": false
+  },
+  "deployments": {
+    "host": "127.0.0.1:18080",
+    "path": "/deployments",
+    "orders_v2_record_returned": true,
+    "record_count": null,
+    "time_window_reported": true,
+    "exact_start_end": null,
+    "record_id": null
+  },
+  "cleanup": {
+    "stop_script": ".\\lab\\stop.ps1",
+    "stop_status": "passed",
+    "containers_removed": 10,
+    "networks_removed": 1,
+    "compose_ps_all_empty": true
+  },
+  "full_matrix_run": false,
+  "agent_root_cause_diagnosis_verified": false,
+  "not_recorded": [
+    "exact run start/end timestamps",
+    "order ID",
+    "log/deployment record IDs and counts",
+    "raw host JSON artifact"
+  ],
+  "interpretation_limit": "One host bad_release smoke only. The user summary reports records returned within the window, but without exact timestamps, order ID, or raw records their per-order/window linkage cannot be independently verified. This does not establish that an Agent diagnosed the root cause."
+}
