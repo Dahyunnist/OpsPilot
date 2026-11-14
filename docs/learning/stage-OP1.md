@@ -95,7 +95,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 ## 2026-11-14 用户宿主 bad_release 冒烟
 
-用户回报从 Windows PowerShell 执行 `run-scenario.ps1 -Scenario bad_release`：构建/启动成功，唯一 checkout 返回 HTTP 502；窗口内 orders `/logs` 返回 v2 启动记录，gateway `/deployments` 返回 orders/v2 记录。随后 `stop.ps1` 成功移除 10 个容器和 1 个网络，`compose ps --all` 为空。该证据只是一轮 bad_release 宿主冒烟，不是 `run-host-matrix.ps1` 全矩阵，也不证明 Agent 根因诊断正确。回报未附原始 JSON、准确 start/end、order ID 或记录 ID，因此只能登记“用户报告窗口内有返回”，无法独立核验日志与部署记录是否精确关联同一订单/窗口。记录见 `reports/op1-bad-release-host-smoke-2026-11-14.json`；无需重复运行该场景。
+用户回报从 Windows PowerShell 执行 `run-scenario.ps1 -Scenario bad_release`：在本机 Docker Compose 合成环境构建/启动成功，唯一 checkout 返回 HTTP 502；用户确认同一 UTC 半开窗口 `[start,end)` 内，orders `/logs` 从 `127.0.0.1:18081` 返回记录，gateway `/deployments` 从 `127.0.0.1:18080` 返回 orders/v2 部署记录。绝对 UTC 起止时间、order ID 与原始记录未提供，因此不能独立复核记录与订单的精确关联。随后 `stop.ps1` 成功移除 10 个容器和 1 个网络，`compose ps --all` 为空。此证据只覆盖一轮合成 bad_release 宿主冒烟，不是 `run-host-matrix.ps1` 全矩阵，不代表生产行为，也不证明 Agent 根因诊断正确。记录见 `reports/op1-bad-release-host-smoke-2026-11-14.json`；无需重复运行该场景。
 
 
 ## 2026-11-14 共享运行清单覆盖

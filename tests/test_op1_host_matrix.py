@@ -20,10 +20,10 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "Missing local image; refusing network pull" in script and "config --format json" in script
     assert "foreach ($port in @(18080, 18081, 18082, 18083, 14318, 16686, 19090))" in script
     assert script.index("docker info --format") < script.index("$runScript -Scenario none")
-    assert script.index("docker image inspect $image") < script.index('$env:COMPOSE_PROJECT_NAME = "opspilot-matrix-')
+    assert script.index("docker image inspect $image") < script.index("$env:COMPOSE_PROJECT_NAME = $runId")
     assert "Get-NetTCPConnection -State Listen -LocalPort $port" in script
     assert "finally" in script and "stop.ps1" in script and "ps --all" in script
-    assert "$env:COMPOSE_PROJECT_NAME = \"opspilot-matrix-" in script
+    assert "$env:COMPOSE_PROJECT_NAME = $runId" in script
     assert script.index("$env:COMPOSE_PROJECT_NAME =") < script.index("foreach ($case in $truth.cases)")
     assert scenario_runner.count("docker compose @composeFiles up --build") == 1
     assert "function Wait-LabReady([int]$TimeoutSeconds = 60)" in scenario_runner
@@ -89,12 +89,59 @@ def test_user_host_bad_release_smoke_does_not_claim_full_matrix_or_agent_diagnos
 
     evidence = json.loads((ROOT / "reports/op1-bad-release-host-smoke-2026-11-14.json").read_text(encoding="utf-8"))
     assert evidence["scenario"] == "bad_release"
+    assert evidence["environment"]["kind"] == "synthetic_local_docker_compose"
+    assert evidence["environment"]["production_evidence"] is False
     assert evidence["checkout"]["http_status"] == 502
+    assert (evidence["logs"]["host"], evidence["logs"]["path"]) == ("127.0.0.1:18081", "/logs")
+    assert (evidence["deployments"]["host"], evidence["deployments"]["path"]) == ("127.0.0.1:18080", "/deployments")
+    assert evidence["window_utc"] == {
+        "interval": "[start,end)", "shared_by_logs_and_deployments": True,
+        "exact_start": None, "exact_end": None, "absolute_bounds_recorded": False,
+    }
+    assert evidence["logs"]["record_returned_within_reported_window"] is True
+    assert evidence["deployments"]["record_returned_within_reported_window"] is True
     assert evidence["deployments"]["orders_v2_record_returned"] is True
+    assert evidence["cleanup"]["stop_status"] == "passed"
+    assert evidence["cleanup"]["containers_removed"] == 10
+    assert evidence["cleanup"]["networks_removed"] == 1
     assert evidence["cleanup"]["compose_ps_all_empty"] is True
     assert evidence["full_matrix_run"] is False
     assert evidence["agent_root_cause_diagnosis_verified"] is False
     assert evidence["logs"]["order_id_correlation_verifiable"] is False
+
+
+def test_op3_run_report_ledger_and_frozen_manifest_consistency_audit():
+    import hashlib
+    import json
+
+    report_path = ROOT / "reports/op3-op2-three-case-run-2026-11-14-r2.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    audit = json.loads((ROOT / "reports/op3-three-case-run-consistency-audit-2026-11-14.json").read_text(encoding="utf-8"))
+    failure_audit = json.loads((ROOT / "reports/op3-three-case-run-failure-audit-2026-11-14.json").read_text(encoding="utf-8"))
+    manifest_path = ROOT / "reports/op2-model-subset.json"
+    ledger = [json.loads(line) for line in (ROOT / "reports/api-cost-ledger.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    run_rows = [row for row in ledger if row.get("run_id") == report["run_id"]]
+    requests = [row for row in run_rows if row.get("kind") in {"completed_request", "failed_request_worst_case"}]
+    summary = next(row for row in run_rows if row.get("kind") == "run_summary")
+    key = lambda row: tuple(row.get("request_metadata", {}).get(field) for field in
+        ("case_id", "system_sha256", "user_payload_sha256", "token_budget"))
+    request_peak = round(sum(row.get("peak_rate_estimate_usd", row.get("reserve_usd", 0)) for row in requests), 8)
+
+    assert report["evaluation_status"] == "partial"
+    assert report["strategy_summary"]["multi"]["failed_cases"] == 3
+    assert len(report["strategy_summary"]["multi"]["failures"]) == 3
+    assert hashlib.sha256(report_path.read_bytes()).hexdigest() == audit["source_report"]["sha256"]
+    assert failure_audit["source_report_sha256"] == audit["source_report"]["sha256"]
+    assert hashlib.sha256(manifest_path.read_bytes()).hexdigest() == report["frozen_dataset"]["spec_sha256"]
+    assert audit["run_manifest"]["separate_live_run_artifact_present"] is False
+    assert all(re.fullmatch(r"[0-9a-f]{64}", value) for value in report["code_sha256"].values())
+    assert len(requests) == 9
+    assert len({key(row) for row in requests}) == len(requests)
+    assert request_peak == summary["peak_rate_estimate_usd"] == report["budget"]["actual_run_peak_usd"]
+    assert summary["cumulative_peak_estimate_usd"] == report["budget"]["cumulative_peak_usd"]
+    assert audit["ledger_consistency"]["sum_request_peak_usd"] == request_peak
+    assert summary["provider_rate_estimate_usd"] == report["strategy_summary"]["multi"]["provider_rate_estimate_usd"]
+    assert audit["ledger_consistency"]["provider_rate_estimate_delta_from_peak_usd"] == -0.00000001
 
 
 def test_matrix_contract_rejects_missing_logs_or_trace_spans():

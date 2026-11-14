@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "audit_type": "op3_three_case_report_ledger_manifest_consistency",
+  "run_id": "15dbce7b-36d5-4c78-bfc3-13104c2c0143",
+  "evaluation_status": "partial",
+  "source_report": {
+    "path": "reports/op3-op2-three-case-run-2026-11-14-r2.json",
+    "sha256": "03c13068413a393c9aa2618d11d229fa7c0c0d4a7c1cae3579d2d3990a6ed452",
+    "matches_failure_audit": true
+  },
+  "frozen_dataset_manifest": {
+    "path": "reports/op2-model-subset.json",
+    "sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "matches_source_report": true,
+    "case_count": 3
+  },
+  "run_manifest": {
+    "separate_live_run_artifact_present": false,
+    "provenance_sha256_fields_in_source_report": [
+      "code_sha256.runner",
+      "code_sha256.strategy_eval",
+      "code_sha256.model_client",
+      "code_sha256.gold_scorer",
+      "frozen_dataset.spec_sha256"
+    ]
+  },
+  "ledger_consistency": {
+    "path": "reports/api-cost-ledger.jsonl",
+    "request_count": 9,
+    "unique_request_key_count": 9,
+    "duplicate_request_key_count": 0,
+    "completed_request_count": 7,
+    "failed_request_worst_case_count": 2,
+    "sum_request_peak_usd": 0.01434911,
+    "run_summary_peak_usd": 0.01434911,
+    "source_report_actual_run_peak_usd": 0.01434911,
+    "run_peak_fields_match": true,
+    "run_summary_cumulative_peak_usd": 0.51366983,
+    "source_report_cumulative_peak_usd": 0.51366983,
+    "cumulative_peak_fields_match": true,
+    "provider_rate_estimate_usd": 0.0143491,
+    "provider_rate_estimate_delta_from_peak_usd": -0.00000001,
+    "rounding_note": "Provider rate estimate and conservative request peak are separate aggregates. Report and ledger run_peak fields agree; keep request peak as budget authority."
+  },
+  "model_calls_repeated": false,
+  "original_evaluation_report_modified": false
+}

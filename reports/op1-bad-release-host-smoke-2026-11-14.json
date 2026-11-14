@@ -4,7 +4,18 @@
   "scenario": "bad_release",
   "evidence_source": "user-provided Windows PowerShell host execution summary dated 2026-11-14",
   "execution_context": "user host; separate from Codex execution environment",
+  "environment": {
+    "kind": "synthetic_local_docker_compose",
+    "production_evidence": false
+  },
   "invocation": ".\\lab\\run-scenario.ps1 -Scenario bad_release",
+  "window_utc": {
+    "interval": "[start,end)",
+    "shared_by_logs_and_deployments": true,
+    "exact_start": null,
+    "exact_end": null,
+    "absolute_bounds_recorded": false
+  },
   "build": {
     "status": "passed",
     "services_started": true,
@@ -21,6 +32,7 @@
     "host": "127.0.0.1:18081",
     "path": "/logs",
     "orders_v2_startup_record_returned": true,
+    "record_returned_within_reported_window": true,
     "record_count": null,
     "time_window_reported": true,
     "exact_start_end": null,
@@ -30,6 +42,7 @@
     "host": "127.0.0.1:18080",
     "path": "/deployments",
     "orders_v2_record_returned": true,
+    "record_returned_within_reported_window": true,
     "record_count": null,
     "time_window_reported": true,
     "exact_start_end": null,
@@ -45,10 +58,10 @@
   "full_matrix_run": false,
   "agent_root_cause_diagnosis_verified": false,
   "not_recorded": [
-    "exact run start/end timestamps",
+    "exact UTC window start/end timestamps",
     "order ID",
     "log/deployment record IDs and counts",
     "raw host JSON artifact"
   ],
-  "interpretation_limit": "One host bad_release smoke only. The user summary reports records returned within the window, but without exact timestamps, order ID, or raw records their per-order/window linkage cannot be independently verified. This does not establish that an Agent diagnosed the root cause."
+  "interpretation_limit": "One synthetic host bad_release smoke only. The user confirms logs and deployment records returned in the same UTC [start,end) window, but did not supply exact bounds, order ID, or raw records, so precise record/window and per-order linkage cannot be independently verified. This does not establish production behavior or Agent root-cause accuracy."
 }

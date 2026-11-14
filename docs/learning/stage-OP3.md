@@ -110,4 +110,4 @@ Runner 的报告 uthorization_scope 改为 	hree_case_frozen_subset，run summa
 
 ## 2026-11-14 三案失败诊断
 
-Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3、multi 0/3、auto 2/3；失败均保留。checkpoint 显示响应 JSON schema 可解析，但 provider usage token 字段为字符串，strategy_eval.py 的直接 int() 转换触发 ValueError。现对可选 usage metadata 做容错归零；不改预测。第三案 BudgetLimitExceeded 是本轮 per-run reserve 剩余不足时的安全停止，总 cap 尚有余量；不得将其写成成功。审计见 reports/op3-three-case-run-failure-audit-2026-11-14.json。离线定向测试 32 项通过；未重跑模型。
+Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3、multi 0/3、auto 2/3；失败均保留。整数 token 字符串可解析；损坏 usage 按请求峰值预留记账并标记 `unknown_estimated`，策略原始错误仍保留。第三案 BudgetLimitExceeded 是 per-run reserve 不足时的安全停止；不得写成成功。报告 SHA、冻结数据 manifest SHA、9 条唯一请求账目及 `$0.01434911` run peak 一致；策略费率汇总与保守峰值相差 `$0.00000001`，不改原始报告。审计见 `reports/op3-three-case-run-failure-audit-2026-11-14.json` 和 `reports/op3-three-case-run-consistency-audit-2026-11-14.json`。35 项 OP-3 离线定向测试通过；未重跑模型。
