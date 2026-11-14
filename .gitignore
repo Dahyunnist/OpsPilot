@@ -21,3 +21,4 @@ var/
 lab/telemetry/
 reports/*raw*.jsonl
 reports/*ledger*.jsonl
+reports/*.requests.jsonl

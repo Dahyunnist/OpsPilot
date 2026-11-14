@@ -51,3 +51,13 @@ runner 逐例保留 investigate、预测或注入取消/超时/失败的 traject
 离线核验：三份快照哈希与注册清单匹配；账本峰值 `$0.47833002`，注册最坏成本 `$0.0230226`，剩余预算 `$0.12166998`。DeepSeek `/user/balance` 返回 `is_available=true`；账户余额不写入仓库。尚无模型推理调用。自动审批拒绝将冻结遥测及派生内容发送给外部模型服务；真实 Agent 结果待明确批准后再跑。OP-3 mock harness 不替代此真实评测。
 
 `tests.test_op3_frozen_eval` 覆盖固定哈希清单和 `--execute` 显式闸门。宿主复跑命令：`.\.venv\Scripts\python.exe scripts\evaluate_op2_frozen.py --execute`。
+
+## 2026-11-14 OP-3 合成快照真实模型部分评测
+
+用户授权只发送 3 份登记 SHA-256 的合成遥测快照及由固定 evaluator 生成的提示；不发送 gold、密钥、私人文献或真实客户数据。首次运行发现通用脱敏器重写了 `record_id`，与原快照 allowlist 不匹配。修复后增加精确快照哈希校验、gold 字段拒绝、来源/记录逐条比对，以及每请求费用预留。
+
+首次 5 次成功请求的响应正文未写入评测报告，但逐条费用账本保留了 token 用量和提示 SHA-256。修复后续跑将成功响应立即写入本地 JSONL checkpoint；下次运行先复用成功响应，把存在记录但正文不可恢复的请求标记为 `PriorPaidResponseUnavailable`，不会再次计费。检查点文件匹配 `reports/*.requests.jsonl` 并被 Git 忽略，不能提交到远端。
+
+本次共 3 个合成案例，评测状态为 **partial**，不是完整策略对照：规则策略 3/3 可评分，single 与 auto 各有 2/3 完成，multi 0/3 完成；失败包含预算余量不足与早期已付但响应不可恢复。成功根因集合统计不适合比较策略优劣。真实模型推理累计峰值估算为 `$0.02099070`，批准子集 cap `$0.02302260`，余量 `$0.00203190`；项目累计峰值 `$0.49932072 / $0.60`。续跑在额外推理前因余量不足而 fail-closed。服务余额和模型清单预检成功；没有超出授权快照范围。
+
+验证命令 `\.venv\Scripts\python.exe -m unittest tests.test_op3_frozen_eval tests.test_benchmark -v`：`21` 项通过。全套 pytest 本轮启动后无输出，未完成退出；不得把它计为通过。报告为 `reports/op3-op2-subset-evaluation-fixed-2026-11-14.json`。响应检查点和未跟踪 `.tmp/` 不提交。该小样本只证明数据边界、费用闸和部分请求可执行，不证明 Multi-Agent 收益或真实事故泛化。

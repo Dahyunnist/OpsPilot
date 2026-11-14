@@ -88,6 +88,23 @@ class BenchmarkTests(unittest.TestCase):
                 blocked.call(operation, instance, "long system " * 100, "long user " * 100, 512)
             self.assertFalse(called)
 
+    def test_run_budget_respects_specific_evaluation_cap_before_call(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost.jsonl"
+            budget = RunBudget(0.60, ledger, "deepseek-v4-flash", run_limit_usd=0.00001)
+            instance = SimpleNamespace(max_tokens=512)
+            called = False
+
+            def operation(*_args):
+                nonlocal called
+                called = True
+                return {"usage": {}}
+
+            with self.assertRaisesRegex(BudgetLimitExceeded, "授权子集上限"):
+                budget.call(operation, instance, "system", "user", 512)
+            self.assertFalse(called)
+            self.assertFalse(ledger.exists())
+
     def test_run_budget_preserves_sanitized_model_error_classification(self):
         with TemporaryDirectory() as temp:
             ledger = Path(temp) / "cost.jsonl"

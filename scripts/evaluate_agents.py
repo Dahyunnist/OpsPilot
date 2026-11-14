@@ -44,8 +44,10 @@ class BudgetLimitExceeded(RuntimeError):
 class RunBudget:
     """Track request charges and stop before a request can exceed the run cap."""
 
-    def __init__(self, limit_usd: float, ledger_path: Path, model: str) -> None:
+    def __init__(self, limit_usd: float, ledger_path: Path, model: str,
+                 run_limit_usd: float | None = None) -> None:
         self.limit_usd = limit_usd
+        self.run_limit_usd = run_limit_usd
         self.ledger_path = ledger_path
         self.model = model
         self.spent_usd = 0.0
@@ -83,6 +85,8 @@ class RunBudget:
         input_reserve = int((len(system.encode("utf-8")) + len(user.encode("utf-8"))) * 1.2) + 256
         reserve = (input_reserve * 0.30 + max_output * 1.20) / 1_000_000
         with self.lock:
+            if self.run_limit_usd is not None and self.spent_usd + self.reserved_usd + reserve > self.run_limit_usd:
+                raise BudgetLimitExceeded(f"本次评测峰值预留将超过授权子集上限 ${self.run_limit_usd:.8f}")
             if self.prior_spent_usd + self.spent_usd + self.reserved_usd + reserve > self.limit_usd:
                 raise BudgetLimitExceeded(f"累计峰值费率预留将超过账本上限 ${self.limit_usd:.2f}")
             self.reserved_usd += reserve

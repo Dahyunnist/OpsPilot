@@ -25,7 +25,7 @@ def load_project_env(path: Path = Path(".env")) -> None:
 
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
-        return {key: ("[REDACTED]" if re.search(r"(?i)(authorization|api.?key|password|secret|token|email|phone)", key) else redact(item)) for key, item in value.items()}
+        return {key: ("[REDACTED]" if re.search(r"(?i)(authorization|api.?key|password|secret|token|email|phone)", key) else item if key == "record_id" else redact(item)) for key, item in value.items()}
     if isinstance(value, list):
         return [redact(item) for item in value]
     if isinstance(value, str):

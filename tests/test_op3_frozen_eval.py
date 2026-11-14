@@ -1,25 +1,118 @@
 from __future__ import annotations
 
 import unittest
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from scripts.evaluate_op2_frozen import STRATEGIES, _load_frozen_cases, main
+from opspilot.strategy_eval import CAUSES, STRATEGIES
+from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
+    _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
+    _validate_prompt_payload, main, run)
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
     def test_preregistered_snapshots_and_shared_strategy_order_are_frozen(self):
         spec, cases = _load_frozen_cases()
         self.assertEqual(["rules", "single", "multi", "auto"], list(STRATEGIES))
+        self.assertEqual(list(STRATEGIES), list(RUNNER_STRATEGIES))
         self.assertEqual(3, len(cases))
         self.assertEqual(3, len({case["snapshot_sha256"] for case in cases}))
         self.assertTrue(all(case["start"] < case["end"] for case in cases))
         self.assertEqual(spec["total_worst_case_usd"], 0.0230226)
         self.assertEqual(spec["calls_made"], 0)
 
+    def test_prompt_allowlist_accepts_only_current_snapshot_records_without_gold(self):
+        _spec, cases = _load_frozen_cases()
+        records = {row["record_id"]: row for result in cases[0]["sources"].values()
+            for row in result["records"]}
+        row = next(iter(records.values()))
+        source = row["source"]
+        payload = {"allowed_causes": [{"id": cause, "title": title} for cause, title in CAUSES],
+            "live_evidence_by_source": {name: [item for item in records.values() if item["source"] == name]
+                for name in ("metrics", "logs", "traces", "deployments")}}
+        _validate_prompt_payload("fixed policy prompt", json.dumps(payload), records)
+        with self.assertRaisesRegex(ValueError, "labels are forbidden"):
+            _validate_prompt_payload("fixed policy prompt", json.dumps({**payload, "truth": []}), records)
+        bad_payload = {"source": source, "allowed_causes": sorted(cause for cause, _ in CAUSES),
+            "records": [{**row, "record_id": "not-in-frozen-snapshot"}]}
+        with self.assertRaisesRegex(ValueError, "outside the frozen snapshot"):
+            _validate_prompt_payload("fixed policy prompt", json.dumps(bad_payload), records)
+
     def test_real_run_requires_explicit_execute_switch(self):
         with patch("sys.argv", ["evaluate_op2_frozen.py"]), self.assertRaises(SystemExit) as raised:
             main()
         self.assertEqual(2, raised.exception.code)
+
+    def test_prior_successful_payloads_are_loaded_by_stable_request_key(self):
+        with TemporaryDirectory() as temp:
+            report_path = Path(temp) / "prior.json"
+            report_path.write_text(json.dumps({"request_payload_audit": [{
+                "case_id": "synthetic_case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 320, "status": "completed"}, {
+                "case_id": "synthetic_case", "system_sha256": "c" * 64,
+                "user_payload_sha256": "d" * 64, "token_budget": 320, "status": "failed_or_blocked"}]}), encoding="utf-8")
+
+            completed, audit = _prior_completed_requests([report_path])
+
+        self.assertEqual({("synthetic_case", "a" * 64, "b" * 64, 320)}, completed)
+        self.assertEqual(2, len(audit))
+        self.assertTrue(all(item["prior_report"] == "prior.json" for item in audit))
+
+    def test_request_checkpoint_reuses_completed_response_and_fails_closed_on_pending(self):
+        with TemporaryDirectory() as temp:
+            checkpoint = Path(temp) / "requests.jsonl"
+            base = {"case_id": "synthetic_case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 320}
+            checkpoint.write_text("\n".join(json.dumps(item) for item in [
+                {**base, "status": "pending"},
+                {**base, "status": "completed", "response": {"data": {"root_causes": []}, "usage": {}}},
+                {**base, "status": "pending"},
+            ]) + "\n", encoding="utf-8")
+
+            responses, uncertain = _load_request_checkpoints(checkpoint)
+
+        key = ("synthetic_case", "a" * 64, "b" * 64, 320)
+        self.assertNotIn(key, responses)
+        self.assertIn(key, uncertain)
+
+    def test_completed_checkpoint_can_be_reused_without_new_request(self):
+        with TemporaryDirectory() as temp:
+            checkpoint = Path(temp) / "requests.jsonl"
+            response = {"data": {"root_causes": ["example"]}, "usage": {"prompt_tokens": 1}}
+            checkpoint.write_text(json.dumps({"case_id": "synthetic_case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 320,
+                "status": "completed", "response": response}) + "\n", encoding="utf-8")
+
+            responses, uncertain = _load_request_checkpoints(checkpoint)
+
+        key = ("synthetic_case", "a" * 64, "b" * 64, 320)
+        self.assertEqual(response, responses[key])
+        self.assertNotIn(key, uncertain)
+
+    def test_subset_spend_includes_checkpointed_run_missing_summary(self):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger = root / "api-cost-ledger.jsonl"
+            checkpoint = root / "op3-op2-subset-evaluation-resume.requests.jsonl"
+            ledger.write_text(json.dumps({"kind": "completed_request", "run_id": "interrupted",
+                "run_peak_estimate_usd": 0.004}) + "\n", encoding="utf-8")
+            checkpoint.write_text(json.dumps({"run_id": "interrupted", "status": "completed"}) + "\n",
+                encoding="utf-8")
+
+            spend = _prior_subset_spend(ledger)
+
+        self.assertEqual(0.004, float(spend))
+
+    def test_existing_report_is_never_overwritten_before_preflight(self):
+        with TemporaryDirectory() as temp:
+            output = Path(temp) / "existing.json"
+            output.write_text("keep", encoding="utf-8")
+            with patch("scripts.evaluate_op2_frozen.load_project_env") as load_env:
+                with self.assertRaises(FileExistsError):
+                    run(output)
+                load_env.assert_not_called()
 
 
 if __name__ == "__main__":
