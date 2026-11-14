@@ -115,3 +115,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 为显式获准的新评测增加 `request_scope=run_id`：同一 scope 的恢复请求仍按请求键拒绝重复计费；独立获准的新 run 可重新请求。启动前优先载入所有 `op3-op2-*.requests.jsonl` 完成响应；待确认/失败项 fail closed。scope 只记在费用账本，不进入供应商提示。
 
 获准的 r3 运行使用同三份 SHA 固定合成快照，余额与 Flash 系列预检通过。复用 13 份先前响应，新增 4 次 provider 请求（3 成功、1 最坏预留失败）；本次峰值 `$0.00752314`，累计 `$0.52119297/$0.60`。rules、single、auto 各 3/3 完成；multi 0/3，三案 ValueError 全部保留。复用 checkpoint 的 token 字段已被脱敏为 `[REDACTED]`，因此不能继续解析 usage；该失败不能解释为模型质量。报告为 `reports/op3-op2-three-case-run-2026-11-14-r3.json`，费用与 manifest 核对见 `reports/op3-three-case-run-consistency-audit-r3-2026-11-14.json`。未在 r3 后再次调用模型。
+
+## 2026-11-14 R3 ValueError 离线根因定位
+
+离线合成复现确认：`redact()` 的通用 `token` 键规则把 provider `usage.prompt_tokens`、`completion_tokens`、`total_tokens`、`prompt_tokens_details.cached_tokens` 写成 `[REDACTED]`。恢复的专家响应先进入 `tracked_gate()`，usage 计数解析抛出 ValueError；`_multi()` 捕获专家错误并提前返回，因此协作裁决和 `score_case()` 均未执行。新增合成回归验证旧格式检查点在此边界失败、裁决器未调用。脱敏器现保留 usage 对象内的数值计数，仍脱敏 `api_token` 等凭据字段。旧 checkpoint 的已脱敏值不可恢复；R3 报告及 multi 0/3 原样保留，未调用模型。定向回归：`python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`。

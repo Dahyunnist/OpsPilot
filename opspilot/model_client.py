@@ -24,11 +24,15 @@ def load_project_env(path: Path = Path(".env")) -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
-def redact(value: Any) -> Any:
+def redact(value: Any, *, _usage: bool = False) -> Any:
     if isinstance(value, dict):
-        return {key: ("[REDACTED]" if re.search(r"(?i)(authorization|api.?key|password|secret|token|email|phone)", key) else item if key == "record_id" else redact(item)) for key, item in value.items()}
+        return {key: (item if _usage and key in {"prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens"}
+            and isinstance(item, (int, float)) and not isinstance(item, bool) else
+            redact(item, _usage=True) if _usage and key == "prompt_tokens_details" else
+            "[REDACTED]" if re.search(r"(?i)(authorization|api.?key|password|secret|token|email|phone)", key) else
+            item if key == "record_id" else redact(item, _usage=_usage or key == "usage")) for key, item in value.items()}
     if isinstance(value, list):
-        return [redact(item) for item in value]
+        return [redact(item, _usage=_usage) for item in value]
     if isinstance(value, str):
         value = re.sub(r"(?i)\bBearer\s+\S+", "Bearer [REDACTED]", value)
         value = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED_EMAIL]", value)

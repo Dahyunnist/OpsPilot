@@ -5,7 +5,7 @@ import threading
 import unittest
 
 from opspilot.strategy_eval import STRATEGIES, evaluate_snapshot, score_case, summarize_cases
-from opspilot.model_client import ModelError
+from opspilot.model_client import ModelError, redact
 from scripts.evaluate_agents import BudgetLimitExceeded
 from unittest.mock import patch
 
@@ -101,6 +101,32 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(len(model.calls), report["strategies"]["multi"]["model_calls"])
         self.assertGreaterEqual(report["strategies"]["multi"]["model_calls"], 1)
         self.assertGreater(report["strategies"]["multi"]["provider_rate_estimate_usd"], 0)
+
+    def test_redacted_checkpoint_usage_fails_before_multi_adjudication(self) -> None:
+        class RedactedCheckpointModel(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                response = super().complete(system, user, budget)
+                response["usage"] = {"prompt_tokens": "[REDACTED]", "completion_tokens": "[REDACTED]",
+                    "total_tokens": "[REDACTED]", "prompt_tokens_details": {"cached_tokens": "[REDACTED]"}}
+                return response
+
+        model = RedactedCheckpointModel()
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model,
+            lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
+        multi = report["strategies"]["multi"]
+        self.assertEqual("failed", multi["evaluation_status"])
+        self.assertEqual(["ValueError", "ValueError"], sorted(multi["failures"]))
+        self.assertEqual(2, len(model.calls))
+        self.assertFalse(any(system.startswith("You are an adversarial incident adjudicator")
+            for system, _payload in model.calls))
+
+    def test_redaction_preserves_numeric_provider_usage_only(self) -> None:
+        value = {"usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15,
+            "prompt_tokens_details": {"cached_tokens": 4}}, "api_token": 123}
+        redacted = redact(value)
+        self.assertEqual(12, redacted["usage"]["prompt_tokens"])
+        self.assertEqual(4, redacted["usage"]["prompt_tokens_details"]["cached_tokens"])
+        self.assertEqual("[REDACTED]", redacted["api_token"])
 
     def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
         class OneExpertFails(FakeChatModel):
