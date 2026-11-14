@@ -106,3 +106,8 @@ Runner 现要求并读取冻结清单内全部哈希校验案例；成本仍按�
 ## 2026-11-14 三案评测授权范围
 
 Runner 的报告 uthorization_scope 改为 	hree_case_frozen_subset，run summary 与最终报告共用同一常量并由合约测试锁定。当前三案 hashes 匹配；账本峰值 $0.49932072，总 cap 余 $0.10067928，三案预留 $0.0230226 在上限内。待用户获准网络环境执行，当前不调用 API。
+
+
+## 2026-11-14 三案失败诊断
+
+Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3、multi 0/3、auto 2/3；失败均保留。checkpoint 显示响应 JSON schema 可解析，但 provider usage token 字段为字符串，strategy_eval.py 的直接 int() 转换触发 ValueError。现对可选 usage metadata 做容错归零；不改预测。第三案 BudgetLimitExceeded 是本轮 per-run reserve 剩余不足时的安全停止，总 cap 尚有余量；不得将其写成成功。审计见 reports/op3-three-case-run-failure-audit-2026-11-14.json。离线定向测试 32 项通过；未重跑模型。

@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
     _validate_prompt_payload, AUTHORIZATION_SCOPE, FROZEN_LIVE_CASES, main, run)
+from scripts.evaluate_agents import BudgetLimitExceeded, RunBudget
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
@@ -26,6 +28,19 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
 
         self.assertTrue(_total_cap_covers(0.49932072, Decimal("0.0230226"), Decimal("0.60")))
         self.assertFalse(_total_cap_covers(0.49932072, Decimal("0.12"), Decimal("0.60")))
+
+    def test_per_run_reserve_blocks_before_call_even_when_project_cap_has_room(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "cost-ledger.jsonl"
+            ledger.write_text(json.dumps({"kind": "run_summary", "run_id": "prior",
+                "peak_rate_estimate_usd": 0.49932072}) + "\n", encoding="utf-8")
+            budget = RunBudget(0.60, ledger, "synthetic-model", run_limit_usd=0.0230226)
+            called = []
+            with self.assertRaises(BudgetLimitExceeded):
+                budget.call(lambda *_: called.append(True), SimpleNamespace(max_tokens=512), "s" * 80_000, "u", 512)
+            self.assertEqual([], called)
+            self.assertLess(budget.prior_spent_usd, budget.limit_usd)
+            self.assertEqual(0.0, budget.spent_usd)
 
     def test_preregistered_snapshots_and_shared_strategy_order_are_frozen(self):
         spec, cases = _load_frozen_cases()
@@ -245,6 +260,16 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual(0, report["execution"]["model_calls"])
         self.assertFalse(report["execution"]["inference_requests_started"])
         self.assertEqual("blocked_before_inference", report["evaluation_status"])
+
+    def test_three_case_run_failure_audit_preserves_partial_counts(self):
+        root = Path(__file__).resolve().parents[1]
+        audit = json.loads((root / "reports" /
+            "op3-three-case-run-failure-audit-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual("partial", audit["original_evaluation_status"])
+        self.assertEqual({"rules": 3, "single": 2, "multi": 0, "auto": 2}, audit["completed_cases"])
+        self.assertEqual(2, audit["multi_value_error_cases"])
+        self.assertEqual("blocked_by_per_run_reserve", audit["budget_stop_classification"])
+        self.assertFalse(audit["original_report_modified"])
 
 
 if __name__ == "__main__":

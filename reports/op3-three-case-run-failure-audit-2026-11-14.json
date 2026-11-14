@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "audit_type": "op3_three_case_failure_diagnosis",
+  "run_id": "15dbce7b-36d5-4c78-bfc3-13104c2c0143",
+  "source_report": "reports/op3-op2-three-case-run-2026-11-14-r2.json",
+  "source_report_sha256": "03c13068413a393c9aa2618d11d229fa7c0c0d4a7c1cae3579d2d3990a6ed452",
+  "original_report_modified": false,
+  "original_evaluation_status": "partial",
+  "case_count": 3,
+  "completed_cases": {
+    "rules": 3,
+    "single": 2,
+    "multi": 0,
+    "auto": 2
+  },
+  "failed_cases": {
+    "rules": 0,
+    "single": 1,
+    "multi": 3,
+    "auto": 1
+  },
+  "multi_value_error_cases": 2,
+  "multi_value_error_schema": {
+    "response_data": "object with hypotheses:list and missing_data:list",
+    "usage": "provider token counts were strings; strategy code coerced with int()",
+    "prompt_tokens_details": "string, not object",
+    "raw_values_recorded": false
+  },
+  "diagnosis": "ValueError is consistent with int() on non-integer-formatted usage metadata in strategy_eval.py. Tolerant parsing now treats invalid optional usage fields as zero; predictions remain unchanged.",
+  "budget_stop_classification": "blocked_by_per_run_reserve",
+  "budget": {
+    "run_limit_usd": 0.0230226,
+    "actual_run_peak_usd": 0.01434911,
+    "remaining_run_reserve_usd": 0.00867349,
+    "total_cap_usd": 0.6,
+    "cumulative_peak_usd": 0.51366983,
+    "total_remaining_usd": 0.08633017,
+    "blocked_before_provider_call": true
+  },
+  "provider_calls": 9,
+  "inference_rerun": false,
+  "interpretation": "Evaluation remains partial. BudgetLimitExceeded was a safe per-run reserve stop; it is not a total-cap overrun. No failed strategy is counted as successful."
+}

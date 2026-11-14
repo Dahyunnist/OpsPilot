@@ -68,6 +68,13 @@ def _failure_diagnostic(exc: Exception) -> dict[str, Any]:
     return {"category": "internal", "code": type(exc).__name__, "retryable": False}
 
 
+def _usage_int(usage: dict[str, Any], field: str) -> int:
+    try:
+        return max(0, int(usage.get(field, 0) or 0))
+    except (TypeError, ValueError, OverflowError):
+        return 0
+
+
 def _rules_prediction(live_report: dict[str, Any]) -> dict[str, Any]:
     return {"root_causes": live_report["root_causes"],
         "evidence_by_root": {item["id"]: [row["record_id"] for row in item.get("support", [])]
@@ -175,7 +182,7 @@ def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[s
                 source, finding, usage = future.result()
                 findings.append({"source": source, **finding})
                 for key in usage_totals:
-                    usage_totals[key] += int(usage.get(key, 0) or 0)
+                    usage_totals[key] += _usage_int(usage, key)
             except Exception as exc:
                 errors.append(_failure_label(exc))
                 error_traces.append(_failure_diagnostic(exc))
@@ -199,7 +206,7 @@ def _multi(live_report: dict[str, Any], records_by_source: dict[str, list[dict[s
         "\"evidence_by_root\":{\"cause_id\":[\"record_id\"]},\"uncertainty\":\"\"}.",
         cross_exam, max(256, min(512, token_budget - specialist_budget * 4)))
     for key in usage_totals:
-        usage_totals[key] += int(result.get("usage", {}).get(key, 0) or 0)
+        usage_totals[key] += _usage_int(result.get("usage", {}), key)
     return _ground_prediction(result["data"], live_report), usage_totals, errors, error_traces
 
 
@@ -254,9 +261,10 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             raise
         if called:
             usage = response.get("usage", {})
-            prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
-            cached_tokens = int(usage.get("prompt_tokens_details", {}).get("cached_tokens", 0) or 0)
-            output_tokens = int(usage.get("completion_tokens", 0) or 0)
+            prompt_tokens = _usage_int(usage, "prompt_tokens")
+            details = usage.get("prompt_tokens_details")
+            cached_tokens = _usage_int(details, "cached_tokens") if isinstance(details, dict) else 0
+            output_tokens = _usage_int(usage, "completion_tokens")
             price = (cached_tokens * 0.006 + max(0, prompt_tokens - cached_tokens) * 0.30 + output_tokens * 1.20) / 1_000_000
             with tracker_lock:
                 tracker[active_strategy]["calls"] += 1

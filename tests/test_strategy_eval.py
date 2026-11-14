@@ -84,6 +84,22 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(report["strategies"]["single"]["prediction"]["root_causes"], [])
         self.assertEqual(report["strategies"]["single"]["prediction"]["withheld_claims"], ["slow_database_query"])
 
+    def test_malformed_optional_usage_metadata_does_not_fail_strategy(self) -> None:
+        class MalformedUsageModel(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                response = super().complete(system, user, budget)
+                response["usage"] = {"prompt_tokens": "invalid", "completion_tokens": None,
+                    "total_tokens": "n/a", "prompt_tokens_details": "not-json"}
+                return response
+
+        model = MalformedUsageModel()
+        report = evaluate_snapshot("lab-pool-01", START, END, self.snapshot(), model,
+            lambda operation, instance, system, user, budget: operation(instance, system, user, budget),
+            ("multi",))
+        self.assertEqual("complete", report["strategies"]["multi"]["evaluation_status"])
+        self.assertEqual([], report["strategies"]["multi"]["failures"])
+        self.assertEqual(3, report["strategies"]["multi"]["model_calls"])
+
     def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
         class OneExpertFails(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:
