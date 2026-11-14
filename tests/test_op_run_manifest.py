@@ -100,8 +100,8 @@ class OpRunManifestTests(unittest.TestCase):
         self.assertIn("model_id none requires zero estimated cost", errors)
         self.assertIn("model_id none requires independent gold or an explicit non-evaluative artifact type", errors)
 
-    def test_non_evaluative_snapshot_and_dry_run_can_declare_truth_not_applicable(self):
-        for artifact_type in ("evidence_snapshot", "action_dry_run"):
+    def test_non_evaluative_artifacts_can_declare_truth_not_applicable(self):
+        for artifact_type in ("evidence_snapshot", "action_dry_run", "offline_preflight_audit"):
             with self.subTest(artifact_type=artifact_type):
                 manifest = valid_op_manifest()
                 manifest.update(evaluation_id=f"op-{artifact_type}", truth_sha256=None,

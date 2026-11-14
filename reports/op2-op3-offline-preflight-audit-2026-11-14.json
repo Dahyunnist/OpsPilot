@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "audit_type": "op2_op3_offline_frozen_preflight",
+  "started_at": "2026-11-14T04:35:04.870979+00:00",
+  "ended_at": "2026-11-14T04:35:04.933371+00:00",
+  "dataset_manifest_path": "reports/op2-model-subset.json",
+  "dataset_manifest_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+  "op2_snapshot_manifest_path": "reports/op2-snapshot-manifest-audit-2026-11-14.json",
+  "op2_snapshot_manifest_sha256": "616989ba21fe70245932106d89db8722dfdf503993b93cf3564729c8d467ba2e",
+  "op2_readonly_regressions": {
+    "passed": true,
+    "files": [
+      "tests/test_live_telemetry.py",
+      "tests/test_op2_source_status.py",
+      "tests/test_op2_telemetry_robustness.py",
+      "tests/test_op2_frozen_snapshot_readonly.py"
+    ],
+    "coverage": [
+      "half-open time windows",
+      "limit bounds and filter-before-limit",
+      "stable source pointers",
+      "missing-evidence abstention",
+      "contradictory signal abstention",
+      "references resolve to frozen records"
+    ]
+  },
+  "op3_preflight_regressions": {
+    "passed": true,
+    "files": [
+      "tests/test_op3_frozen_eval.py",
+      "tests/test_op_run_manifest.py"
+    ],
+    "coverage": [
+      "registered snapshot hashes",
+      "snapshot path allowlist",
+      "payload evidence allowlist",
+      "partial report preservation",
+      "blocked request zero-egress record",
+      "shared audit manifest"
+    ]
+  },
+  "frozen_cases": [
+    {
+      "case_id": "normal_slow_sql",
+      "snapshot_path": "reports/op2-normal_slow_sql-snapshot.json",
+      "snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "snapshot_hash_match": true,
+      "query_window": {
+        "start": "2026-10-23T12:40:29.6471845Z",
+        "end": "2026-10-23T12:40:43.3542103Z"
+      },
+      "record_counts": {
+        "metrics": 66,
+        "logs": 2,
+        "traces": 9,
+        "deployments": 1
+      },
+      "source_limits_valid": true,
+      "timestamps_inside_half_open_window": true,
+      "query_bounds_forwarded": true,
+      "record_ids_unique": true,
+      "snapshot_manifest_valid": true,
+      "rule_confidence": "high",
+      "rule_root_cause_count": 1,
+      "evidence_reference_count": 78,
+      "evidence_references_resolve_to_snapshot": true,
+      "no_evidence_abstains_without_references": true
+    },
+    {
+      "case_id": "missing_pool_evidence",
+      "snapshot_path": "reports/op2-missing_pool_evidence-snapshot.json",
+      "snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "snapshot_hash_match": true,
+      "query_window": {
+        "start": "2026-10-23T13:11:06.8812711Z",
+        "end": "2026-10-23T13:11:19.3885106Z"
+      },
+      "record_counts": {
+        "metrics": 62,
+        "logs": 4,
+        "traces": 5,
+        "deployments": 1
+      },
+      "source_limits_valid": true,
+      "timestamps_inside_half_open_window": true,
+      "query_bounds_forwarded": true,
+      "record_ids_unique": true,
+      "snapshot_manifest_valid": true,
+      "rule_confidence": "abstain",
+      "rule_root_cause_count": 0,
+      "evidence_reference_count": 72,
+      "evidence_references_resolve_to_snapshot": true,
+      "no_evidence_abstains_without_references": true
+    },
+    {
+      "case_id": "contradictory_payment",
+      "snapshot_path": "reports/op2-contradictory_payment-snapshot.json",
+      "snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "snapshot_hash_match": true,
+      "query_window": {
+        "start": "2026-10-23T13:12:03.5963872Z",
+        "end": "2026-10-23T13:12:15.3319245Z"
+      },
+      "record_counts": {
+        "metrics": 57,
+        "logs": 7,
+        "traces": 8,
+        "deployments": 1
+      },
+      "source_limits_valid": true,
+      "timestamps_inside_half_open_window": true,
+      "query_bounds_forwarded": true,
+      "record_ids_unique": true,
+      "snapshot_manifest_valid": true,
+      "rule_confidence": "abstain",
+      "rule_root_cause_count": 0,
+      "evidence_reference_count": 73,
+      "evidence_references_resolve_to_snapshot": true,
+      "no_evidence_abstains_without_references": true
+    }
+  ],
+  "op3_existing_evaluation": {
+    "path": "reports/op3-op2-subset-evaluation-fixed-2026-11-14.json",
+    "sha256": "5dafe66aef3e7b29d56b57be5993353241de73814b58270de62e7bac8bbb1ff9",
+    "status": "partial",
+    "case_count": 3,
+    "model_calls": 0,
+    "actual_run_peak_usd": 0.0,
+    "failure_types": [
+      "BudgetLimitExceeded",
+      "PriorPaidResponseUnavailable"
+    ],
+    "unchanged_source_report": true
+  },
+  "op3_existing_preflight_failure": {
+    "path": "reports/op3-op2-authorized-two-preflight-blocked-2026-11-14.json",
+    "sha256": "1a6aba32bb2126a2699802e6e47d4062b025b462fac9364ee881e5dc1cd170ad",
+    "status": "blocked_before_request_egress",
+    "automatic_review_status": "rejected",
+    "request_command_process_started": false,
+    "new_model_calls": 0,
+    "incremental_cost_usd": 0.0,
+    "evaluation_report_created": false,
+    "response_checkpoint_created": false,
+    "unchanged_source_report": true
+  },
+  "model_calls": 0,
+  "incremental_cost_usd": 0.0,
+  "interpretation": "只核对冻结输入、只读证据契约及既有报告；不执行模型，也不改写 Agent 预测或评分。OP-3 仍为 partial。",
+  "op_run_manifest": {
+    "schema_version": 1,
+    "project": "OpsPilot",
+    "run_id": "op2-op3-offline-audit-65e5d986-5e28-4841-a221-5aba2dc143ce",
+    "evaluation_id": "op2_op3_offline_frozen_preflight",
+    "dataset_id": "op2_model_subset_v1",
+    "dataset_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "truth_sha256": null,
+    "split": "frozen_registered_snapshots",
+    "evaluator_sha256": "83f4334947f8d8d9209b2ef105068df24ebcb413a406269564ff460296ecf1a5",
+    "result_fingerprint_sha256": "b9b4b9f879441670fc5b42dd2a60ae466b51fb4e01d622ec8dafdc73be6b4553",
+    "git_sha": "61b71bc381aa88c4b45765ac19c53eea00c49937",
+    "model_id": "none",
+    "prompt_sha": null,
+    "tool_schema_sha": null,
+    "runtime_digest": null,
+    "max_steps": 3,
+    "max_tokens": null,
+    "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
+    "gold_source": "not_applicable",
+    "cost_usd_estimate": 0.0,
+    "trace_id": "op2-op3-offline-audit-trace-ab499112-dc2d-419c-b180-57334839b853",
+    "started_at": "2026-11-14T04:35:04.870979+00:00",
+    "ended_at": "2026-11-14T04:35:04.933371+00:00",
+    "parameters": {
+      "artifact_type": "offline_preflight_audit",
+      "snapshot_count": 3,
+      "model_calls": 0,
+      "sources_modified": false
+    },
+    "status": "completed"
+  }
+}

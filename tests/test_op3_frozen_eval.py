@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from opspilot.strategy_eval import CAUSES, STRATEGIES
+from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
     _validate_prompt_payload, AUTHORIZED_LIVE_CASES, main, run)
@@ -29,6 +30,24 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             [case["spec"]["id"] for case in cases])
         self.assertEqual(AUTHORIZED_LIVE_CASES,
             {case["spec"]["id"]: case["snapshot_sha256"] for case in cases})
+
+    def test_frozen_preflight_rejects_changed_registry_and_snapshot_path(self):
+        import copy
+        from scripts import evaluate_op2_frozen
+
+        with patch("scripts.evaluate_op2_frozen.ALLOWED_SNAPSHOT_HASHES", {"unexpected.json": "a" * 64}):
+            with self.assertRaisesRegex(ValueError, "allowlist differs"):
+                _load_frozen_cases()
+
+        spec, _cases = _load_frozen_cases()
+        with TemporaryDirectory() as temp:
+            altered = copy.deepcopy(spec)
+            altered["cases"][0]["snapshot"] = "reports/../" + Path(altered["cases"][0]["snapshot"]).name
+            path = Path(temp) / "subset.json"
+            path.write_text(json.dumps(altered), encoding="utf-8")
+            with patch("scripts.evaluate_op2_frozen.SUBSET_PATH", path):
+                with self.assertRaisesRegex(ValueError, "outside allowlist"):
+                    _load_frozen_cases()
 
     def test_live_run_requires_both_explicitly_authorized_case_ids(self):
         with TemporaryDirectory() as temp:
@@ -102,6 +121,20 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual(0.0, audit["execution"]["incremental_cost_usd"])
         self.assertFalse(audit["execution"]["request_command_process_started"])
         self.assertFalse(audit["provider_read_only_preflight"]["exact_configured_model_id_listed"])
+
+    def test_offline_preflight_audit_binds_frozen_manifests_and_preserves_partial_result(self):
+        root = Path(__file__).resolve().parents[1]
+        audit = json.loads((root / "reports" /
+            "op2-op3-offline-preflight-audit-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual([], validate_op_run_artifact(audit, is_new_run=True))
+        self.assertEqual(3, len(audit["frozen_cases"]))
+        self.assertTrue(all(item["snapshot_hash_match"] and item["snapshot_manifest_valid"]
+            for item in audit["frozen_cases"]))
+        self.assertTrue(audit["op2_readonly_regressions"]["passed"])
+        self.assertEqual("partial", audit["op3_existing_evaluation"]["status"])
+        self.assertEqual("blocked_before_request_egress", audit["op3_existing_preflight_failure"]["status"])
+        self.assertEqual(0, audit["op3_existing_preflight_failure"]["new_model_calls"])
+        self.assertEqual(0.0, audit["op3_existing_preflight_failure"]["incremental_cost_usd"])
 
     def test_prior_successful_payloads_are_loaded_by_stable_request_key(self):
         with TemporaryDirectory() as temp:

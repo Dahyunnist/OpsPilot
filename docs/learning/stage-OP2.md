@@ -30,3 +30,7 @@ MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 
 ## 2026-11-14 证据快照清单
 
 `capture_lab_snapshot.py` 对成功快照及缺少来源的失败快照均写入共享 `op_run_manifest` 侧车记录，绑定原始快照哈希、来源数量、共同查询窗口和 Git revision；快照不适用真值，模型调用与费用均为 0。现有 OP-2 子集的三份冻结快照已在本地核对哈希、来源结构及查询窗口，逐例与汇总清单见 [快照清单审计](../../reports/op2-snapshot-manifest-audit-2026-11-14.json)。原始采集时间未记录，审计不评价外部授权，也没有调用模型。
+
+## 2026-11-14 冻结证据只读复核
+
+新增 `tests/test_op2_frozen_snapshot_readonly.py`，直接用登记的 `missing_pool_evidence` 与 `contradictory_payment` 快照驱动只读调查；查询必须沿用快照共同时间窗与条数上限，所有 evidence reference 必须能解析回输入记录。两案规则调查均保持弃答；把来源记录清空后，要求无根因、无引用。已有 `test_live_telemetry.py` 与 `test_op2_source_status.py` 覆盖半开窗、筛窗后限条、stable source pointers、来源错误/空结果和矛盾发布引用。离线汇总见 [OP-2/OP-3 冻结输入审计](../../reports/op2-op3-offline-preflight-audit-2026-11-14.json)。不改变模型 Agent 报告或根因标签；这不是 live service 验收。

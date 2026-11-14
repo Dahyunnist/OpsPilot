@@ -336,7 +336,7 @@ def validate_op_run_manifest(value: Any) -> list[str]:
     no_truth_artifact = (value.get("model_id") == "none"
         and value.get("gold_source") == "not_applicable"
         and isinstance(parameters, dict)
-        and parameters.get("artifact_type") in {"evidence_snapshot", "action_dry_run"})
+        and parameters.get("artifact_type") in {"evidence_snapshot", "action_dry_run", "offline_preflight_audit"})
     for field in OP_RUN_HASH_FIELDS:
         optional_mock_hash = value.get("model_id") == "none" and field in {"prompt_sha", "tool_schema_sha", "runtime_digest"} and value.get(field) is None
         optional_no_truth = field == "truth_sha256" and no_truth_artifact and value.get(field) is None
@@ -360,7 +360,7 @@ def validate_op_run_manifest(value: Any) -> list[str]:
         if value.get("gold_source") != "independent" and not no_truth_artifact:
             errors.append("model_id none requires independent gold or an explicit non-evaluative artifact type")
         if value.get("gold_source") == "not_applicable" and not no_truth_artifact:
-            errors.append("not_applicable gold requires an evidence_snapshot or action_dry_run artifact type")
+            errors.append("not_applicable gold requires an explicit non-evaluative artifact type")
         for field in ("prompt_sha", "tool_schema_sha", "runtime_digest"):
             if field in value and value[field] is not None:
                 errors.append(f"model_id none requires {field} null")

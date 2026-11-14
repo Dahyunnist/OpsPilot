@@ -81,3 +81,7 @@ User host `bad_release` JSONL confirms nine services started, healthy baseline p
 ## 2026-11-14 授权重试预检
 
 逐字节重算三份快照 SHA-256，均匹配冻结清单：slow SQL `d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8`；missing pool `d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7`；contradictory payment `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813`。官方余额接口报告可用，模型目录可达且 Flash 可用；账户余额不写入仓库。项目账本峰值 `$0.49932072 / $0.60`，项目余量 `$0.10067928`；但注册子集累计已用 `$0.02099070 / $0.02302260`，只余 `$0.00203190`，低于完整三例最坏预留 `$0.02302260`。本次未发送推理请求，新增调用 0、费用 0。冻结预登记文件不改；正式比较仍以 fixed 报告的 partial 结果为准，不推断策略提升。
+
+## 2026-11-14 冻结输入与失败报告离线预检
+
+新增离线审计核对三份登记快照的 SHA、查询窗/条数、OP-2 共享快照 manifest、既有 fixed partial 评测报告及此前被自动审核拦截的预检失败报告。失败记录仍为 `blocked_before_request_egress`：进程未启动、模型调用 0、费用 0、未生成新评测报告或请求检查点。审计以共享 `op_run_manifest` 绑定冻结数据清单和审计结果；原始 OP-3 报告及其 Agent 预测/评分不改写。没有读取 `.env`、费用账本或请求检查点，也未重试出站请求。审计见 [OP-2/OP-3 冻结输入审计](../../reports/op2-op3-offline-preflight-audit-2026-11-14.json)。定向回归 72 项通过。
