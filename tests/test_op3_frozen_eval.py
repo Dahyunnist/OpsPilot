@@ -45,6 +45,22 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             main()
         self.assertEqual(2, raised.exception.code)
 
+    def test_fixed_report_remains_partial_and_does_not_claim_strategy_gain(self):
+        from pathlib import Path
+        report = json.loads((Path(__file__).resolve().parents[1] / "reports" /
+            "op3-op2-subset-evaluation-fixed-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual("partial", report["evaluation_status"])
+        self.assertEqual(0.0, report["budget"]["actual_run_peak_usd"])
+        self.assertEqual({"rules": 3, "single": 2, "multi": 0, "auto": 2},
+            {name: values["completed_cases"] for name, values in report["strategy_summary"].items()})
+        self.assertTrue(any("PriorPaidResponseUnavailable" in reason
+            for case in report["per_case"] for strategy in case["strategies"].values()
+            for reason in strategy["failures"]))
+        self.assertTrue(any("BudgetLimitExceeded" in reason
+            for case in report["per_case"] for strategy in case["strategies"].values()
+            for reason in strategy["failures"]))
+        self.assertEqual(0, report["strategy_summary"]["multi"]["model_calls"])
+
     def test_prior_successful_payloads_are_loaded_by_stable_request_key(self):
         with TemporaryDirectory() as temp:
             report_path = Path(temp) / "prior.json"
