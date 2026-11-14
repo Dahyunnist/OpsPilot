@@ -128,6 +128,45 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(4, redacted["usage"]["prompt_tokens_details"]["cached_tokens"])
         self.assertEqual("[REDACTED]", redacted["api_token"])
 
+    def test_multi_synthetic_experts_merge_conflict_adjudicate_and_score(self) -> None:
+        class ConflictModel(FakeChatModel):
+            def complete(self, system: str, user: str, budget: int) -> dict:
+                payload = json.loads(user)
+                if system.startswith("You are an independent metrics"):
+                    response = {"hypotheses": [{"id": "database_pool_exhaustion",
+                        "evidence_ids": ["m1", "invented-metrics"], "reason": "metrics signal"}]}
+                elif system.startswith("You are an independent logs"):
+                    response = {"hypotheses": [{"id": "slow_database_query",
+                        "evidence_ids": ["l1", "invented-logs"], "reason": "logs signal"}]}
+                elif system.startswith("You are an adversarial incident adjudicator"):
+                    self.adjudication_payload = payload
+                    response = {"root_causes": ["database_pool_exhaustion"],
+                        "evidence_by_root": {"database_pool_exhaustion": ["m1", "l1"]},
+                        "uncertainty": "experts disagree; cross-source support retained"}
+                else:
+                    raise AssertionError("unexpected model role")
+                self.calls.append((system, payload))
+                return {"data": response, "usage": {"prompt_tokens": 100, "completion_tokens": 20,
+                    "total_tokens": 120, "prompt_tokens_details": {"cached_tokens": 0}}}
+
+        model = ConflictModel()
+        report = evaluate_snapshot("synthetic-conflict", START, END, self.snapshot(), model,
+            lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
+        scored = score_case(report, ["database_pool_exhaustion"], {"m1", "l1"})["strategies"]["multi"]
+        experts = model.adjudication_payload["experts"]
+        by_source = {item["source"]: item for item in experts}
+        self.assertEqual({"metrics", "logs"}, set(by_source))
+        self.assertEqual("database_pool_exhaustion", by_source["metrics"]["hypotheses"][0]["id"])
+        self.assertEqual("slow_database_query", by_source["logs"]["hypotheses"][0]["id"])
+        self.assertEqual(["m1"], by_source["metrics"]["hypotheses"][0]["evidence_ids"])
+        self.assertEqual(["l1"], by_source["logs"]["hypotheses"][0]["evidence_ids"])
+        self.assertEqual(3, len(model.calls))
+        self.assertEqual("complete", scored["evaluation_status"])
+        self.assertEqual(["database_pool_exhaustion"], scored["prediction"]["root_causes"])
+        self.assertTrue(scored["metrics"]["exact_root_set"])
+        self.assertEqual(1.0, scored["metrics"]["evidence_precision"])
+        self.assertEqual(1.0, scored["metrics"]["evidence_recall"])
+
     def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
         class OneExpertFails(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:

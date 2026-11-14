@@ -119,3 +119,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 ## 2026-11-14 R3 ValueError 离线根因定位
 
 离线合成复现确认：`redact()` 的通用 `token` 键规则把 provider `usage.prompt_tokens`、`completion_tokens`、`total_tokens`、`prompt_tokens_details.cached_tokens` 写成 `[REDACTED]`。恢复的专家响应先进入 `tracked_gate()`，usage 计数解析抛出 ValueError；`_multi()` 捕获专家错误并提前返回，因此协作裁决和 `score_case()` 均未执行。新增合成回归验证旧格式检查点在此边界失败、裁决器未调用。脱敏器现保留 usage 对象内的数值计数，仍脱敏 `api_token` 等凭据字段。旧 checkpoint 的已脱敏值不可恢复；R3 报告及 multi 0/3 原样保留，未调用模型。定向回归：`python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`。
+
+## 2026-11-14 Multi 合成路径回归
+
+新增纯本地 fake model 回归：metrics 专家与 logs 专家给出相冲突的假设；解析器剔除各自伪造的 evidence ID；裁决器接收两个来源的有效发现并选择跨源支持根因；最终 `score_case()` 对固定合成 oracle 得到完整根因命中、evidence precision/recall 均为 1。另保留 checkpoint `[REDACTED]` usage、malformed usage、伪造/不足证据与裁决失败的负例断言。定向 `python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`：40 项通过。完整 `.venv` pytest：256 项、69 子测试通过；需将 pytest 临时目录设在仓库内，并允许本机 HTTP socket 测试。以上均为离线合成或本地集成测试，不是新的真实模型结果；R3 仍为 partial，真实 Multi 仍 0/3，原报告不改写，也未发起模型请求。
