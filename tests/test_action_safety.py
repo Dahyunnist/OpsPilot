@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor
 import ast
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 
 from opspilot.action_safety import ActionRejected, approval_binding, execute_dry_run, issue_approval, load_or_create_key
@@ -88,6 +90,30 @@ class ActionSafetyTests(unittest.TestCase):
             execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual([event["event_type"] for event in self.events()], ["dry_run_completed", "dry_run_rejected"])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+
+    def test_concurrent_replay_consumes_approval_once_within_process(self) -> None:
+        approval = self.approval()
+        contenders = 8
+        barrier = threading.Barrier(contenders)
+
+        def consume() -> str:
+            barrier.wait(timeout=3)
+            try:
+                return execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                    investigation_report=self.report(), principal=self.principal(), now=NOW)["status"]
+            except ActionRejected as exc:
+                return exc.code
+
+        with ThreadPoolExecutor(max_workers=contenders) as pool:
+            outcomes = list(pool.map(lambda _index: consume(), range(contenders)))
+
+        self.assertEqual(1, outcomes.count("simulated_execution"))
+        self.assertEqual(contenders - 1, outcomes.count("approval_replayed"))
+        events = self.events()
+        self.assertEqual(1, sum(event["event_type"] == "dry_run_completed" for event in events))
+        self.assertEqual(contenders - 1, sum(event.get("reason") == "approval_replayed" for event in events))
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
 
     def test_wrong_environment_and_tampered_signature_are_rejected(self) -> None:
         approval = self.approval()
