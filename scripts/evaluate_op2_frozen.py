@@ -55,7 +55,7 @@ def _request_key(case_id: str, system_sha256: str, user_sha256: str, token_budge
 
 
 def _prior_reports(output: Path) -> list[Path]:
-    return sorted(path for path in (ROOT / "reports").glob("op3-op2-subset-evaluation*.json")
+    return sorted(path for path in (ROOT / "reports").glob("op3-op2-*.json")
         if path.resolve() != output.resolve())
 
 
@@ -281,7 +281,7 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     selected_ids = set(case_ids)
     prior_completed_requests = {key for key in prior_completed_requests if key[0] in selected_ids}
     prior_request_audit = [item for item in prior_request_audit if item.get("case_id") in selected_ids]
-    reusable_checkpoints = sorted(path for path in ledger.parent.glob("op3-op2-subset-evaluation*.requests.jsonl")
+    reusable_checkpoints = sorted(path for path in ledger.parent.glob("op3-op2-*.requests.jsonl")
         if path.resolve() != checkpoint_path.resolve())
     checkpoint_responses, checkpoint_uncertain = _load_request_checkpoints([*reusable_checkpoints, checkpoint_path])
     checkpoint_responses = {key: value for key, value in checkpoint_responses.items() if key[0] in selected_ids}
@@ -365,7 +365,8 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
             try:
                 result = budget.call(checkpointed_operation, instance, system, user, token_budget,
                     request_metadata={"case_id": key[0], "system_sha256": key[1],
-                        "user_payload_sha256": key[2], "token_budget": token_budget})
+                        "user_payload_sha256": key[2], "token_budget": token_budget,
+                        "request_scope": budget.run_id})
             except Exception as exc:
                 audit.update({"status": "failed_or_blocked", "error_type": type(exc).__name__})
                 raise

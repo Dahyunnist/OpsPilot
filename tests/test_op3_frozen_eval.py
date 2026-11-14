@@ -63,6 +63,28 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
                     SimpleNamespace(max_tokens=100), "system", "user", 100, metadata)
             self.assertEqual(1, len(ledger.read_text(encoding="utf-8").splitlines()))
 
+    def test_request_scope_blocks_recovery_but_allows_explicit_new_run(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "ledger.jsonl"
+            metadata = {"case_id": "case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 100,
+                "request_scope": "authorized-run-1"}
+            operation = lambda *_: {"usage": {"prompt_tokens": "1", "completion_tokens": "1"}}
+            first = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            first.call(operation, SimpleNamespace(max_tokens=100), "s", "u", 100, metadata)
+
+            recovered = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            with self.assertRaises(DuplicateBudgetRequest):
+                recovered.call(lambda *_: self.fail("recovery request reached provider"),
+                    SimpleNamespace(max_tokens=100), "s", "u", 100, metadata)
+
+            second = RunBudget(1.0, ledger, "deepseek-v4-flash")
+            second.call(operation, SimpleNamespace(max_tokens=100), "s", "u", 100,
+                {**metadata, "request_scope": "authorized-run-2"})
+            rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(2, len(rows))
+            self.assertNotEqual(rows[0]["request_key"], rows[1]["request_key"])
+
     def test_checkpoint_completion_append_is_idempotent_by_request_key(self):
         from scripts.evaluate_op2_frozen import _append_request_checkpoint
 

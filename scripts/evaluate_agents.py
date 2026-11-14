@@ -69,7 +69,10 @@ class RunBudget:
         fields = ("case_id", "system_sha256", "user_payload_sha256", "token_budget")
         if any(field not in metadata for field in fields):
             return None
-        encoded = json.dumps([metadata[field] for field in fields], separators=(",", ":")).encode()
+        values = [metadata[field] for field in fields]
+        if metadata.get("request_scope") is not None:
+            values.append(metadata["request_scope"])
+        encoded = json.dumps(values, separators=(",", ":")).encode()
         return hashlib.sha256(encoded).hexdigest()
 
     def _request_keys_from_ledger(self) -> set[str]:
