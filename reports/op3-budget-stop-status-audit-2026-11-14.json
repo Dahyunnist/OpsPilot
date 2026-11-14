@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "audit_type": "op3_budget_stop_status_and_reproducibility",
+  "source_report": "reports/op3-op2-subset-evaluation-fixed-2026-11-14.json",
+  "source_report_sha256": "5dafe66aef3e7b29d56b57be5993353241de73814b58270de62e7bac8bbb1ff9",
+  "evaluation_status": "partial",
+  "cases": [
+    {
+      "sample_key": "normal_slow_sql",
+      "strategies": {
+        "rules": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        },
+        "single": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        },
+        "multi": {
+          "state": "not_run",
+          "failure_counts": {
+            "PriorPaidResponseUnavailable": 1
+          },
+          "model_calls": 0
+        },
+        "auto": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "sample_key": "missing_pool_evidence",
+      "strategies": {
+        "rules": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        },
+        "single": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        },
+        "multi": {
+          "state": "not_run",
+          "failure_counts": {
+            "PriorPaidResponseUnavailable": 4
+          },
+          "model_calls": 0
+        },
+        "auto": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "sample_key": "contradictory_payment",
+      "strategies": {
+        "rules": {
+          "state": "complete",
+          "failure_counts": {},
+          "model_calls": 0
+        },
+        "single": {
+          "state": "blocked",
+          "failure_counts": {
+            "BudgetLimitExceeded": 1
+          },
+          "model_calls": 0
+        },
+        "multi": {
+          "state": "blocked",
+          "failure_counts": {
+            "BudgetLimitExceeded": 2,
+            "PriorPaidResponseUnavailable": 1
+          },
+          "model_calls": 0
+        },
+        "auto": {
+          "state": "blocked",
+          "failure_counts": {
+            "BudgetLimitExceeded": 1
+          },
+          "model_calls": 0
+        }
+      }
+    }
+  ],
+  "sample_count": 3,
+  "strategy_states": {
+    "rules": {
+      "complete": 3
+    },
+    "single": {
+      "complete": 2,
+      "blocked": 1
+    },
+    "multi": {
+      "not_run": 2,
+      "blocked": 1
+    },
+    "auto": {
+      "complete": 2,
+      "blocked": 1
+    }
+  },
+  "failed_request_types": [
+    "BudgetLimitExceeded",
+    "PriorPaidResponseUnavailable"
+  ],
+  "ledger": {
+    "rows": 536,
+    "subset_spend_usd": "0.0209907",
+    "subset_cap_usd": "0.0230226",
+    "remaining_usd": "0.0020319",
+    "run_summary_count": 3
+  },
+  "frozen_hashes": [
+    {
+      "sample_key": "normal_slow_sql",
+      "sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "matches_manifest": true
+    },
+    {
+      "sample_key": "missing_pool_evidence",
+      "sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "matches_manifest": true
+    },
+    {
+      "sample_key": "contradictory_payment",
+      "sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "matches_manifest": true
+    }
+  ],
+  "interpretation": "BudgetLimitExceeded=blocked; PriorPaidResponseUnavailable=not_run. Original partial report unchanged; no Agent quality inference."
+}

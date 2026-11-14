@@ -91,3 +91,8 @@ User host `bad_release` JSONL confirms nine services started, healthy baseline p
 
 Runner 现要求并读取冻结清单内全部哈希校验案例；成本仍按各案 worst-case 求和。报告仅含哈希/计数/样本键，未读账本、未调用模型。三案预检见 reports/op3-three-case-preflight-2026-11-14.json。第三案外发仍待用户确认完整哈希。
 
+
+
+## 2026-11-14 预算停止状态复核
+
+固定报告原样保留。补充审计将 BudgetLimitExceeded 标为 blocked，将所有 PriorPaidResponseUnavailable 样本标为 not_run；不计作 Agent 质量失败。三样本、失败类型、账本汇总及三份冻结 SHA 可复现；子集余量仍为 .0020319，低于三案预留 .0230226。见 reports/op3-budget-stop-status-audit-2026-11-14.json。
