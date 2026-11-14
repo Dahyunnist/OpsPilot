@@ -12,6 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LabManifestTests(unittest.TestCase):
+    def test_compose_contains_all_required_application_and_telemetry_services(self) -> None:
+        text = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")
+        service_block = text.split("services:", 1)[1].split("\nnetworks:\n", 1)[0]
+        service_names = {line.strip()[:-1] for line in service_block.splitlines()
+            if line.startswith("  ") and line.strip().endswith(":") and not line.startswith("    ")}
+        self.assertEqual({"gateway", "orders", "inventory", "payment", "postgres", "redis",
+            "otel-collector", "jaeger", "prometheus"}, service_names)
+
     def test_frozen_scenarios_have_distinct_mechanisms_and_truth_is_separate(self) -> None:
         truth = json.loads((ROOT / "lab" / "scenarios" / "truth.json").read_text(encoding="utf-8"))
         cases = truth["cases"]

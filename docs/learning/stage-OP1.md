@@ -80,3 +80,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 宿主 `smoke.ps1` 的最终 JSON 除部署总数外，也保留 `deployment_evidence` 的 `record_id/timestamp/service/version` 与 expected/observed version。新增合成 JSONL 回归从写入字段、部署文件、gateway response shape 到 smoke 筛选字段逐段核对；不读取或覆盖用户已有输出。
 
 2026-11-13 用户 Windows 宿主 `bad_release` 验收通过：`python:3.12-slim` 构建成功并启动 9 个服务；健康基线通过；orders v2 发布记录由 `127.0.0.1:18080/deployments` 观测到；唯一 checkout 返回 **HTTP 502**；`127.0.0.1:18081/logs` 返回记录。随后停止成功，删除 10 个容器和 1 个网络，`compose ps --all` 为空。用户摘要未含精确窗口、order ID、记录数量/内容或详细失败原因，均留空，不推断。证据来源、字段与限制见[用户宿主 bad_release 验收](../../reports/op1-bad-release-host-result-2026-11-13.json)。该结果来自用户宿主，与本执行环境此前因 Docker pipe 权限失败的尝试分开记录。
+
+## 2026-11-14 OP-1/OP-2 Compose 与场景核对
+
+`lab/compose.yaml` 声明 9 个服务：gateway、orders、inventory、payment、PostgreSQL、Redis、OTel Collector、Jaeger、Prometheus。`truth.json` 固定 12 类不同 fault/root cause 标签，包含 db_pool_exhaustion、dependency_timeout、slow_sql、retry_storm 和 double_root 双根因。对应场景脚本已存在；`run-op1-case.ps1` 记录 baseline/fault/recovery、清理故障并检查恢复，测试覆盖注入配置、健康结果、truth 隔离和重置契约。三例 OP-3 同模板评测不作为独立泛化证据。
+
+本执行环境 Docker Desktop pipe 不存在；只读 `docker compose ps --all` 返回 `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.`。本轮未启动 Docker，Compose 运行状态未验收。用户宿主 bad_release cleanup 报告只证明该次移除 10 容器/1 网络且 Compose 列表为空，不外推到当前宿主或其他场景。新增 Compose 服务清单离线契约测试。
