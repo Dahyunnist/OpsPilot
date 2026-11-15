@@ -45,7 +45,7 @@ function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$Orde
     return $spans
 }
 
-function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $TraceData, [string]$Start, [string]$End) {
+function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $TraceData, [string]$Start, [string]$End, [string]$RunId = "") {
     $Logs = @($Logs | Where-Object { Test-InEvidenceWindow $_.timestamp $Start $End })
     $Deployments = @($Deployments | Where-Object { Test-InEvidenceWindow $_.timestamp $Start $End })
     $spans = @(Get-WindowSpans $TraceData $Start $End $OrderId)
@@ -86,9 +86,9 @@ function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $Trac
             if ($source -eq "logs") {
                 $attributes = @($_.PSObject.Properties | Where-Object { $_.Name -in @("severity", "service_version", "error_type", "dependency_host", "status", "attempt", "remaining", "path") } | ForEach-Object { [pscustomobject]@{key=$_.Name;value=$_.Value} })
             }
-            [pscustomobject]@{source=$source;record_id=$recordId;service=$_.service;timestamp=$_.timestamp;trace_id=$_.trace_id;span_id=$_.span_id;operation=$_.operation;message=$_.message;order_id=$_.order_id;attributes=$attributes}
+            [pscustomobject]@{run_id=$RunId;window_start=$Start;window_end=$End;source=$source;record_id=$recordId;service=$_.service;timestamp=$_.timestamp;trace_id=$_.trace_id;span_id=$_.span_id;operation=$_.operation;message=$_.message;order_id=$_.order_id;attributes=$attributes}
         })
-        $results += [pscustomobject]@{name=$signal;observed=($matches.Count -ge $minimumCount);match_count=$matches.Count;minimum_count=$minimumCount;evidence=$references;query_scope=@{start=$Start;end=$End;order_id=$OrderId;source=$source};raw_matches=$references}
+        $results += [pscustomobject]@{name=$signal;observed=($matches.Count -ge $minimumCount);match_count=$matches.Count;minimum_count=$minimumCount;evidence=$references;query_scope=@{run_id=$RunId;start=$Start;end=$End;order_id=$OrderId;source=$source};raw_matches=$references}
     }
     return $results
 }

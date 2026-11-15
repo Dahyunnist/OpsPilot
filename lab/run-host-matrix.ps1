@@ -83,7 +83,7 @@ try {
         $controlDeploymentRecords=@($controlDeployments.records)
     } catch { $controlError=$_.Exception.Message; $controlEnd=[DateTime]::UtcNow.ToString("o") }
     $controlVersionObserved=@($controlDeploymentRecords | Where-Object { $_.service -eq "orders" -and $_.version -eq "v1" }).Count -gt 0
-    $normalControl=[pscustomobject]@{scenario="none";start=$controlStart;end=$controlEnd;http_status=$controlStatus;error=$controlError;log_count=$controlLogs.count;deployment_count=$controlDeploymentRecords.Count;deployment_records=$controlDeploymentRecords;expected_deployment_version="v1";expected_deployment_observed=$controlVersionObserved;passed=($controlStatus -eq 200 -and $controlLogs.count -gt 0 -and $controlVersionObserved)}
+    $normalControl=[pscustomobject]@{run_id=$runId;scenario="none";start=$controlStart;end=$controlEnd;http_status=$controlStatus;error=$controlError;log_count=$controlLogs.count;deployment_count=$controlDeploymentRecords.Count;deployment_records=$controlDeploymentRecords;expected_deployment_version="v1";expected_deployment_observed=$controlVersionObserved;passed=($controlStatus -eq 200 -and $controlLogs.count -gt 0 -and $controlVersionObserved)}
     if ($normalControl.passed) {
       foreach ($case in $truth.cases) {
         $id = "matrix-$($case.fault)-$([guid]::NewGuid())"
@@ -125,7 +125,7 @@ try {
                 $traces=Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&limit=1000"
                 $traceData=@($traces.data)
                 $windowSpans=@(Get-WindowSpans $traceData $start $end $id)
-                $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
+                $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end $runId)
                 $missingTraceSignals=@($signals | Where-Object { $_.name -in $traceSignals -and -not $_.observed })
                 $missingLogSignals=@($signals | Where-Object { $_.name -in $logSignals -and -not $_.observed })
                 if (($windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0) -or $traceAttempt -eq 10) { break }
@@ -141,14 +141,14 @@ try {
         $logsObserved=$logs.Count -gt 0
         $tracesObserved=$windowSpans.Count -gt 0
         $telemetryObserved=$logsObserved -and $tracesObserved
-        $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
+        $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end $runId)
         $missingSignals=@($signals | Where-Object { -not $_.observed } | ForEach-Object { $_.name })
         $scenarioPassed=Test-MatrixScenarioPass @{ExpectedStatusObserved=$expectedStatusObserved;VersionObserved=$versionObserved;DnsObserved=$dnsObserved;Logs=$logs;TraceSpans=$windowSpans;SignalResults=$signals}
         $safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,dependency_host,status,attempt,remaining,path)
         $safeSpans=@($windowSpans | Select-Object service,trace_id,span_id,operation,start,duration,status,order_id,attributes)
         $recoveryOrderId = "matrix-recovery-$([guid]::NewGuid())"
         $recoveryStart = [DateTime]::UtcNow.ToString("o")
-        $recovery = [ordered]@{order_id=$recoveryOrderId;start=$recoveryStart;end=$null;http_status=$null;duration_ms=$null;log_count=0;logs_observed=$false;deployment_version_observed=$false;error=$null;passed=$false}
+        $recovery = [ordered]@{run_id=$runId;order_id=$recoveryOrderId;start=$recoveryStart;end=$null;http_status=$null;duration_ms=$null;log_count=0;logs_observed=$false;deployment_version_observed=$false;error=$null;passed=$false}
         try {
             & $runScript -Scenario none
             if ($LASTEXITCODE -ne 0) { throw "healthy recovery startup failed ($LASTEXITCODE)" }
@@ -172,7 +172,7 @@ try {
             $recovery.deployment_version_observed = @($recoveryDeployments.records | Where-Object { $_.service -eq "orders" -and $_.version -eq "v1" }).Count -gt 0
             $recovery.passed = ($recovery.http_status -eq 200 -and $null -ne $recovery.duration_ms -and $recovery.logs_observed -and $recovery.deployment_version_observed)
         } catch { $recovery.error = $_.Exception.Message; $recovery.end = [DateTime]::UtcNow.ToString("o") }
-        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;window_log_records=$safeLogs;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;window_trace_spans=$safeSpans;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;recovery=$recovery;live_run=($null -ne $status)}
+        $rows += [pscustomobject]@{run_id=$runId;case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;window_log_records=$safeLogs;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;window_trace_spans=$safeSpans;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;recovery=$recovery;live_run=($null -ne $status)}
       }
     }
 } finally {

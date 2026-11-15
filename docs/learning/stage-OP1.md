@@ -47,9 +47,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 针对用户回传的 bad_release 504/无部署记录，`run-scenario.ps1 -Scenario bad_release` 现先用正常 `inventory` DNS 启动实验台并发起唯一 ID checkout，要求 200；失败则在注入前停止。随后清理基线订单、重建 orders 为 v2 并注入唯一错误主机 `inventory-v2`。smoke 的 DNS 日志轮询现在同时匹配场景订单 ID，避免邻近请求的日志误作证据。新增进程内服务端 E2E 回归调用真实 Handler：正常 checkout 成功，bad_release 返回 502/504 类失败，orders `/logs` 回出对应 order ID/错误 hostname，gateway `/deployments` 回出时间窗内 orders/v2 记录。此合成回归不替代 Docker Compose DNS 实测。
 
-当前矩阵进一步逐项评估全部 `must_observe`：数据库池压力/错误与订单日志匹配；支付延迟、SQL 和订单延迟与同一订单 ID 的 trace span 匹配；重试风暴要求 payment 503 和 orders 失败日志各至少 3 条；发布版本查 deployment；缓存、库存、拒付与重复投递查服务日志及订单 ID。每项写入 `signal_results`，附证据来源和记录引用；缺失项列入 `missing_signals`。缺少窗口内日志、同订单 trace span、或任一必需信号均判失败。Jaeger trace 需带 `opspilot.order_id` tag，避免邻近案例的 trace 冒充当前证据。
+当前矩阵进一步逐项评估全部 `must_observe`：数据库池压力/错误与订单日志匹配；支付延迟、SQL 和订单延迟与同一订单 ID 的 trace span 匹配；重试风暴要求 payment 503 和 orders 失败日志各至少 3 条；发布版本查 deployment；缓存、库存、拒付与重复投递查服务日志及订单 ID。每项写入 `signal_results`，附证据来源和记录引用；每条引用包含矩阵 `run_id`、该案 `[start,end)` 时间窗和来源；日志/trace 另核对唯一订单 ID，部署按窗口筛选。缺少窗口内日志、同订单 trace span、或任一必需信号均判失败。Jaeger trace 需带 `opspilot.order_id` tag，避免邻近案例的 trace 冒充当前证据。
 
-宿主验收只需运行一条命令：
+宿主验收只需运行一条命令。默认报告写入 Git 忽略的 `.tmp/op1-host-matrix-host.json`，不覆盖历史 `reports/op1-host-matrix.json`：
 
 ```powershell
 .\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json

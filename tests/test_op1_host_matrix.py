@@ -12,6 +12,7 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     script = (ROOT / "lab/run-host-matrix.ps1").read_text(encoding="utf-8-sig")
     scenario_runner = (ROOT / "lab/run-scenario.ps1").read_text(encoding="utf-8-sig")
     stop = (ROOT / "lab/stop.ps1").read_text(encoding="utf-8-sig")
+    contract = (ROOT / "lab/op1-matrix-contract.ps1").read_text(encoding="utf-8-sig")
     compose = (ROOT / "lab/compose.yaml").read_text(encoding="utf-8")
     truth = (ROOT / "lab/scenarios/truth.json").read_text(encoding="utf-8")
     assert '.tmp/op1-host-matrix-host.json' in script.splitlines()[0]
@@ -65,6 +66,8 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert '18081/logs?start=$recoveryFrom&end=$recoveryTo&limit=100' in script
     assert '18080/deployments?start=$recoveryFrom&end=$recoveryTo&limit=100' in script
     assert 'recovery=$recovery' in script
+    assert 'run_id=$runId;case_id=$case.case_id' in script
+    assert 'query_scope=@{run_id=$RunId;start=$Start;end=$End;order_id=$OrderId;source=$source}' in contract
     assert '-not $_.scenario_passed -or -not $_.recovery.passed' in script
     assert "$telemetryObserved=$logsObserved -and $tracesObserved" in script
     assert "logs_observed=$logsObserved" in script and "traces_observed=$tracesObserved" in script
@@ -79,7 +82,6 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "$windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0" in script
     assert "window_log_records=$safeLogs" in script and "window_trace_spans=$safeSpans" in script
     assert "$safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,dependency_host,status,attempt,remaining,path)" in script
-    contract = (ROOT / "lab/op1-matrix-contract.ps1").read_text(encoding="utf-8-sig")
     assert '"opspilot.order_id", "http.response.status_code"' in contract
     assert 'Where-Object { $_.Name -in @("severity", "service_version", "error_type", "dependency_host", "status", "attempt", "remaining", "path") }' in contract
     assert "$settleAttempts=if ($case.fault -eq \"bad_release\") { 10 } else { 2 }" in script
@@ -275,8 +277,15 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         spans.append({"processID": process_ids[service], "operationName": operation,
                       "spanID": f"span-{len(spans)}", "startTime": start_us + 1_000_000, "duration": duration,
                       "tags": [{"key": "opspilot.order_id", "type": "string", "value": order_id}]})
-    fixture = {"cases": truth["cases"], "order_id": order_id, "logs": logs,
-               "deployments": [{"service": "orders", "version": "v2", "timestamp": (start + dt.timedelta(seconds=5)).isoformat().replace("+00:00", "Z")}],
+    spans.append({"processID": process_ids["payment"], "operationName": "payment/charge",
+                  "spanID": "other-run-span", "startTime": start_us - 1, "duration": 10_000_000,
+                  "tags": [{"key": "opspilot.order_id", "type": "string", "value": order_id}]})
+    fixture = {"cases": truth["cases"], "run_id": "fixture-run-001", "order_id": order_id, "logs": logs,
+               "deployments": [
+                   {"record_id": "other-run-before", "service": "orders", "version": "v2", "timestamp": (start - dt.timedelta(seconds=1)).isoformat().replace("+00:00", "Z")},
+                   {"record_id": "current-run", "service": "orders", "version": "v2", "timestamp": (start + dt.timedelta(seconds=5)).isoformat().replace("+00:00", "Z")},
+                   {"record_id": "other-run-after", "service": "orders", "version": "v2", "timestamp": end.isoformat().replace("+00:00", "Z")},
+               ],
                "traces": [{"traceID": "trace-fixture-001", "processes": {pid: {"serviceName": service}
                                             for service, pid in process_ids.items()}, "spans": spans}]}
     encoded = base64.b64encode(json.dumps(fixture).encode()).decode()
@@ -286,8 +295,8 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         f"$fixture=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{encoded}'))|ConvertFrom-Json; "
         f"$start='{start.isoformat().replace('+00:00', 'Z')}'; $end='{end.isoformat().replace('+00:00', 'Z')}'; "
         "$all=@(); foreach ($case in $fixture.cases) { "
-        "$all+=@(Get-ObservedSignals $case $fixture.order_id $fixture.logs $fixture.deployments $fixture.traces $start $end) }; "
-        "$absent=@(Get-ObservedSignals $fixture.cases[0] $fixture.order_id @() @() @() $start $end); "
+        "$all+=@(Get-ObservedSignals $case $fixture.order_id $fixture.logs $fixture.deployments $fixture.traces $start $end $fixture.run_id) }; "
+        "$absent=@(Get-ObservedSignals $fixture.cases[0] $fixture.order_id @() @() @() $start $end $fixture.run_id); "
         "[pscustomobject]@{all=$all;absent=$absent}|ConvertTo-Json -Depth 8 -Compress"
     )
     result = subprocess.run(
@@ -302,5 +311,11 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
     assert all(item["evidence"] for item in observed)
     assert all(item["raw_matches"] for item in observed)
     assert all(item["query_scope"]["order_id"] == order_id for item in observed)
+    assert all(item["query_scope"]["run_id"] == "fixture-run-001" for item in observed)
     assert all(record.get("order_id") == order_id for item in observed for record in item["raw_matches"] if item["query_scope"]["source"] != "deployments")
+    assert all(record["run_id"] == "fixture-run-001" and record["window_start"] == outcome["all"][0]["query_scope"]["start"] and record["window_end"] == outcome["all"][0]["query_scope"]["end"] for item in observed for record in item["raw_matches"])
+    deployment_evidence = next(item for item in observed if item["name"] == "orders_v2")["raw_matches"]
+    assert [record["record_id"] for record in deployment_evidence] == ["current-run"]
+    assert all(record["record_id"] != "out-of-window" for item in observed for record in item["raw_matches"])
+    assert all(record["span_id"] != "other-run-span" for item in observed for record in item["raw_matches"])
     assert all(not item["observed"] and item["raw_matches"] == [] and item["query_scope"]["start"] for item in outcome["absent"])
