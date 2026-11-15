@@ -4,7 +4,7 @@
 
 该计划仅离线校验快照、路由与预算。DeepSeek 余额未知，尚未推理。执行下面命令时，runner 先请求余额与模型列表；只有余额、项目累计上限、三个 SHA 和 0 次推理的预检结果全部通过，才会启动评测。
 
-在 `E:\job\opspilot` 的 PowerShell 执行：
+在仓库根目录的 PowerShell 执行：
 
 ```powershell
 $runId = '076b2ef2-4e61-4d65-9622-ecaab02268d1'
