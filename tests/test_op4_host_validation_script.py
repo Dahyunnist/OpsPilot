@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +29,36 @@ def test_bad_release_host_script_uses_same_encoded_utc_window_and_proves_run_ide
     assert '$_.order_id -eq $orderId' in source
     assert '$_.run_id -eq $runId -and $_.order_id -eq $orderId' in source
     assert '$result.deployment.version -ne "v2"' in source
+
+
+def test_dns_evidence_scalar_is_counted_in_windows_powershell_51():
+    executable = shutil.which("powershell.exe")
+    if not executable:
+        import pytest
+        pytest.skip("Windows PowerShell 5.1 is unavailable")
+    source = (ROOT / "lab" / "verify-bad-release.ps1").read_text(encoding="utf-8")
+    assert "$dnsEvidence = @($matchingLogs | Where-Object {" in source
+    assert "$dnsEvidence.Count -eq 0" in source
+    powershell = r"""
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) {
+    throw "Expected Windows PowerShell 5.1, got $($PSVersionTable.PSVersion)."
+}
+$matchingLogs = @(
+    [pscustomobject]@{ dependency_host = 'inventory-v2'; error_reason = '[Errno -5] No address associated with hostname' }
+    [pscustomobject]@{ dependency_host = 'database'; error_reason = '' }
+)
+$dnsEvidence = @($matchingLogs | Where-Object {
+    $_.dependency_host -eq 'inventory-v2' -or
+    $_.error_reason -match 'inventory-v2|Name or service not known|No address associated'
+})
+if ($dnsEvidence.Count -ne 1) { throw "Expected one DNS record, found $($dnsEvidence.Count)." }
+Write-Output "Windows PowerShell 5.1 DNS evidence count: $($dnsEvidence.Count)"
+"""
+    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-Command", powershell],
+        capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "Windows PowerShell 5.1 DNS evidence count: 1" in result.stdout
 
 
 def test_host_validation_guide_lists_each_blocked_socket_test_separately():

@@ -15,6 +15,14 @@ Set-Location (git rev-parse --show-toplevel)
 
 结果 JSON 写到 `reports/op4-bad-release-host-<run_id>.json`，包含唯一 run/order ID、请求状态、部署版本、匹配日志与清理状态。deployment JSONL 追加到被忽略的 `lab/telemetry/deployments.jsonl`；该合成记录保留，后续查询必须使用自己的 UTC 窗口。报告只有在脚本实际通过所有断言时才标 `passed`；Docker 权限阻塞不是通过。
 
+Windows PowerShell 5.1 对单条管道输出的 `.Count` 与 PowerShell 7 行为不同。DNS 断言已改为先将筛选结果显式收进数组。此前 run `8a23a2cd-779d-4d65-9027-bb12cc9e673b` 的失败 JSON 原样保留；其中 502、DNS、deployment 和清理证据有效，最终断言失败属于脚本兼容性缺陷。修复后由用户用新 run ID 完整重跑：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\lab\verify-bad-release.ps1
+```
+
+本机单元回归只运行 Windows PowerShell 5.1 断言片段，不启动 Docker；它不替代上面的宿主重跑。
+
 ## A2A/MCP socket 用例逐项复测
 
 先确认依赖已装：A2A 用例需要仓库固定的 `requirements-a2a-interop.txt`；MCP 用例需要开发依赖。逐条运行，不要把挂起误报为通过；某项超时或权限拒绝后，保留完整错误，再运行下一条。

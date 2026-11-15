@@ -112,6 +112,10 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 验证：OP-1 定向测试 15 项通过；全套 `.venv` pytest 为 256 项及 69 子测试通过。该矩阵是本机 Docker Compose 合成环境验收，不是生产证据，也不证明 Agent 诊断准确率。
 
+## 2026-11-15 Windows PowerShell 5.1 宿主断言修复
+
+用户回传的宿主报告 `reports/op4-bad-release-host-8a23a2cd-779d-4d65-9027-bb12cc9e673b.json` 保持原样：单次 checkout 确实返回 502，唯一订单的两条日志、inventory-v2 DNS 错误和 orders/v2 deployment 均已采集，容器清理为空；报告仍为 `failed`，只因最终 DNS 断言在 Windows PowerShell 5.1 把单条 `Where-Object` 结果的 `.Count` 误判为空。验证脚本现先用 `@(...)` 固定数组，再判断 `.Count -eq 0`。新增 Windows PowerShell 5.1 单元回归，以单条 DNS 日志复现标量边界，不启动 Docker。用户需在自己的宿主机用新 run ID 再运行完整隔离脚本；旧失败报告不改写、不标为通过。
+
 ## 2026-11-15 场景机制、真值隔离与恢复范围审计
 
 静态核对确认 12 个 fault 值分别映射到独立代码分支；其中 `dependency_timeout` 与 `payment_reject` 分别是慢响应超时和即时 HTTP 503，`retry_storm` 是前三次临时拒绝后重试，`stale_inventory` 和 `inventory_depleted` 分别是陈旧副本信号与容量为零。`double_root` 是唯一组合案例，不作为第十二种单一原子机制。

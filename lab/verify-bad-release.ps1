@@ -127,7 +127,11 @@ try {
     if ($deployments.Count -ne 1 -or $result.deployment.version -ne "v2") {
         throw "Expected exactly one orders/v2 deployment record for run $runId in the reported UTC window."
     }
-    if (-not ($matchingLogs | Where-Object { $_.dependency_host -eq "inventory-v2" -or $_.error_reason -match "inventory-v2|Name or service not known|No address associated" }).Count) {
+    $dnsEvidence = @($matchingLogs | Where-Object {
+        $_.dependency_host -eq "inventory-v2" -or
+        $_.error_reason -match "inventory-v2|Name or service not known|No address associated"
+    })
+    if ($dnsEvidence.Count -eq 0) {
         throw "Logs did not prove the inventory-v2 DNS failure for order $orderId."
     }
     $result.status = "passed"
