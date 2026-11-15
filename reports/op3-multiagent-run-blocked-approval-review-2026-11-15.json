@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "artifact_type": "blocked_external_model_execution_audit",
+  "stage": "OP-3",
+  "run_id": "dbc4601c-992d-428b-8bc6-8d49fc59a27a",
+  "status": "blocked_before_process_start",
+  "approval_review": {
+    "decision": "rejected",
+    "reason": "该命令会向外部模型提供商发起付费推理并发送快照数据；现有可信用户消息未明确授权本次具体 payload、目的地及费用，不能据此执行。",
+    "workaround_attempted": false
+  },
+  "intended_destination": "https://api.deepseek.com/chat/completions",
+  "payload_review": {
+    "artifact": "reports/op3-multiagent-payload-review-2026-11-15.json",
+    "sha256": "f85c863ee98c22f47e37ed1e0d754e004cf952435be3769b06815882f6643fcb",
+    "spec_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "fixed_request_hashes": 15,
+    "dynamic_adjudicator_payloads": 3,
+    "gold_in_payload": false,
+    "credentials_in_payload": false,
+    "private_or_real_customer_data_in_payload": false
+  },
+  "budget": {
+    "max_provider_requests": 18,
+    "run_reserve_usd": 0.0230226,
+    "prior_ledger_peak_usd": 0.52152799,
+    "cumulative_worst_case_usd": 0.54455059,
+    "project_cap_usd": 0.6,
+    "within_project_cap": true
+  },
+  "preflight": {
+    "historical_source": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
+    "observed_at": "2026-11-15T07:48:39.145866+00:00",
+    "fresh": false,
+    "provider_balance_get_retried": false
+  },
+  "execution": {
+    "command_process_started": false,
+    "provider_requests": 0,
+    "model_inference_calls": 0,
+    "new_cost_usd": 0,
+    "report_written": false,
+    "request_checkpoint_written": false,
+    "cost_ledger_changed": false
+  }
+}

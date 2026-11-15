@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "OP-3",
   "artifact_type": "reviewable_rerun_plan",
-  "status": "authorized_for_execution",
+  "status": "blocked_by_auto_review",
   "run_id": "dbc4601c-992d-428b-8bc6-8d49fc59a27a",
   "planned_output": "reports/op3-multiagent-retest-2026-11-15-dbc4601c.json",
   "previous_run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
@@ -66,6 +66,14 @@
     "model_family_available": true,
     "freshness": "historical_non_live",
     "user_direction": "Use timestamped prior evidence; do not retry provider balance GET."
+  },
+  "execution_attempt": {
+    "status": "blocked_before_process_start",
+    "approval_review": "rejected",
+    "provider_requests": 0,
+    "inference_calls": 0,
+    "new_cost_usd": 0,
+    "audit": "reports/op3-multiagent-run-blocked-approval-review-2026-11-15.json"
   },
   "prompt_review": {
     "artifact": "reports/op3-multiagent-payload-review-2026-11-15.json",

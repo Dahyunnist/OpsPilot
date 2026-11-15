@@ -49,3 +49,9 @@ multi 三案均因 `ValueError` 降级到 rules，不能作为有效多 Agent �
 仅在本地聚合用户提供的两份 CSV，未复制原文件，未读取或保存 `api_key`、`user_id` 原值。重新核算 amount 全表：除 `request_count` 外，各行 `amount × price` 合计 ¥10.91277486，与 cost 全表精确相等。`api_key_name=OpsPilot` 的 amount 表有 18 行、1,305 次请求；缓存命中输入 114,556 tokens、¥0.00327408；缓存未命中输入 1,494,968 tokens、¥1.931891；输出 345,510 tokens、¥1.861372。按导出单价推算合计 ¥3.79653708。记录日期为 10/20、10/23、11/14，末端到 11/15 00:00。
 
 两份导出文件窗口均为 2026-10-17 至 2026-11-15。导出省略零用量日；cost 表的六个有金额日窗覆盖完整导出窗口，不表示周期不完整。cost 是账号级 CNY，缺少 `api_key_name`，不可归到 OpsPilot；¥10.91277486 不与 OpsPilot 的 ¥3.79653708 相加，以免重复计费。本地 USD ledger 仍单独记录，不做无汇率依据的换算。细项见离线审计 `reports/op3-multiagent-run-audit-2026-11-15.json`。
+
+## 2026-11-15 OP-3 重放授权审计与阻断
+
+provider usage redaction 曾改写含数字片段的冻结 record ID，导致 adjudicator 的 `all_evidence_ids` 与冻结快照不符。现在 redactor 保留已登记格式的 record ID；离线 payload harness 验证 3 例、18 个唯一提示（15 个固定请求、3 个响应依赖 adjudicator），0 provider 请求。静态请求 body hash、动态裁决器模板、冻结 SHA 与 reserve 见 `reports/op3-multiagent-payload-review-2026-11-15.json` 和复测计划。
+
+定向 OP-3 测试 60 项通过。全套中可执行的其余 286 项与 76 子测试通过；9 个 A2A/MCP 测试因 Windows socket 权限或 asyncio socketpair 初始化未完成。重放命令随后被自动审批拒绝，进程未启动、provider 请求 0、推理 0、费用 0。脱敏阻断记录为 `reports/op3-multiagent-run-blocked-approval-review-2026-11-15.json`。不得绕过自动审批。
