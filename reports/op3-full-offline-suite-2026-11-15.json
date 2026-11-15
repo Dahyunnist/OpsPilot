@@ -47,6 +47,35 @@
     "network_used": false,
     "cross_platform_environment_block_confirmed": false
   },
+  "local_linux_dependency_audit": {
+    "venv": {
+      "a2a_sdk_version": "0.3.8",
+      "a2a_sdk_file_count": 168,
+      "a2a_sdk_native_extensions": [],
+      "a2a_sdk_is_pure_python": true,
+      "installed_relevant_dependencies": {
+        "httpx": "0.28.1",
+        "protobuf": "7.36.2",
+        "jsonschema": "4.26.0",
+        "pydantic": "2.14.1",
+        "starlette": "1.9.0",
+        "anyio": "4.15.1",
+        "httpcore": "1.0.9",
+        "typing-extensions": "4.16.0"
+      },
+      "windows_only_native_dependency_file": "google/_upb/_message.pyd"
+    },
+    "pip_cache": {
+      "locally_built_wheels": 0,
+      "wheel_cache_size_bytes": 0,
+      "http_cache_files": 0,
+      "http_cache_size_bytes": 0,
+      "complete_linux_wheelhouse_available": false
+    },
+    "project_image_missing": ["pytest==9.1.1", "a2a-sdk==0.3.8", "Linux-compatible wheels for the A2A dependency set"],
+    "container_started": false,
+    "network_used": false
+  },
   "focused_suite": {
     "command": ".venv/Scripts/python.exe -m pytest -q -x -p no:cacheprovider --basetemp <repo-local-temp> tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
     "passed": 43,

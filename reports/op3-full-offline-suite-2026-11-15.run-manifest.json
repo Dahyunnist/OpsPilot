@@ -1,10 +1,10 @@
 {
   "report_path": "reports/op3-full-offline-suite-2026-11-15.json",
-  "report_sha256": "fd4050e632f235632ccaaeeec01fab5fbc3d19ba0eadd28493acdcfdd0c318cb",
+  "report_sha256": "f72706c63a66b392d07c75f8fc2e3d40adec3f61771bb6c78a2bf1e076769c8f",
   "op_run_manifest": {
     "status": "full_suite_timed_out; focused_suite_passed",
     "split": "offline_verification",
-    "result_fingerprint_sha256": "fd4050e632f235632ccaaeeec01fab5fbc3d19ba0eadd28493acdcfdd0c318cb",
+    "result_fingerprint_sha256": "f72706c63a66b392d07c75f8fc2e3d40adec3f61771bb6c78a2bf1e076769c8f",
     "cost_usd_estimate": 0,
     "parameters": {
       "full_suite_collected": 259,
@@ -18,7 +18,10 @@
       "a2a_selector": "same socketpair accept stalled",
       "a2a_semantics_verified": false,
       "linux_container_gate": "no confirmed test-dependency image",
-      "container_started": false
+      "container_started": false,
+      "a2a_sdk_pure_python": true,
+      "protobuf_native_extension": "Windows .pyd",
+      "linux_wheelhouse_available": false
     },
     "model_id": "none",
     "run_id": "op3-full-offline-suite-2026-11-15",

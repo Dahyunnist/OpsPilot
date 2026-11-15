@@ -141,3 +141,5 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 追加 A2A 定点诊断：默认 Proactor 与 `WindowsSelectorEventLoopPolicy` 对照都在 `socket._fallback_socketpair → accept` 卡住，10 秒故障栈一致。Selector 未能进入测试主体，故未验证 A2A 往返语义；问题不是 Proactor 独有，不能据此加 Selector fixture。未跳过或把超时当通过。测试环境当前不支持该回环 socketpair 初始化。诊断使用的专用临时目录已删除，记录补入同一报告。
 
 Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，但仓库唯一已跟踪 Dockerfile `lab/service/Dockerfile` 只安装 `lab/service/requirements.txt`；开发测试依赖 `pytest` 与可选 `a2a-sdk==0.3.8` 分别在 `requirements-dev.txt`、`requirements-a2a-interop.txt`，没有镜像构建依赖。故没有可确认包含项目测试依赖的 Linux 镜像；未启动容器、未拉镜像、未安装或联网。Linux A2A 对照未运行，尚不能标记 Windows 跨平台环境阻塞。详见本报告新增容器门禁记录。
+
+本机 `.venv` 只读依赖核验：`a2a-sdk 0.3.8` 共 168 个发行文件，无 `.pyd/.dll/.so`，属于纯 Python；其已安装的默认依赖包含 `httpx 0.28.1`、`protobuf 7.36.2`、`pydantic 2.14.1`、`google-api-core`、`httpx-sse` 等。`protobuf` 含 Windows 专用 `google/_upb/_message.pyd`。pip wheel cache 与 HTTP cache 均为 0 字节、0 文件，没有可复用 Linux wheelhouse。故不能把 Windows venv 直接搬入 Linux；当前项目服务镜像也未装 `pytest` 或 `a2a-sdk`。未尝试安装或联网。用户可在有权限的宿主机运行此前提供的单测命令并保留故障栈。
