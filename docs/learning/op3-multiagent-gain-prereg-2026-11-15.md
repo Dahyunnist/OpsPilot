@@ -48,7 +48,9 @@ multi 三案均因 `ValueError` 降级到 rules，不能作为有效多 Agent �
 
 仅在本地聚合用户提供的两份 CSV，未复制原文件，未读取或保存 `api_key`、`user_id` 原值。重新核算 amount 全表：除 `request_count` 外，各行 `amount × price` 合计 ¥10.91277486，与 cost 全表精确相等。`api_key_name=OpsPilot` 的 amount 表有 18 行、1,305 次请求；缓存命中输入 114,556 tokens、¥0.00327408；缓存未命中输入 1,494,968 tokens、¥1.931891；输出 345,510 tokens、¥1.861372。按导出单价推算合计 ¥3.79653708。记录日期为 10/20、10/23、11/14，末端到 11/15 00:00。
 
-两份导出文件窗口均为 2026-10-17 至 2026-11-15。导出省略零用量日；cost 表的六个有金额日窗覆盖完整导出窗口，不表示周期不完整。cost 是账号级 CNY，缺少 `api_key_name`，不可归到 OpsPilot；¥10.91277486 不与 OpsPilot 的 ¥3.79653708 相加，以免重复计费。本地 USD ledger 仍单独记录，不做无汇率依据的换算。细项见离线审计 `reports/op3-multiagent-run-audit-2026-11-15.json`。
+两份导出文件窗口均为 2026-10-17 至 2026-11-15。OpsPilot 的 ¥3.79653708 只代表该 CSV 区间，不是终身累计、当前 provider 余额或可用额度。导出省略零用量日；cost 表的六个有金额日窗覆盖完整导出窗口，不表示周期不完整。cost 是账号级 CNY，缺少 `api_key_name`，不可归到 OpsPilot；¥10.91277486 不与 OpsPilot 的 ¥3.79653708 相加，以免重复计费。本地 USD ledger 仍单独记录，不做无汇率依据的换算。原始 CSV 未复制入库或外发；细项见离线审计 `reports/op3-multiagent-run-audit-2026-11-15.json`。
+
+用户另回报一次新的只读 provider 预检以 `URLError` / `WinError 10013` 中止，推理请求未发出。摘要没有 run ID 或 endpoint，故保留为空；不重试、不推断余额。记录见 `reports/op3-provider-preflight-host-blocked-2026-11-15.json`。
 
 ## 2026-11-15 OP-3 重放授权审计与阻断
 

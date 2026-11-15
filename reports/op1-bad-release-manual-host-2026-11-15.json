@@ -1,0 +1,48 @@
+{
+  "evidence_schema_version": 1,
+  "project": "OpsPilot",
+  "scenario": "bad_release",
+  "evidence_source": "user-provided Windows host summary dated 2026-11-15",
+  "execution_context": "user host; outside Codex execution environment",
+  "environment": {
+    "kind": "synthetic_local_docker_compose",
+    "production_evidence": false
+  },
+  "invocation": ".\\lab\\run-scenario.ps1 -Scenario bad_release",
+  "verification_script": {
+    "path": "lab/verify-bad-release.ps1",
+    "used_for_this_evidence": false,
+    "status": "not_run_by_Codex"
+  },
+  "checkout": {
+    "endpoint": "http://127.0.0.1:18080/checkout",
+    "http_status": 502,
+    "request_count": null,
+    "order_id": null
+  },
+  "logs": {
+    "endpoint": "http://127.0.0.1:18081/logs",
+    "records_returned": true,
+    "record_count": null,
+    "order_id_correlation_verifiable": false
+  },
+  "deployments": {
+    "endpoint": "http://127.0.0.1:18080/deployments",
+    "orders_v2_record_returned": true,
+    "record_count": null,
+    "exact_window_verifiable": false
+  },
+  "cleanup": {
+    "stop_completed": true,
+    "containers_empty_after_stop": true,
+    "network_state": null,
+    "volume_state": null
+  },
+  "not_supplied": [
+    "exact UTC start/end",
+    "unique order ID",
+    "log and deployment records/counts",
+    "network and volume cleanup details"
+  ],
+  "interpretation_limit": "Manual run-scenario host smoke only. Do not attribute this result to verify-bad-release.ps1. It confirms a 502, returned log evidence, an orders/v2 deployment record, and empty containers after stop; it does not prove exact log/order linkage, exact UTC-window membership, production behavior, or Agent diagnosis."
+}

@@ -2,6 +2,8 @@
 
 来源：用户回传的本轮宿主输出。代理未启动、查询或停止容器；未调用模型。
 
+用户确认该次手工入口是 `run-scenario.ps1 -Scenario bad_release`，不是新增的 `verify-bad-release.ps1`。摘要证据另存于 `reports/op1-bad-release-manual-host-2026-11-15.json`；新脚本仍待用户安排主机联调。
+
 ## 本轮可确认事实
 
 - checkout 返回 HTTP `502`。

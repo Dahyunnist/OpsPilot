@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3 provider preflight",
+  "artifact_type": "user_reported_read_only_preflight_block",
+  "evidence_source": "user-provided summary dated 2026-11-15",
+  "run_id": null,
+  "run_id_status": "not_supplied",
+  "request": {
+    "kind": "read_only_provider_preflight",
+    "endpoint": null,
+    "retry_attempted": false
+  },
+  "outcome": {
+    "error_type": "URLError",
+    "error_code": "WinError 10013",
+    "provider_response_received": false,
+    "inference_started": false,
+    "model_calls": 0,
+    "new_cost_usd": 0,
+    "ledger_write": null
+  },
+  "interpretation": "Preflight failed at the local Windows network permission layer before provider response. Balance is unknown for this attempt. Do not retry from this execution environment; do not infer inference or cost."
+}
