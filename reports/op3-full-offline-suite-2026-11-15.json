@@ -30,6 +30,23 @@
     "fixture_added": false,
     "conclusion": "socketpair fallback accept stalls under both Windows loop implementations in this environment; Proactor-specific incompatibility is not established"
   },
+  "linux_container_gate": {
+    "status": "blocked_no_confirmed_test_dependency_image",
+    "local_project_image": "opspilot-lab-orders:latest",
+    "image_platform": "linux/amd64",
+    "tracked_dockerfile": "lab/service/Dockerfile",
+    "dockerfile_installs": "lab/service/requirements.txt only",
+    "test_dependencies": {
+      "pytest": "requirements-dev.txt",
+      "a2a_sdk": "requirements-a2a-interop.txt (a2a-sdk==0.3.8)"
+    },
+    "test_image_build_definition_found": false,
+    "container_started": false,
+    "image_pulled": false,
+    "packages_installed": false,
+    "network_used": false,
+    "cross_platform_environment_block_confirmed": false
+  },
   "focused_suite": {
     "command": ".venv/Scripts/python.exe -m pytest -q -x -p no:cacheprovider --basetemp <repo-local-temp> tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
     "passed": 43,
