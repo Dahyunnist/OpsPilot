@@ -23,3 +23,9 @@ Windows A2A localhost 测试遇 `WinError 10013`；MCP 标准 SDK 测试挂起�
 策略结果现在统一带 `failure_outcomes`，从相同脱敏 trace 计超时和取消；汇总按每策略累加。新增无 provider 调用的 fake timeout、fake cancellation 和 A2A `tasks/cancel` trace 测试。离线报告附四策略相同的单超时/单取消计数夹具，并标明它不是实验结果。定向测试 57 项通过。
 
 重新查询 Actions run `43673391511` 的 jobs，API 返回 `jobs: []`。无 job ID，无法取 step 或日志；失败原因仍未知。账户余额仍未检查；性能指标仍未运行。
+
+## 2026-11-15 provider 余额预检阻断
+
+本轮执行只读余额预检，Windows 网络层返回 `URLError` / `WinError 10013`，在收到 provider 响应前中止。余额未知；模型列表未查询；未发起推理，模型调用 `0` 次，新增费用 `$0`。未写评测结果或请求 checkpoint，未携带 Gold 标签。
+
+本地门禁通过：三份已授权快照 hash 匹配；冻结 spec hash 匹配；策略为 `rules/single/always-multi/auto`；请求上限 `18`；累计 worst-case `$0.54421557/$0.60`。provider 余额门禁未通过，因此没有策略比较结果。机器可读记录：`reports/op3-multiagent-provider-preflight-2026-11-15.json` 及其 `.run-manifest.json`。
