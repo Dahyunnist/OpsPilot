@@ -1,0 +1,482 @@
+{
+  "plan_schema_version": 2,
+  "artifact_type": "authorized_paid_replay_plan_v2",
+  "status": "authorized_for_execution",
+  "plan_id": "fada0bdf-559b-4e8a-8c29-a22bae658be5",
+  "plan_path": "reports/op3-multiagent-authorized-replay-plan-9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad.json",
+  "created_at": "2026-11-15T13:58:36.754621+00:00",
+  "run_id": "9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad",
+  "planned_output": "reports/op3-multiagent-authorized-replay-9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad.json",
+  "planned_checkpoint": "reports/op3-multiagent-authorized-replay-9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad.requests.jsonl",
+  "scope": {
+    "spec": "reports/op2-model-subset.json",
+    "spec_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "case_ids": [
+      "normal_slow_sql",
+      "missing_pool_evidence",
+      "contradictory_payment"
+    ],
+    "snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "strategies": [
+      "rules",
+      "single",
+      "multi",
+      "auto"
+    ],
+    "multi_policy": "always-multi",
+    "retries_enabled": false,
+    "gold_sent_to_provider": false
+  },
+  "authorization": {
+    "user_confirmed": true,
+    "source": "explicit current user instruction",
+    "run_id": "9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad",
+    "case_ids": [
+      "normal_slow_sql",
+      "missing_pool_evidence",
+      "contradictory_payment"
+    ],
+    "snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "strategies": [
+      "rules",
+      "single",
+      "multi",
+      "auto"
+    ],
+    "max_provider_requests": 18,
+    "reserve_usd": 0.0230226,
+    "allow_unusable_prior_paid_prompt_keys_only": "7218bb753b2a14ab1af3dfeb6cbcb218c580b51b0f161907791cee1bd2f48411",
+    "gold_sent_to_provider": false,
+    "secrets_sent_in_payload": false,
+    "private_or_real_customer_data_sent": false
+  },
+  "provider_preflight_evidence": {
+    "source": "reports/op3-multiagent-final-6b03e236-6a28-4f40-b752-a6325f522cb3.json",
+    "source_sha256": "4284cdfeb053123c7ee8c3e6d70d1ce98895d0e66a23da19f9199a4838c28665",
+    "source_run_id": "6b03e236-6a28-4f40-b752-a6325f522cb3",
+    "observed_at": "2026-11-15T13:30:19.705807+00:00",
+    "freshness": "timestamped_recent_preflight",
+    "max_age_seconds": 3600,
+    "balance_available": true,
+    "balance_currencies_available": [
+      "CNY"
+    ],
+    "models_endpoint": "GET /models succeeded",
+    "provider_model_ids": [
+      "deepseek-flash",
+      "deepseek-v4-pro"
+    ],
+    "provider": "official DeepSeek API; endpoint constrained by runner"
+  },
+  "request_plan": {
+    "count_basis": "unique prompts across selected routes; truncation retries disabled",
+    "per_case": [
+      {
+        "case_id": "normal_slow_sql",
+        "auto_route": "rules",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "rules"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "contradictory_payment",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      }
+    ],
+    "max_provider_requests": 18
+  },
+  "prompt_review": {
+    "artifact": "reports/op3-multiagent-payload-review-2026-11-15.json",
+    "sha256": "f85c863ee98c22f47e37ed1e0d754e004cf952435be3769b06815882f6643fcb",
+    "static_request_hashes": [
+      {
+        "case_id": "contradictory_payment",
+        "kind": "expert",
+        "source": "deployments",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "4cb1cb89497432207cdee02378538495d66a9231557df5b817692c6177fd3901",
+        "request_body_sha256": "a6f771f2504b0b56546c8ef5dc69de2dac6532d69adf36735428b7c6bc7a53a6",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "kind": "expert",
+        "source": "logs",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "3334a8f00a5d1513acdb876a2b7a37231039fc0cd17862484819137e08733272",
+        "request_body_sha256": "ef98f17fbfb2e43182025d56c5c8b8d13ee504504e3bbb158a10c79de106bf28",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "kind": "expert",
+        "source": "metrics",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "a5cd38f68724a31e73e922d3b28b713d6a1d1f2e1e3e1e23463640f22e63d333",
+        "request_body_sha256": "733a665d69598891fa62353a3f4458a133f8e888802fe3fafec66ad45a544333",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "kind": "expert",
+        "source": "traces",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "4e2c300c8760ff7cde6e8c18f57a4418873ce2462c9f45c6976f55eca0900a2d",
+        "request_body_sha256": "e4f7ba791e3247227f71e36143c3e69be899a7ebea3d33b59eb828fd520fcdd1",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "kind": "single",
+        "source": null,
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "ce92783e80768dbb95cdaaf295f6f73f33f7cea25bb6f226d2f9cecdf959505c",
+        "request_body_sha256": "61ad1e7b4504948d3d2342798575b901d64854ac2afc2e0fc0c6960854ff33a3",
+        "token_budget": 2048,
+        "max_tokens": 512
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "expert",
+        "source": "deployments",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "a7e9352ebba2b6c5613817676cff0b7684a48a3fbb25adbcf540f45dbd1e2d8c",
+        "request_body_sha256": "bcaaeec23eb942de3baaad339b592480286f88e527950c54c4d6c443a6a81137",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "expert",
+        "source": "logs",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "704d290feed044db89f3976b6d17862fadd012234cbefc8b0d07d7a698d35fff",
+        "request_body_sha256": "9c3e509387342aa6fa09f7b7280722cc6ef1dfb58fd1b9ff92c8592e39ff660a",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "expert",
+        "source": "metrics",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "5f0430e1bf634912e1f86912e66f18b2648bcb34c4374d01b385239c47f38fb4",
+        "request_body_sha256": "964f6deaae72eafdc220510b46df18825afe50e3401ab2eeb1edbf8a502b7cab",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "expert",
+        "source": "traces",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "8d4938a7249d64f131cc91514e1b2ed567c6a9fb6bb70dce39162cb851cf8406",
+        "request_body_sha256": "8c2619f6fb3f0cdb52a40a723d9b03678c53f2cc9d436e62920d39be7c29f838",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "single",
+        "source": null,
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "927abac01a7d00606a133c473234883d673641b0525f39cffb0ddc00acfa5d6d",
+        "request_body_sha256": "1fc151452e9ef0c64c8f19299dd77474a8e53c1e077dd8c8488f2c6227ebb4d3",
+        "token_budget": 2048,
+        "max_tokens": 512
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "expert",
+        "source": "deployments",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "c3f8dd8ace22fc5f05ae2500a6d4229f1ec3962fd76389cebf01ad1a6b521dd5",
+        "request_body_sha256": "726fb12d63355890dca341ef8d971ba8dc23ab62ef72f164bb25dc98520c3527",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "expert",
+        "source": "logs",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "251b9a7e7157e15a7afa62a4d07a41c9d1573ca2672d437688ea9c1002b1b86c",
+        "request_body_sha256": "0f2ea7dcc19fc93f6c592627687bf05a35a742c5c11215b6f7814866c7e294bc",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "expert",
+        "source": "metrics",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "ee8dc9aefa4a2737685b2f41a108b51398b236108da862fef648c401dc5137b1",
+        "request_body_sha256": "c4a1ce98c1ce216baddaeef5abe7eaf0e8741defabbd89dd3b0fa10d51874e02",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "expert",
+        "source": "traces",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "c18f9bbb887afc4296a97d08611b2c2318a10c07fb775f16b04caf39e242c8b8",
+        "request_body_sha256": "1c0d56e9ce0062d719fb814a7d20d7d641ff117aa07689706ff458d199122aa2",
+        "token_budget": 320,
+        "max_tokens": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "single",
+        "source": null,
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "bc1dd6abd1111392e4e83e6cae76a1a459473dee0bd9ff9e74a202400e75434b",
+        "request_body_sha256": "8edce187bd1c1be77006057c4487b955f1edacae6fcc29f5369967a0d0c46d0b",
+        "token_budget": 2048,
+        "max_tokens": 512
+      }
+    ],
+    "dynamic_adjudicator_templates": [
+      {
+        "case_id": "contradictory_payment",
+        "kind": "adjudicator",
+        "system_sha256": "322b9c94da201e1717368e520304be0f0d4dd51e72bf030688651e5cd73cc916",
+        "token_budget": 512,
+        "max_tokens": 512
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "kind": "adjudicator",
+        "system_sha256": "322b9c94da201e1717368e520304be0f0d4dd51e72bf030688651e5cd73cc916",
+        "token_budget": 512,
+        "max_tokens": 512
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "kind": "adjudicator",
+        "system_sha256": "322b9c94da201e1717368e520304be0f0d4dd51e72bf030688651e5cd73cc916",
+        "token_budget": 512,
+        "max_tokens": 512
+      }
+    ],
+    "dynamic_user_hash_policy": "compute and record exact hash from this run's sanitized source-isolated expert outputs immediately before each call"
+  },
+  "resume_policy": {
+    "reuse_requires_verified_usage": true,
+    "unusable_checkpoint_action": "reissue_only_if_key_is_explicitly_authorized",
+    "prior_paid_response_keys_are_allowlisted": true,
+    "unusable_prior_paid_prompt_keys": [
+      {
+        "case_id": "contradictory_payment",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "3334a8f00a5d1513acdb876a2b7a37231039fc0cd17862484819137e08733272",
+        "token_budget": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "4cb1cb89497432207cdee02378538495d66a9231557df5b817692c6177fd3901",
+        "token_budget": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "ce92783e80768dbb95cdaaf295f6f73f33f7cea25bb6f226d2f9cecdf959505c",
+        "token_budget": 2048
+      },
+      {
+        "case_id": "contradictory_payment",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "4e2c300c8760ff7cde6e8c18f57a4418873ce2462c9f45c6976f55eca0900a2d",
+        "token_budget": 320
+      },
+      {
+        "case_id": "contradictory_payment",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "a5cd38f68724a31e73e922d3b28b713d6a1d1f2e1e3e1e23463640f22e63d333",
+        "token_budget": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "704d290feed044db89f3976b6d17862fadd012234cbefc8b0d07d7a698d35fff",
+        "token_budget": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "a7e9352ebba2b6c5613817676cff0b7684a48a3fbb25adbcf540f45dbd1e2d8c",
+        "token_budget": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "927abac01a7d00606a133c473234883d673641b0525f39cffb0ddc00acfa5d6d",
+        "token_budget": 2048
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "8d4938a7249d64f131cc91514e1b2ed567c6a9fb6bb70dce39162cb851cf8406",
+        "token_budget": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "8d4938a7249d64f131cc91514e1b2ed567c6a9fb6bb70dce39162cb851cf8406",
+        "token_budget": 512
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "5f0430e1bf634912e1f86912e66f18b2648bcb34c4374d01b385239c47f38fb4",
+        "token_budget": 320
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "5f0430e1bf634912e1f86912e66f18b2648bcb34c4374d01b385239c47f38fb4",
+        "token_budget": 512
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "system_sha256": "03688bccc32fbf95ccd9cfd3e38d94e6891b48dc940d3430e8467f8d163b6336",
+        "user_payload_sha256": "251b9a7e7157e15a7afa62a4d07a41c9d1573ca2672d437688ea9c1002b1b86c",
+        "token_budget": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "system_sha256": "3dcd36023b3710a22663b8c4e5dcef11dbe74db22c32a2f32e7dcec21d796dd4",
+        "user_payload_sha256": "c3f8dd8ace22fc5f05ae2500a6d4229f1ec3962fd76389cebf01ad1a6b521dd5",
+        "token_budget": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "system_sha256": "6551324a1c998daf97417a36dcb9f54038c93810adf30c5365f74132e0421222",
+        "user_payload_sha256": "bc1dd6abd1111392e4e83e6cae76a1a459473dee0bd9ff9e74a202400e75434b",
+        "token_budget": 2048
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "system_sha256": "8d745ae61cc927a65c7d3758157b08f2a6cc9f79b8008482353e54cbf59f0e7c",
+        "user_payload_sha256": "c18f9bbb887afc4296a97d08611b2c2318a10c07fb775f16b04caf39e242c8b8",
+        "token_budget": 320
+      },
+      {
+        "case_id": "normal_slow_sql",
+        "system_sha256": "dfaefe4aabb14855cf89e5a7a8132666cc3ee03fa1564832e7b7ba063687b59b",
+        "user_payload_sha256": "ee8dc9aefa4a2737685b2f41a108b51398b236108da862fef648c401dc5137b1",
+        "token_budget": 320
+      }
+    ],
+    "unusable_prior_paid_prompt_keys_sha256": "7218bb753b2a14ab1af3dfeb6cbcb218c580b51b0f161907791cee1bd2f48411"
+  },
+  "checkpoint_inventory": [
+    {
+      "path": "reports/op3-op2-subset-evaluation-fixed-2026-11-14.requests.jsonl",
+      "sha256": "9ccd703c1db0d2a424ea19f90d7275c317cc4ba8cc8317471f8c3053f4087589",
+      "record_count": 14
+    },
+    {
+      "path": "reports/op3-op2-three-case-run-2026-11-14-r2.requests.jsonl",
+      "sha256": "2dc1b77434b00ddebac67d2123969cd485209f55ed85120d93cdd5232a542e9b",
+      "record_count": 24
+    },
+    {
+      "path": "reports/op3-op2-three-case-run-2026-11-14-r3.requests.jsonl",
+      "sha256": "52ff9171ff71cab686a9bdeff05fdd3526b1ca051ab997fc321e79fcd6f2c052",
+      "record_count": 20
+    }
+  ],
+  "prior_blocked_artifacts": [
+    {
+      "path": "reports/op3-multiagent-retest-plan-2026-11-15.json",
+      "sha256": "797ab2e52d0e1dab3b69ec3faec39b2b8211d9e17d372b38d09faf03e98510be"
+    },
+    {
+      "path": "reports/op3-multiagent-execution-blocked-2026-11-15.json",
+      "sha256": "736009ba2e1b9edd71fdc7f1e60fe563120519229c7d04331142890b48881eaf"
+    },
+    {
+      "path": "reports/op3-multiagent-run-blocked-approval-review-2026-11-15.json",
+      "sha256": "d82489350a4d6169c4213731280cb8c31e8793576e33ae5d22466a342c9662cb"
+    },
+    {
+      "path": "reports/op3-multiagent-final-6b03e236-6a28-4f40-b752-a6325f522cb3.json",
+      "sha256": "4284cdfeb053123c7ee8c3e6d70d1ce98895d0e66a23da19f9199a4838c28665"
+    }
+  ],
+  "budget": {
+    "ledger": "reports/api-cost-ledger.jsonl",
+    "ledger_sha256": "74cbe4af35b74ffab5ccafce7bcd57b1d564d168ba9e670c8ae589b695740cc4",
+    "latest_ledger_peak_usd": 0.52152799,
+    "prior_op3_subset_spend_usd": 0.04319797,
+    "run_reserve_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54455059,
+    "project_cap_usd": 0.6,
+    "within_project_cap": true
+  },
+  "reserve_policy": {
+    "lock": "RunBudget per-request lock",
+    "reserve_before_each_provider_call": true,
+    "max_provider_requests": 18,
+    "max_run_reserve_usd": 0.0230226,
+    "fail_closed_on_cap_or_key_mismatch": true
+  },
+  "data_safety": {
+    "synthetic_frozen_snapshots_only": true,
+    "gold_sent_to_provider": false,
+    "secrets_or_credentials_written": false,
+    "real_customer_data_sent": false,
+    "previous_reports_overwritten": false
+  },
+  "code_sha256": {
+    "runner": "ca03f5153857de230ff68bc54b309765e4946bd52da635bc75a0aa31e05d5312",
+    "strategy_eval": "d1965b51157079361d549da613641b58e7a8d167b22ba054e07ef886664f0cd9",
+    "model_client": "d4cd131bac46a215bdbc260451c716ab15fc0f19fcbb3462fc3e97a1266cd736",
+    "gold_scorer": "28f18d1f3f4ce2c4f444955952d7475a00ff40ecadc68cd986f6ff9834c7a882",
+    "plan_builder": "ee8fa3b62676e6e96c08149565cb9a2fd58f6e369fbe6cd7db0874497fbd4638"
+  },
+  "execution_gate": {
+    "provider_requests_sent_during_plan_prep": 0,
+    "inference_calls_sent_during_plan_prep": 0,
+    "execution_is_a_separate_explicit_command": true
+  }
+}

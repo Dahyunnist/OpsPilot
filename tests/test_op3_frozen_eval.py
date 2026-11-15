@@ -12,7 +12,7 @@ from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
-    _refuse_unavailable_paid_response, _total_cap_covers,
+    _refuse_unavailable_paid_response, _check_prior_paid_replay_key, _total_cap_covers,
     _planned_requests, _validate_new_run_id, _validate_prompt_payload,
     AUTHORIZATION_SCOPE,
     FROZEN_LIVE_CASES, PriorPaidResponseUnavailable, _validate_authorized_retest_plan, main, run)
@@ -397,6 +397,23 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertIn(request_key, uncertain)
         with self.assertRaises(PriorPaidResponseUnavailable):
             _refuse_unavailable_paid_response(request_key, set(), uncertain)
+
+    def test_authorized_paid_replay_requires_exact_allowlisted_prompt_key(self):
+        key = ("case-a", "a" * 64, "b" * 64, 320)
+        same_case_different_prompt = ("case-a", "a" * 64, "c" * 64, 320)
+        self.assertTrue(_check_prior_paid_replay_key(key, {key}, {key}))
+        self.assertFalse(_check_prior_paid_replay_key(key, set(), set()))
+        with self.assertRaisesRegex(ValueError, "outside the exact authorized replay key list"):
+            _check_prior_paid_replay_key(key, {key}, {same_case_different_prompt})
+
+    def test_checkpoint_usage_requires_consistent_total_before_reuse(self):
+        from scripts.evaluate_op2_frozen import _checkpoint_response_has_usable_usage
+
+        response = {"data": {"hypotheses": []}, "usage": {
+            "prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15}}
+        self.assertTrue(_checkpoint_response_has_usable_usage(response))
+        response["usage"]["total_tokens"] = 14
+        self.assertFalse(_checkpoint_response_has_usable_usage(response))
 
     def test_completed_checkpoint_can_be_reused_without_new_request(self):
         with TemporaryDirectory() as temp:

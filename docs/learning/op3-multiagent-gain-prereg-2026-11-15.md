@@ -59,3 +59,11 @@ multi 三案均因 `ValueError` 降级到 rules，不能作为有效多 Agent �
 provider usage redaction 曾改写含数字片段的冻结 record ID，导致 adjudicator 的 `all_evidence_ids` 与冻结快照不符。现在 redactor 保留已登记格式的 record ID；离线 payload harness 验证 3 例、18 个唯一提示（15 个固定请求、3 个响应依赖 adjudicator），0 provider 请求。静态请求 body hash、动态裁决器模板、冻结 SHA 与 reserve 见 `reports/op3-multiagent-payload-review-2026-11-15.json` 和复测计划。
 
 定向 OP-3 测试 60 项通过。全套中可执行的其余 286 项与 76 子测试通过；9 个 A2A/MCP 测试因 Windows socket 权限或 asyncio socketpair 初始化未完成。重放命令随后被自动审批拒绝，进程未启动、provider 请求 0、推理 0、费用 0。脱敏阻断记录为 `reports/op3-multiagent-run-blocked-approval-review-2026-11-15.json`。不得绕过自动审批。
+
+## 2026-11-15 OP-3 新授权重放计划准备
+
+按用户后续明确指示，仅准备新计划，不执行推理。计划 `reports/op3-multiagent-authorized-replay-plan-9d8dbf6b-ddb5-4c7f-9d9d-bcabe122d5ad.json` SHA-256 为 `6f11271d6ccc4cfe1b9ee50c674aab60b1e35da99b618000168b5068b39f6c1a`，绑定独立 run ID、输出和 checkpoint 路径、OP-3 spec、三份冻结快照、四策略及精确静态提示 hash / 动态裁决器模板。执行器要求单独提供此计划路径及 SHA-256，并逐项检查快照、提示、账本、checkpoint、旧阻断产物和运行代码 hash。
+
+预检来源为 `reports/op3-multiagent-final-6b03e236-6a28-4f40-b752-a6325f522cb3.json`，SHA-256 `4284cdfeb053123c7ee8c3e6d70d1ce98895d0e66a23da19f9199a4838c28665`，观测时间 `2026-11-15T13:30:19.705807+00:00`。证据显示 CNY 余额可用、`GET /models` 成功且列出 DeepSeek Flash；计划准备及校验时均在一小时有效窗内。来源 run 的推理请求数和实际费用均为 0。
+
+当前 ledger 峰值 `$0.52152799`，OP-3 子集历史费用 `$0.04319797`；run reserve `$0.02302260`，累计 worst-case `$0.54455059/$0.60`。计划最多 18 次请求，只允许重放 17 个 usage 不可验证的精确历史付费提示键；其余有效 usage checkpoint 可复用。RunBudget 按请求锁定预算，提示或账本 hash 不符即停止。定向 OP-3、策略、模型错误和授权计划测试共 62 项通过，计划和 provider 预检绑定校验通过，`git diff --check` 通过。本阶段 provider 请求 0、推理 0、费用 `$0`；OP-3 实验仍未执行，旧阻断报告及 ledger 未改写。

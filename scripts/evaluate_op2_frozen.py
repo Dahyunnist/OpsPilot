@@ -32,6 +32,7 @@ AUTHORIZATION_SCOPE = "three_case_frozen_subset"
 FIXED_WORST_CASE_USD = 0.0230226
 FIXED_COMPLETION_LIMIT = 512
 MAX_EXPLICIT_RUN_RESERVE_USD = Decimal("0.0230226")
+MAX_PROVIDER_PREFLIGHT_AGE_SECONDS = 3600
 DEFAULT_OUTPUT = ROOT / "reports" / "op3-op2-subset-evaluation.json"
 AUTHORIZED_RETEST_PLAN = ROOT / "reports" / "op3-multiagent-retest-plan-2026-11-15.json"
 ALLOWED_SNAPSHOT_HASHES = {
@@ -104,8 +105,10 @@ def _checkpoint_response_has_usable_usage(response: Any) -> bool:
         return False
     try:
         prompt_tokens = usage_token_count(usage.get("prompt_tokens"), "prompt_tokens")
-        usage_token_count(usage.get("completion_tokens"), "completion_tokens")
-        usage_token_count(usage.get("total_tokens"), "total_tokens")
+        completion_tokens = usage_token_count(usage.get("completion_tokens"), "completion_tokens")
+        total_tokens = usage_token_count(usage.get("total_tokens"), "total_tokens")
+        if total_tokens != prompt_tokens + completion_tokens:
+            return False
         details = usage.get("prompt_tokens_details")
         if isinstance(details, str):
             details = json.loads(details)
@@ -150,6 +153,41 @@ def _load_request_checkpoints(path: Path | list[Path]) -> tuple[dict[tuple[str, 
     return responses, uncertain
 
 
+def _unusable_paid_prompt_keys(output: Path) -> list[dict[str, Any]]:
+    prior_reports = _prior_reports(output)
+    completed, _audit = _prior_completed_requests(prior_reports)
+    checkpoint_paths = sorted((ROOT / "reports").glob("op3-op2-*.requests.jsonl"))
+    responses, uncertain = _load_request_checkpoints(checkpoint_paths)
+    keys = (completed | uncertain) - set(responses)
+    return [{"case_id": key[0], "system_sha256": key[1], "user_payload_sha256": key[2],
+        "token_budget": key[3]} for key in sorted(keys)]
+
+
+def _checkpoint_inventory() -> list[dict[str, Any]]:
+    rows = []
+    for path in sorted((ROOT / "reports").glob("op3-op2-*.requests.jsonl")):
+        records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        rows.append({"path": path.resolve().relative_to(ROOT.resolve()).as_posix(),
+            "sha256": _sha256(path), "record_count": len(records)})
+    return rows
+
+
+def _blocked_artifact_inventory() -> list[dict[str, str]]:
+    paths = [
+        ROOT / "reports" / "op3-multiagent-retest-plan-2026-11-15.json",
+        ROOT / "reports" / "op3-multiagent-execution-blocked-2026-11-15.json",
+        ROOT / "reports" / "op3-multiagent-run-blocked-approval-review-2026-11-15.json",
+        ROOT / "reports" / "op3-multiagent-final-6b03e236-6a28-4f40-b752-a6325f522cb3.json",
+    ]
+    rows = []
+    for path in paths:
+        if not path.is_file():
+            raise ValueError(f"required prior blocked artifact is missing: {path.name}")
+        rows.append({"path": path.resolve().relative_to(ROOT.resolve()).as_posix(),
+            "sha256": _sha256(path)})
+    return rows
+
+
 def _refuse_unavailable_paid_response(
         key: tuple[str, str, str, int],
         prior_completed_requests: set[tuple[str, str, str, int]],
@@ -157,6 +195,16 @@ def _refuse_unavailable_paid_response(
     if key in prior_completed_requests or key in checkpoint_uncertain:
         raise PriorPaidResponseUnavailable(
             "prior paid response is unavailable or unusable; refusing duplicate inference")
+
+
+def _check_prior_paid_replay_key(key: tuple[str, str, str, int],
+        prior_paid_keys: set[tuple[str, str, str, int]],
+        authorized_replay_keys: set[tuple[str, str, str, int]]) -> bool:
+    if key not in prior_paid_keys:
+        return False
+    if key not in authorized_replay_keys:
+        raise ValueError("unusable paid prompt is outside the exact authorized replay key list")
+    return True
 
 
 def _append_request_checkpoint(path: Path, record: dict[str, Any], lock: threading.Lock) -> None:
@@ -306,7 +354,9 @@ def run(output: Path, case_ids: list[str] | None = None,
         max_run_reserve_usd: Decimal | None = None,
         preflight_only: bool = False, run_id: str | None = None,
         allow_authorized_paid_replay: bool = False,
-        historical_provider_preflight: Path | None = None) -> dict[str, Any]:
+        historical_provider_preflight: Path | None = None,
+        authorized_replay_plan_path: Path | None = None,
+        authorized_replay_plan_sha256: str | None = None) -> dict[str, Any]:
     if not preflight_only and output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
     if case_ids is None or set(case_ids) != set(FROZEN_LIVE_CASES) or len(case_ids) != len(FROZEN_LIVE_CASES):
@@ -349,14 +399,17 @@ def run(output: Path, case_ids: list[str] | None = None,
     if allow_authorized_paid_replay:
         if preflight_only:
             raise ValueError("authorized paid replay requires an execution run, not preflight-only mode")
-        if historical_provider_preflight is None:
-            raise ValueError("authorized paid replay requires the timestamped preflight evidence in its plan")
-        authorized_replay_plan = _validate_authorized_retest_plan(AUTHORIZED_RETEST_PLAN,
-            output, run_id, frozen, cases, strategies, reserved_case_cap, request_plan, budget.prior_spent_usd)
+        if historical_provider_preflight is None or authorized_replay_plan_path is None:
+            raise ValueError("authorized paid replay requires its versioned plan and timestamped preflight evidence")
+        if not authorized_replay_plan_sha256:
+            raise ValueError("authorized paid replay requires the independently supplied plan SHA-256")
+        authorized_replay_plan = _validate_authorized_retest_plan(authorized_replay_plan_path,
+            output, run_id, frozen, cases, strategies, reserved_case_cap, request_plan,
+            budget.prior_spent_usd, authorized_replay_plan_sha256)
         historical_preflight = _load_historical_provider_preflight(historical_provider_preflight,
             authorized_replay_plan, configured_model)
-    elif historical_provider_preflight is not None:
-        raise ValueError("historical provider evidence is accepted only with its exact authorized replay plan")
+    elif any((historical_provider_preflight, authorized_replay_plan_path, authorized_replay_plan_sha256)):
+        raise ValueError("replay plan and provider evidence require --allow-authorized-paid-replay")
 
     prior_report_paths = _prior_reports(output)
     prior_completed_requests, prior_request_audit = _prior_completed_requests(prior_report_paths)
@@ -368,6 +421,10 @@ def run(output: Path, case_ids: list[str] | None = None,
     checkpoint_responses, checkpoint_uncertain = _load_request_checkpoints([*reusable_checkpoints, checkpoint_path])
     checkpoint_responses = {key: value for key, value in checkpoint_responses.items() if key[0] in selected_ids}
     checkpoint_uncertain = {key for key in checkpoint_uncertain if key[0] in selected_ids}
+    authorized_replay_keys = ({(item["case_id"], item["system_sha256"],
+        item["user_payload_sha256"], int(item["token_budget"]))
+        for item in authorized_replay_plan.get("resume_policy", {}).get("unusable_prior_paid_prompt_keys", [])}
+        if authorized_replay_plan is not None else set())
 
     if historical_preflight is not None:
         model_ids = set(historical_preflight["provider_model_ids"])
@@ -439,11 +496,16 @@ def run(output: Path, case_ids: list[str] | None = None,
                 if "experts" in request_payload:
                     expected_adjudicator_hash = hashlib.sha256(
                         review["system_prompts"]["adjudicator"].encode("utf-8")).hexdigest()
+                    dynamic_allowlist = {item["case_id"]: item for item in
+                        authorized_replay_plan["prompt_review"]["dynamic_adjudicator_templates"]}
+                    dynamic = dynamic_allowlist.get(case["spec"]["id"], {})
                     expected_ids = sorted(records_by_id)[:1000]
                     expected_sources = sorted(source for source, result in case["sources"].items()
                         if result.get("records"))
                     actual_sources = sorted(item.get("source") for item in request_payload.get("experts", []))
                     if (system_hash != expected_adjudicator_hash
+                            or dynamic.get("system_sha256") != system_hash
+                            or dynamic.get("token_budget") != token_budget
                             or request_payload.get("all_evidence_ids") != expected_ids
                             or actual_sources != expected_sources):
                         raise ValueError("adjudicator payload differs from authorized source scope")
@@ -476,13 +538,15 @@ def run(output: Path, case_ids: list[str] | None = None,
                 "system_sha256": key[1], "user_payload_sha256": key[2],
                 "request_body_sha256": request_body_hash,
                 "token_budget": token_budget, "status": "pending"}
-            if key in prior_completed_requests or key in checkpoint_uncertain:
+            prior_paid_keys = prior_completed_requests | checkpoint_uncertain
+            if key in prior_paid_keys:
                 if authorized_replay_plan is None:
                     audit["previous_paid_response_unavailable"] = True
                     audit["status"] = "previous_paid_response_unavailable"
                     with audit_lock:
                         request_audit.append(audit)
                     _refuse_unavailable_paid_response(key, prior_completed_requests, checkpoint_uncertain)
+                _check_prior_paid_replay_key(key, prior_paid_keys, authorized_replay_keys)
                 audit["previous_paid_response_unavailable"] = True
                 audit["prior_paid_replay_authorized"] = True
             with audit_lock:
@@ -517,8 +581,7 @@ def run(output: Path, case_ids: list[str] | None = None,
                         "user_payload_sha256": key[2], "token_budget": token_budget,
                         "request_body_sha256": request_body_hash,
                         "request_scope": budget.run_id,
-                        "prior_paid_replay_authorized": authorized_replay_plan is not None and
-                            (key in prior_completed_requests or key in checkpoint_uncertain)})
+                        "prior_paid_replay_authorized": key in authorized_replay_keys})
             except Exception as exc:
                 audit.update({"status": "failed_or_blocked", "error_type": type(exc).__name__})
                 raise
@@ -591,8 +654,14 @@ def run(output: Path, case_ids: list[str] | None = None,
             "provider_request_attempts": provider_request_attempts,
             "max_provider_requests": request_plan["max_provider_requests"],
             "authorized_prior_paid_replay": authorized_replay_plan is not None},
-        "authorization": ({"manifest": AUTHORIZED_RETEST_PLAN.relative_to(ROOT).as_posix(),
-            "status": "authorized_exact_scope"} if authorized_replay_plan is not None else None),
+        "authorization": ({"manifest": authorized_replay_plan_path.resolve().relative_to(ROOT.resolve()).as_posix(),
+            "manifest_sha256": authorized_replay_plan_sha256,
+            "status": "authorized_exact_scope",
+            "authorized_unusable_prior_paid_prompt_keys": len(authorized_replay_keys),
+            "provider_preflight_source": historical_preflight.get("source"),
+            "provider_preflight_sha256": historical_preflight.get("source_sha256"),
+            "provider_preflight_observed_at": historical_preflight.get("observed_at")}
+            if authorized_replay_plan is not None else None),
         "code_sha256": {name: _sha256(ROOT / path) for name, path in {
             "runner": "scripts/evaluate_op2_frozen.py", "strategy_eval": "opspilot/strategy_eval.py",
             "model_client": "opspilot/model_client.py", "gold_scorer": "scripts/evaluate_lab.py"}.items()},
@@ -621,9 +690,13 @@ def main() -> int:
         help="verify frozen hashes, budget and provider without inference or report writes")
     parser.add_argument("--run-id", help="UUID shared by preflight and execution")
     parser.add_argument("--allow-authorized-paid-replay", action="store_true",
-        help="permit re-requesting prior paid prompts only when the committed OP-3 authorization plan matches exactly")
+        help="permit re-requesting prior paid prompts only when a versioned exact-scope authorization plan matches")
     parser.add_argument("--historical-provider-preflight", type=Path,
-        help="use timestamped provider evidence named by the exact approved replay plan; never refreshed by this option")
+        help="use timestamped provider evidence named by the exact replay plan; never refreshed by this option")
+    parser.add_argument("--authorized-replay-plan", type=Path,
+        help="versioned authorization plan for this exact run ID, output, hashes, strategy and paid-key allowlist")
+    parser.add_argument("--authorized-replay-plan-sha256",
+        help="expected SHA-256 of the authorization plan, supplied separately to detect plan edits")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")
@@ -631,7 +704,9 @@ def main() -> int:
         report = run(args.output, case_ids=args.case_ids, strategies=tuple(args.strategies),
             max_run_reserve_usd=args.max_run_reserve_usd, preflight_only=args.preflight_only,
             run_id=args.run_id, allow_authorized_paid_replay=args.allow_authorized_paid_replay,
-            historical_provider_preflight=args.historical_provider_preflight)
+            historical_provider_preflight=args.historical_provider_preflight,
+            authorized_replay_plan_path=args.authorized_replay_plan,
+            authorized_replay_plan_sha256=args.authorized_replay_plan_sha256)
     except Exception as exc:
         print(json.dumps({"status": "stopped_before_or_during_run", "error": type(exc).__name__,
             "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
@@ -671,7 +746,8 @@ def _planned_requests(cases: list[dict[str, Any]], strategies: tuple[str, ...]) 
 
 def _validate_authorized_retest_plan(plan_path: Path, output: Path, run_id: str,
         frozen: dict[str, Any], cases: list[dict[str, Any]], strategies: tuple[str, ...],
-        reserve_usd: Decimal, request_plan: dict[str, Any], prior_peak_usd: float) -> dict[str, Any]:
+        reserve_usd: Decimal, request_plan: dict[str, Any], prior_peak_usd: float,
+        expected_plan_sha256: str | None = None) -> dict[str, Any]:
     try:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -679,11 +755,18 @@ def _validate_authorized_retest_plan(plan_path: Path, output: Path, run_id: str,
     authorization = plan.get("authorization", {})
     expected_cases = [case["spec"]["id"] for case in cases]
     expected_hashes = {case["spec"]["id"]: case["snapshot_sha256"] for case in cases}
+    report_rel = lambda path: path.resolve().relative_to(ROOT.resolve()).as_posix()
     checks = [
+        plan.get("plan_schema_version") == 2,
+        plan.get("artifact_type") == "authorized_paid_replay_plan_v2",
         plan.get("status") == "authorized_for_execution",
+        expected_plan_sha256 is not None and _sha256(plan_path) == expected_plan_sha256,
+        plan.get("plan_path") == report_rel(plan_path),
         authorization.get("user_confirmed") is True,
+        authorization.get("source") == "explicit current user instruction",
         authorization.get("run_id") == run_id == plan.get("run_id"),
-        plan.get("planned_output") == output.resolve().relative_to(ROOT.resolve()).as_posix(),
+        plan.get("planned_output") == report_rel(output),
+        plan.get("planned_checkpoint") == report_rel(_checkpoint_path(output)),
         plan.get("scope", {}).get("spec_sha256") == frozen["spec_sha256"],
         plan.get("scope", {}).get("case_ids") == expected_cases,
         plan.get("scope", {}).get("snapshot_sha256") == expected_hashes,
@@ -695,15 +778,36 @@ def _validate_authorized_retest_plan(plan_path: Path, output: Path, run_id: str,
         authorization.get("max_provider_requests") == request_plan["max_provider_requests"] == 18,
         authorization.get("reserve_usd") == float(reserve_usd) == float(FIXED_WORST_CASE_USD),
         plan.get("request_plan", {}).get("max_provider_requests") == request_plan["max_provider_requests"],
+        plan.get("request_plan") == request_plan,
         plan.get("budget", {}).get("latest_ledger_peak_usd") == round(prior_peak_usd, 8),
+        plan.get("budget", {}).get("prior_op3_subset_spend_usd") == float(_prior_subset_spend(
+            ROOT / "reports" / "api-cost-ledger.jsonl")),
         plan.get("budget", {}).get("cumulative_worst_case_usd") == round(prior_peak_usd + float(reserve_usd), 8),
+        plan.get("budget", {}).get("ledger_sha256") == _sha256(ROOT / "reports" / "api-cost-ledger.jsonl"),
+        plan.get("budget", {}).get("within_project_cap") is True,
         plan.get("data_safety", {}).get("synthetic_frozen_snapshots_only") is True,
         plan.get("data_safety", {}).get("gold_sent_to_provider") is False,
         plan.get("data_safety", {}).get("secrets_or_credentials_written") is False,
-        plan.get("historical_provider_preflight", {}).get("freshness") == "historical_non_live",
+        plan.get("resume_policy", {}).get("reuse_requires_verified_usage") is True,
+        plan.get("resume_policy", {}).get("unusable_checkpoint_action") == "reissue_only_if_key_is_explicitly_authorized",
+        plan.get("reserve_policy", {}).get("lock") == "RunBudget per-request lock",
+        plan.get("reserve_policy", {}).get("max_provider_requests") == 18,
+        plan.get("reserve_policy", {}).get("max_run_reserve_usd") == float(reserve_usd),
+        plan.get("provider_preflight_evidence", {}).get("max_age_seconds") == MAX_PROVIDER_PREFLIGHT_AGE_SECONDS,
+        authorization.get("allow_unusable_prior_paid_prompt_keys_only") == hashlib.sha256(
+            json.dumps(plan.get("resume_policy", {}).get("unusable_prior_paid_prompt_keys", []),
+                ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
     ]
     if not all(checks):
-        raise ValueError("authorized replay plan differs from run id, frozen payload, route, or budget")
+        failed = [str(index) for index, passed in enumerate(checks) if not passed]
+        raise ValueError("authorized replay plan differs from run id, frozen payload, route, or budget; checks="
+            + ",".join(failed))
+    if plan.get("checkpoint_inventory") != _checkpoint_inventory():
+        raise ValueError("checkpoint inventory changed after authorized plan preparation")
+    if plan.get("resume_policy", {}).get("unusable_prior_paid_prompt_keys") != _unusable_paid_prompt_keys(output):
+        raise ValueError("unusable paid prompt keys differ from the exact authorization allowlist")
+    if plan.get("prior_blocked_artifacts") != _blocked_artifact_inventory():
+        raise ValueError("prior blocked artifacts changed after authorized plan preparation")
     prompt_review_ref = plan.get("prompt_review", {})
     expected_review_path = ROOT / "reports" / "op3-multiagent-payload-review-2026-11-15.json"
     if prompt_review_ref.get("artifact") != expected_review_path.relative_to(ROOT).as_posix():
@@ -725,18 +829,27 @@ def _validate_authorized_retest_plan(plan_path: Path, output: Path, run_id: str,
             or payload_review.get("validation", {}).get("credentials_in_payload") is not False
             or payload_review.get("validation", {}).get("real_customer_data_in_payload") is not False):
         raise ValueError("authorized payload review differs from frozen scope or send limits")
-    if prompt_review_ref.get("static_request_hash_count") != len(static_requests):
-        raise ValueError("authorized static prompt count differs from payload review")
-    prompt_review_ref["static_request_hash_count"] = len(static_requests)
+    if (prompt_review_ref.get("static_request_hashes") != static_requests
+            or prompt_review_ref.get("dynamic_adjudicator_templates") != payload_review.get("dynamic_adjudicator_templates")):
+        raise ValueError("authorized prompt hashes differ from payload review")
+    expected_code_hashes = {
+        "runner": "scripts/evaluate_op2_frozen.py",
+        "strategy_eval": "opspilot/strategy_eval.py",
+        "model_client": "opspilot/model_client.py",
+        "gold_scorer": "scripts/evaluate_lab.py",
+        "plan_builder": "scripts/prepare_op3_authorized_replay.py",
+    }
+    if plan.get("code_sha256") != {name: _sha256(ROOT / path) for name, path in expected_code_hashes.items()}:
+        raise ValueError("runner, strategy, model, scorer or plan-builder code changed after authorization")
     plan["_validated_payload_review"] = payload_review
     return plan
 
 
 def _load_historical_provider_preflight(path: Path, plan: dict[str, Any], model_id: str) -> dict[str, Any]:
-    evidence = plan.get("historical_provider_preflight", {})
+    evidence = plan.get("provider_preflight_evidence", {})
     if path.resolve().relative_to(ROOT.resolve()).as_posix() != evidence.get("source"):
         raise ValueError("historical provider preflight path differs from approved plan")
-    if _sha256(path) != evidence.get("sha256"):
+    if _sha256(path) != evidence.get("source_sha256"):
         raise ValueError("historical provider preflight report hash differs from approved plan")
     try:
         report = json.loads(path.read_text(encoding="utf-8"))
@@ -745,19 +858,27 @@ def _load_historical_provider_preflight(path: Path, plan: dict[str, Any], model_
     checked_at = report.get("started_at")
     preflight = report.get("provider_preflight", {})
     models = report.get("model", {}).get("provider_model_ids", [])
-    if checked_at != evidence.get("observed_at") or preflight.get("balance_available") is not True:
+    if (checked_at != evidence.get("observed_at")
+            or report.get("run_id") != evidence.get("source_run_id")
+            or preflight.get("balance_available") is not True):
         raise ValueError("historical provider balance evidence does not match approved plan")
+    observed = datetime.fromisoformat(checked_at.replace("Z", "+00:00"))
+    age_seconds = (datetime.now(timezone.utc) - observed.astimezone(timezone.utc)).total_seconds()
+    if age_seconds < 0 or age_seconds > int(evidence.get("max_age_seconds", 0)):
+        raise ValueError("provider preflight evidence is outside its authorized freshness window")
     if preflight.get("inference_preflight") != "GET /models succeeded":
         raise ValueError("historical model-list preflight did not succeed")
     if report.get("model", {}).get("configured_id") != model_id:
         raise ValueError("historical provider preflight used a different configured model")
     if not set(models).intersection({"deepseek-flash", "deepseek-v4-flash"}):
         raise ValueError("historical provider model list does not include the approved model family")
+    if preflight.get("fresh") is not True or "CNY" not in preflight.get("balance_currencies_available", []):
+        raise ValueError("provider preflight does not prove a fresh available CNY balance")
     return {"observed_at": checked_at, "balance_available": True,
         "balance_currencies_available": preflight.get("balance_currencies_available", []),
         "provider_model_ids": models, "fresh": False,
         "source": path.resolve().relative_to(ROOT.resolve()).as_posix(),
-        "source_sha256": evidence["sha256"]}
+        "source_sha256": evidence["source_sha256"]}
 
 
 if __name__ == "__main__":
