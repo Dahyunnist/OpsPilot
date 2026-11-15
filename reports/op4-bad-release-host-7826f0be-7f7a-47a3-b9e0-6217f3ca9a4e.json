@@ -1,0 +1,56 @@
+{
+    "schema_version":  1,
+    "artifact_type":  "op4_bad_release_host_verification",
+    "status":  "passed",
+    "run_id":  "7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e",
+    "compose_project":  "opspilot-bad-release-7826f0be7f7a",
+    "order_id":  "bad-release-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e",
+    "synthetic_only":  true,
+    "request_attempts":  1,
+    "expected_http_status":  502,
+    "actual_http_status":  502,
+    "window_start_utc":  "2026-11-15T13:03:04.8328097Z",
+    "window_end_utc":  "2026-11-15T13:03:09.0600414Z",
+    "deployment":  {
+                       "record_id":  "1a6f51c1-26f4-470c-9689-766bc2aa813a",
+                       "run_id":  "7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e",
+                       "order_id":  "bad-release-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e",
+                       "timestamp":  "2026-11-15T13:03:04.8328097Z",
+                       "service":  "orders",
+                       "version":  "v2",
+                       "synthetic":  true
+                   },
+    "matching_order_logs":  [
+                                {
+                                    "timestamp":  "2026-11-15T13:03:08.957Z",
+                                    "severity":  "error",
+                                    "message":  "inventory dependency failed",
+                                    "service":  "orders",
+                                    "service_version":  "v2",
+                                    "trace_id":  "ed5c80d1dd72ade62ea8135e26722d76",
+                                    "span_id":  "59026040748727a6",
+                                    "error_type":  "URLError",
+                                    "order_id":  "bad-release-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e",
+                                    "dependency_host":  "inventory-v2",
+                                    "error_reason":  "[Errno -5] No address associated with hostname"
+                                },
+                                {
+                                    "timestamp":  "2026-11-15T13:03:08.967Z",
+                                    "severity":  "error",
+                                    "message":  "request failed",
+                                    "service":  "orders",
+                                    "service_version":  "v2",
+                                    "trace_id":  null,
+                                    "span_id":  null,
+                                    "path":  "/orders",
+                                    "error_type":  "RuntimeError",
+                                    "order_id":  "bad-release-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e"
+                                }
+                            ],
+    "cleanup":  {
+                    "volumes_deleted":  false,
+                    "attempted":  true,
+                    "containers_empty":  true
+                },
+    "report":  "reports/op4-bad-release-host-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e.json"
+}

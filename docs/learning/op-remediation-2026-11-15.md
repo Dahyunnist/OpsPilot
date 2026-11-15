@@ -1,14 +1,20 @@
 # OP-1/2/3 路线余项与离线阶段（2026-11-15）
 
-对照 [2026-10-23 最终升级验收](../../reports/final-upgrade-acceptance.md)，只推进不需要 Docker 或新模型请求的回归阶段。
+对照 [2026-10-23 最终升级验收](../../reports/final-upgrade-acceptance.md)，记录路线余项、离线回归和后来回传的宿主证据。
 
 ## 当前余项
 
 | 项目 | 仍待完成 | 本阶段边界 |
 |---|---|---|
-| OP-1 | 修复后的 `verify-bad-release.ps1` 仍待用户宿主用新 run ID 重跑；正式 Python 3.12 镜像也未验证。 | 新 PS 5.1 断言测试只验证本地数组计数，不启动 Compose；原失败报告保持 `failed`。 |
+| OP-1 | 修复后的 PS 5.1 脚本已在用户宿主用新 run ID 通过单场景验收；当前 `python:3.12-slim` 也已在本次 build/start 路径运行。 | 这是单场景 host 验收，不替代 12 场景矩阵或生产验证。报告未记录镜像 digest 与 Docker Engine Server 版本，不对其作断言。旧失败报告保持 `failed`。 |
 | OP-2 | 尚无新 Docker 故障窗口上的 MCP 全链路验收，也未接入生产遥测。 | 注册冻结快照用于离线契约测试，不当作新实时事件。 |
 | OP-3 | 三案真实 Multi 对照仍为 partial、0/3；近期 `ValueError` 运行与账本审计保留。当前实时余额未知，不能据历史人民币账单推断可用余额。 | 用确定性 fake 验证四策略可以消费同一冻结输入、遵守 prompt 数据边界；不评价策略准确率或收益。 |
+
+## OP-1 宿主成功复核
+
+用户在 Windows PowerShell 5.1 用新 run ID `7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e` 完整运行隔离脚本。独立核对报告结构与字段后确认：单次 checkout 为 HTTP 502；唯一订单有两条同版本日志，其中一条明确包含 `inventory-v2` 和 DNS `errno -5`；orders/v2 deployment 与订单、run ID 一致，且位于同一半开 UTC 窗口；cleanup 显示容器清空、卷保留。扫描未发现 credential 类字段。报告见 [宿主验证结果](../../reports/op4-bad-release-host-7826f0be-7f7a-47a3-b9e0-6217f3ca9a4e.json)。此前 PS 5.1 断言缺陷报告仍保留为 `failed`，没有改写。
+
+Python 3.12 host 验证不再需要额外 Docker 操作：较早的 12/12 宿主矩阵记录 `python:3.12-slim` / Python 3.12；本次成功脚本对当前 Dockerfile 执行 `docker compose up --build`，服务健康且场景通过。此证据证明该 tag 在本次宿主构建/启动路径可用；报告未记录镜像 digest 或 Docker Engine Server 版本。只有要求固定 digest 或特定 Engine 版本的证据时，才需要额外宿主记录。
 
 ## 新增离线阶段
 
