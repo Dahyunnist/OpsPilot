@@ -133,3 +133,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 未发送推理请求。最新账本末条累计峰值 `$0.52119297/$0.60`，项目余量 `$0.07880703`；R3 记录的 DeepSeek 余额预检为可用，但本轮未重新请求余额。三份冻结 SHA 与注册值一致；第三案注册 SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 与此前记录的用户确认 SHA `de76add2b1dc15e4da2207632d44c39c39ba813` 不一致。当前 runner 固定执行 rules/single/multi/auto，且完整三案峰值预留 `$0.02302260`，无法满足本轮“最多 `$0.02` 新增最坏预留”和 Multi-only 条件。因此真实 Multi 状态为 blocked，0 次请求、`$0` 新增费用；R3 原报告不变。离线回归仍确认 Multi 合成流程完整，但不作为真实回归证据。
 
 随后用户明确更正：第三案授权 SHA 为 `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813`；此前少字符文本已作废。新核验中三案授权 SHA 全部与注册 SHA 一致。runner 已增加 Multi-only、每次请求前强制 `$0.02` 累计 run reserve 上限，并关闭此次路径的截断重试；总账预检为 `$0.52119297 + $0.02 = $0.54119297 < $0.60`。定向离线测试 43 项通过。随后只读 provider 余额/模型预检遭本机网络权限错误 `WinError 10013`；未发起推理，开发回归停止。详见 `reports/op3-multi-r3-runner-preflight-2026-11-15.json`。此前门禁报告保留作历史记录，由此更正条目覆盖其哈希判断。
+
+## 2026-11-15 全离线测试集复核
+
+全套收集到 259 项，但首项本地 A2A SDK 集成测试超过 90 秒无进展，按要求中断；故不标记全套通过。单项 `faulthandler_timeout=10` 栈定位在 Windows asyncio Proactor `socket.py:accept` / `_fallback_socketpair` 初始化阶段。未连外部服务、未调用模型或 Docker。随后仅运行 OP-3 与 strategy 单元测试：43 项通过，0.29 秒。专用仓库临时目录已清理；`.tmp/` 和 replay 目录未触碰。详见 `reports/op3-full-offline-suite-2026-11-15.json`。

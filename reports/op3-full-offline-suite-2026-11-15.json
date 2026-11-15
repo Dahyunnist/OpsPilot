@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "run_id": "op3-full-offline-suite-2026-11-15",
+  "status": "full_suite_timed_out; focused_suite_passed",
+  "full_suite": {
+    "collected": 259,
+    "completed": false,
+    "first_test": "tests/test_a2a_sdk_interop.py::OfficialSdkInteropTests::test_official_sdk_client_discovers_and_uses_local_agent",
+    "status": "interrupted_after_more_than_90_seconds",
+    "diagnostic_rerun": "pytest -vv -x -p no:cacheprovider -o faulthandler_timeout=10 --basetemp <repo-local-temp> tests/test_a2a_sdk_interop.py",
+    "diagnostic": "faulthandler stack stopped at asyncio Proactor event loop initialization: socket.accept -> socket._fallback_socketpair -> _make_self_pipe",
+    "interpretation": "local loopback SDK test stalled during event-loop setup; full suite is not reported as passed"
+  },
+  "focused_suite": {
+    "command": ".venv/Scripts/python.exe -m pytest -q -x -p no:cacheprovider --basetemp <repo-local-temp> tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
+    "passed": 43,
+    "failed": 0,
+    "duration_seconds": 0.29
+  },
+  "model_calls": 0,
+  "docker_started": false,
+  "external_services_used": false,
+  "temporary_directory": {
+    "path": ".pytest-op3-full-20261115",
+    "created_for_this_run": true,
+    "removed_after_run": true
+  },
+  "preserved_untracked_paths": [".tmp/", "op1-replay-aa155d06fa154b52b634e56e38d22822/"],
+  "git_sha_before_commit": "8176cf620fac7a26b8afe2be9fae0ddf782bb4ea"
+}

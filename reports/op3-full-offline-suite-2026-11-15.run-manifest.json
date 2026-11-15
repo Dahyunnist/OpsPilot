@@ -1,0 +1,24 @@
+{
+  "report_path": "reports/op3-full-offline-suite-2026-11-15.json",
+  "report_sha256": "95d13acfc924045d26d46d6e9f77445e09008963d988d684f4e25db10735159d",
+  "op_run_manifest": {
+    "status": "full_suite_timed_out; focused_suite_passed",
+    "split": "offline_verification",
+    "result_fingerprint_sha256": "95d13acfc924045d26d46d6e9f77445e09008963d988d684f4e25db10735159d",
+    "cost_usd_estimate": 0,
+    "parameters": {
+      "full_suite_collected": 259,
+      "full_suite_completed": false,
+      "focused_tests_passed": 43,
+      "model_calls": 0,
+      "docker_started": false,
+      "external_services_used": false,
+      "temporary_directory_removed": true
+    },
+    "model_id": "none",
+    "run_id": "op3-full-offline-suite-2026-11-15",
+    "schema_version": 1,
+    "git_sha": "8176cf620fac7a26b8afe2be9fae0ddf782bb4ea",
+    "evaluation_id": "op3_full_offline_suite"
+  }
+}
