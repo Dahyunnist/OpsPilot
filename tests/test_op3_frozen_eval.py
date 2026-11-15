@@ -12,11 +12,43 @@ from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
-    _validate_prompt_payload, AUTHORIZATION_SCOPE, FROZEN_LIVE_CASES, main, run)
+    _planned_requests, _validate_new_run_id, _validate_prompt_payload, AUTHORIZATION_SCOPE,
+    FROZEN_LIVE_CASES, main, run)
 from scripts.evaluate_agents import BudgetLimitExceeded, DuplicateBudgetRequest, RunBudget
 
 
 class FrozenOp3EvaluationTests(unittest.TestCase):
+    def test_run_budget_keeps_caller_supplied_run_identity(self):
+        with TemporaryDirectory() as temp:
+            run_id = "076b2ef2-4e61-4d65-9622-ecaab02268d1"
+            budget = RunBudget(0.60, Path(temp) / "ledger.jsonl", "deepseek-v4-flash",
+                run_limit_usd=0.0230226, run_id=run_id)
+            self.assertEqual(run_id, budget.run_id)
+
+    def test_runner_rejects_reused_or_invalid_run_id_before_provider_preflight(self):
+        with TemporaryDirectory() as temp:
+            ledger = Path(temp) / "ledger.jsonl"
+            run_id = "076b2ef2-4e61-4d65-9622-ecaab02268d1"
+            _validate_new_run_id(run_id, ledger)
+            ledger.write_text(json.dumps({"kind": "run_summary", "run_id": run_id}) + "\n",
+                encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                _validate_new_run_id(run_id, ledger)
+            with self.assertRaisesRegex(ValueError, "must be a UUID"):
+                _validate_new_run_id("old-r3-run", ledger)
+
+    def test_request_plan_matches_frozen_auto_routes_and_deduplicates_identical_strategy_prompts(self):
+        _frozen, cases = _load_frozen_cases(set(FROZEN_LIVE_CASES))
+        all_strategies = _planned_requests(cases, STRATEGIES)
+        rules_auto = _planned_requests(cases, ("rules", "auto"))
+        self.assertEqual(3, len(all_strategies["per_case"]))
+        self.assertTrue(all(row["auto_route"] in {"rules", "single", "multi"}
+            for row in all_strategies["per_case"]))
+        self.assertEqual(sum(row["max_provider_requests"] for row in all_strategies["per_case"]),
+            all_strategies["max_provider_requests"])
+        self.assertTrue(all(row["max_provider_requests"] == 0 for row in rules_auto["per_case"]
+            if row["auto_route"] == "rules"))
+
     def test_budget_accepts_integer_strings_and_charges_provider_usage(self):
         with TemporaryDirectory() as temp:
             ledger = Path(temp) / "ledger.jsonl"
@@ -218,7 +250,7 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual(Decimal("0.07880703"), Decimal(str(CAP_USD)) - latest_cumulative)
         self.assertTrue(_total_cap_covers(float(latest_cumulative), MAX_EXPLICIT_RUN_RESERVE_USD,
             Decimal(str(CAP_USD))))
-        self.assertEqual(Decimal("0.54119297"), latest_cumulative + MAX_EXPLICIT_RUN_RESERVE_USD)
+        self.assertEqual(Decimal("0.54421557"), latest_cumulative + MAX_EXPLICIT_RUN_RESERVE_USD)
 
     def test_prompt_allowlist_accepts_only_current_snapshot_records_without_gold(self):
         _spec, cases = _load_frozen_cases()

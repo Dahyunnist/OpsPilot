@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import sys
 import threading
+import uuid
 from typing import Any
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
@@ -19,7 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from opspilot.model_client import ChatModel, load_project_env, redact  # noqa: E402
-from opspilot.strategy_eval import CAUSES, STRATEGIES, evaluate_snapshot, score_case, summarize_cases  # noqa: E402
+from opspilot.live_investigation import investigate_live  # noqa: E402
+from opspilot.strategy_eval import (CAUSES, STRATEGIES, FrozenTelemetry, _auto_route,
+    _source_for_records, evaluate_snapshot, score_case, summarize_cases)  # noqa: E402
 from scripts.evaluate_agents import RunBudget  # noqa: E402
 from scripts.evaluate_lab import _gold_evidence  # noqa: E402
 
@@ -28,7 +31,7 @@ CAP_USD = 0.60
 AUTHORIZATION_SCOPE = "three_case_frozen_subset"
 FIXED_WORST_CASE_USD = 0.0230226
 FIXED_COMPLETION_LIMIT = 512
-MAX_EXPLICIT_RUN_RESERVE_USD = Decimal("0.02")
+MAX_EXPLICIT_RUN_RESERVE_USD = Decimal("0.0230226")
 DEFAULT_OUTPUT = ROOT / "reports" / "op3-op2-subset-evaluation.json"
 ALLOWED_SNAPSHOT_HASHES = {
     "op2-normal_slow_sql-snapshot.json": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
@@ -49,6 +52,17 @@ def _sha256(path: Path) -> str:
 
 def _total_cap_covers(prior_spent_usd: float, reserve_usd: Decimal, cap_usd: Decimal) -> bool:
     return Decimal(str(prior_spent_usd)) + reserve_usd <= cap_usd
+
+
+def _validate_new_run_id(run_id: str, ledger: Path) -> None:
+    try:
+        uuid.UUID(run_id)
+    except (ValueError, AttributeError) as exc:
+        raise ValueError("run_id must be a UUID") from exc
+    if ledger.exists():
+        rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if any(row.get("run_id") == run_id for row in rows):
+            raise ValueError("run_id already exists in cost ledger")
 
 
 def _request_key(case_id: str, system_sha256: str, user_sha256: str, token_budget: int) -> tuple[str, str, str, int]:
@@ -250,14 +264,14 @@ def _validate_prompt_payload(system: str, user: str, records_by_id: dict[str, di
 def run(output: Path, case_ids: list[str] | None = None,
         strategies: tuple[str, ...] = STRATEGIES,
         max_run_reserve_usd: Decimal | None = None,
-        preflight_only: bool = False) -> dict[str, Any]:
+        preflight_only: bool = False, run_id: str | None = None) -> dict[str, Any]:
     if not preflight_only and output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
     if case_ids is None or set(case_ids) != set(FROZEN_LIVE_CASES) or len(case_ids) != len(FROZEN_LIVE_CASES):
         raise ValueError("live execution requires every case in the hash-verified frozen manifest")
     _validate_strategy_selection(strategies)
     if max_run_reserve_usd is not None and max_run_reserve_usd > MAX_EXPLICIT_RUN_RESERVE_USD:
-        raise ValueError("explicit run reserve exceeds the authorized $0.02 maximum")
+        raise ValueError("explicit run reserve exceeds the authorized $0.0230226 maximum")
     checkpoint_path = _checkpoint_path(output)
     if not preflight_only and checkpoint_path.exists():
         raise FileExistsError(f"refusing to overwrite prior request checkpoint: {checkpoint_path.name}")
@@ -277,12 +291,14 @@ def run(output: Path, case_ids: list[str] | None = None,
         raise ValueError("frozen subset strategy order differs")
 
     ledger = ROOT / "reports" / "api-cost-ledger.jsonl"
+    run_id = run_id or str(uuid.uuid4())
+    _validate_new_run_id(run_id, ledger)
     prior_eval_spend = _prior_subset_spend(ledger)
     reserved_case_cap = (max_run_reserve_usd if max_run_reserve_usd is not None else
         sum((Decimal(str(case["spec"]["worst_case_usd"])) for case in cases), Decimal("0")))
     if reserved_case_cap <= 0:
         raise ValueError("run reserve must be positive")
-    budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap))
+    budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap), run_id=run_id)
     if not _total_cap_covers(budget.prior_spent_usd, reserved_case_cap, Decimal(str(CAP_USD))):
         raise ValueError("remaining project cap cannot cover the complete selected-case peak reserve; no inference calls sent")
 
@@ -308,14 +324,15 @@ def run(output: Path, case_ids: list[str] | None = None,
     if not model_ids or not model_ids.intersection({"deepseek-flash", "deepseek-v4-flash"}):
         raise ValueError("provider does not list the frozen Flash model family; no inference calls sent")
     if preflight_only:
-        return {"status": "preflight_passed", "provider_balance_available": True,
+        return {"status": "preflight_passed", "run_id": run_id, "provider_balance_available": True,
             "provider_model_ids": sorted(model_ids), "strategies": list(strategies),
             "case_ids": [case["spec"]["id"] for case in cases],
             "case_sha256": {case["spec"]["id"]: case["snapshot_sha256"] for case in cases},
             "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
             "max_run_reserve_usd": float(reserved_case_cap),
             "cumulative_worst_case_usd": round(budget.prior_spent_usd + float(reserved_case_cap), 8),
-            "project_cap_usd": CAP_USD, "inference_calls": 0}
+            "project_cap_usd": CAP_USD, "inference_calls": 0,
+            "request_plan": _planned_requests(cases, strategies)}
 
     # Frozen registry caps completions at 512 regardless of the wider .env setting.
     os.environ["LLM_MAX_COMPLETION_TOKENS"] = str(FIXED_COMPLETION_LIMIT)
@@ -482,12 +499,14 @@ def main() -> int:
         help="hard run reserve ceiling, enforced before each request")
     parser.add_argument("--preflight-only", action="store_true",
         help="verify frozen hashes, budget and provider without inference or report writes")
+    parser.add_argument("--run-id", help="UUID shared by preflight and execution")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")
     try:
         report = run(args.output, case_ids=args.case_ids, strategies=tuple(args.strategies),
-            max_run_reserve_usd=args.max_run_reserve_usd, preflight_only=args.preflight_only)
+            max_run_reserve_usd=args.max_run_reserve_usd, preflight_only=args.preflight_only,
+            run_id=args.run_id)
     except Exception as exc:
         print(json.dumps({"status": "stopped_before_or_during_run", "error": type(exc).__name__,
             "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
@@ -503,6 +522,26 @@ def _validate_strategy_selection(strategies: tuple[str, ...]) -> None:
         raise ValueError("unsupported or empty strategy selection")
     if len(set(strategies)) != len(strategies):
         raise ValueError("duplicate strategy selection")
+
+
+def _planned_requests(cases: list[dict[str, Any]], strategies: tuple[str, ...]) -> dict[str, Any]:
+    per_case = []
+    total = 0
+    for case in cases:
+        sources = _source_for_records(case["sources"])
+        source_count = sum(bool(rows) for rows in sources.values())
+        live = investigate_live(case["start"], case["end"], telemetry=FrozenTelemetry(case["sources"]))
+        auto_route = _auto_route(live)
+        routes = {strategy: auto_route if strategy == "auto" else strategy for strategy in strategies}
+        unique_paid_routes = {route for route in routes.values() if route in {"single", "multi"}}
+        calls_by_route = {"single": 1, "multi": source_count + 1}
+        planned = sum(calls_by_route[route] for route in unique_paid_routes)
+        total += planned
+        per_case.append({"case_id": case["spec"]["id"], "auto_route": auto_route,
+            "nonempty_sources": source_count, "selected_routes": routes,
+            "max_provider_requests": planned})
+    return {"count_basis": "unique prompts across selected routes; truncation retries disabled",
+        "per_case": per_case, "max_provider_requests": total}
 
 
 if __name__ == "__main__":

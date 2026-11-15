@@ -49,7 +49,7 @@ class RunBudget:
     """Track request charges and stop before a request can exceed the run cap."""
 
     def __init__(self, limit_usd: float, ledger_path: Path, model: str,
-                 run_limit_usd: float | None = None) -> None:
+                 run_limit_usd: float | None = None, run_id: str | None = None) -> None:
         self.limit_usd = limit_usd
         self.run_limit_usd = run_limit_usd
         self.ledger_path = ledger_path
@@ -58,7 +58,7 @@ class RunBudget:
         self.prior_spent_usd = self._prior_spend()
         self.reserved_usd = 0.0
         self.lock = threading.Lock()
-        self.run_id = str(uuid.uuid4())
+        self.run_id = run_id or str(uuid.uuid4())
         self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
         self.request_keys = self._request_keys_from_ledger()
 

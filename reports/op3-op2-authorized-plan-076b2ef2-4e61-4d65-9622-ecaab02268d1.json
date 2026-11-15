@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "run_id": "076b2ef2-4e61-4d65-9622-ecaab02268d1",
+  "status": "awaiting_provider_balance_preflight",
+  "inference_calls": 0,
+  "provider_balance": "unknown; not queried in this offline update",
+  "frozen_case_sha256": {
+    "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+    "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+    "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+  },
+  "authorization": {
+    "scope": "all three complete frozen synthetic snapshots",
+    "user_confirmed_case_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+  },
+  "budget": {
+    "latest_ledger_cumulative_peak_usd": 0.52119297,
+    "authorized_run_reserve_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54421557,
+    "project_cap_usd": 0.6,
+    "within_project_cap": true
+  },
+  "request_plan": {
+    "count_basis": "unique prompts across selected routes; truncation retries disabled",
+    "per_case": [
+      {
+        "case_id": "normal_slow_sql",
+        "auto_route": "rules",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "rules"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "contradictory_payment",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      }
+    ],
+    "max_provider_requests": 18
+  },
+  "safety": {
+    "gold_sent": false,
+    "real_data_sent": false,
+    "secrets_printed": false,
+    "prior_r3_report_overwritten": false
+  }
+}
