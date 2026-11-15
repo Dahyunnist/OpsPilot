@@ -1,5 +1,6 @@
 import json
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -66,10 +67,21 @@ class ReliabilityTests(unittest.TestCase):
             self.assertEqual("rejected_no_execution", rejected["status"])
             self.assertFalse(rejected["executed"])
             self.assertFalse(rejected["external_write"])
-            self.assertEqual("duplicate_ignored", repeated["status"])
+            self.assertEqual("event_id_conflict", repeated["status"])
             self.assertFalse(repeated["executed"])
+            self.assertFalse(repeated["external_write"])
             events = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(1, sum(event.get("event_id") == "approval-event-1" for event in events))
+
+    def test_same_approval_event_replay_is_idempotent(self):
+        report = investigate(self.incidents["config-01"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "audit.jsonl"
+            simulate_action(report, "same-decision-event", "reject", path)
+            repeated = simulate_action(report, "same-decision-event", "reject", path)
+            self.assertEqual("duplicate_ignored", repeated["status"])
+            self.assertFalse(repeated["executed"])
+            self.assertFalse(repeated["external_write"])
 
     def test_approved_action_stays_in_simulator(self):
         report = investigate(self.incidents["config-01"])
@@ -84,12 +96,59 @@ class ReliabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "audit.jsonl"
             audit_investigation(report, path)
+            first_count = len(path.read_text(encoding="utf-8").splitlines())
+            audit_investigation(report, path)
             events = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(first_count, len(events))
             self.assertEqual(5, len(events))
             self.assertEqual(4, sum(event["event_type"] == "readonly_query" for event in events))
             summary = next(event for event in events if event["event_type"] == "investigation_report")
             self.assertEqual(64, len(summary["report_sha256"]))
             self.assertIn("start", events[0]["params"])
+
+    def test_concurrent_approval_event_id_is_written_once(self):
+        report = investigate(self.incidents["config-01"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "audit.jsonl"
+            barrier = threading.Barrier(8)
+            results = []
+
+            def submit():
+                barrier.wait()
+                results.append(simulate_action(report, "concurrent-event", "reject", path))
+
+            workers = [threading.Thread(target=submit) for _ in range(8)]
+            for worker in workers:
+                worker.start()
+            for worker in workers:
+                worker.join()
+
+            events = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(1, len(events))
+            self.assertEqual(1, sum(result["status"] == "rejected_no_execution" for result in results))
+            self.assertEqual(7, sum(result["status"] == "duplicate_ignored" for result in results))
+
+    def test_investigation_audit_event_id_payload_conflict_fails_closed(self):
+        report = investigate(self.incidents["pool-01"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "audit.jsonl"
+            audit_investigation(report, path)
+            original = path.read_text(encoding="utf-8")
+            changed = json.loads(original.splitlines()[0])
+            changed["source"] = "tampered"
+            path.write_text(json.dumps(changed) + "\n" + "\n".join(original.splitlines()[1:]) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "event_id conflicts"):
+                audit_investigation(report, path)
+
+    def test_approval_event_id_conflict_never_executes(self):
+        report = investigate(self.incidents["config-01"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "audit.jsonl"
+            simulate_action(report, "decision-event", "reject", path)
+            result = simulate_action(report, "decision-event", "approve", path)
+            self.assertEqual("event_id_conflict", result["status"])
+            self.assertFalse(result["executed"])
+            self.assertFalse(result["external_write"])
 
 
 if __name__ == "__main__":

@@ -155,3 +155,7 @@ Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，�
 Actions run `43673391511` 对提交 `2af48e9` 的结论为 `failure`，jobs API 返回 `total_count: 0`。没有 job 日志，失败原因未确认；不改 workflow、不猜根因。等待用户提供 Actions 页面错误和余额预检。详见[运行记录](op3-actions-run-43673391511.md)及[Actions 页面](https://github.com/Dahyunnist/OpsPilot/actions/runs/43673391511)。
 
 授权记录更正：对话中用户在看到完整 `contradictory_payment` SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 后明确回复“确认该文件”。此确认授权该冻结文件；先前短 SHA 已被更正，不作为当前授权值。数据范围未扩展。余额仍未知，因此不推理。
+
+## 2026-11-15 OP-3 审计事件幂等加固
+
+审计 JSONL 写入增加进程内线程锁和跨进程文件锁；调查事件使用稳定 `event_id`，重复报告不会重复追加。相同审批事件和决策返回 `duplicate_ignored`；同 ID 携带不同决策或审计负载时 fail closed，返回冲突且不执行、不外写。新增重复调查、负载冲突、审批冲突和并发重放回归。`tests.test_s3`、`tests.test_action_safety`、`tests.test_action_cli` 共 37 项通过。MCP 标准 SDK 互通测试在 Windows 本机挂起，未跳过或记为通过；A2A localhost 测试受 `WinError 10013` 阻断。Linux 环境复核命令：`python -m unittest tests.test_s3 tests.test_action_safety tests.test_action_cli tests.test_agents tests.test_mcp -v`。本轮未调用模型/API、未读取凭据、未执行外部写入。`.tmp/` 和 `op1-replay-aa155d06fa154b52b634e56e38d22822/` 保留未动。
