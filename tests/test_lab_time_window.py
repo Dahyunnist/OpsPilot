@@ -29,6 +29,12 @@ def test_utc_window_is_start_inclusive_and_end_exclusive():
     assert in_window("2026-11-11T14:47:23+01:00", start, end)
 
 
+def test_current_utc_window_excludes_four_day_old_bad_release_evidence():
+    start, end = "2026-11-15T13:30:00+00:00", "2026-11-15T14:05:00+00:00"
+    assert not in_window("2026-11-11T13:47:23.3670972Z", start, end)
+    assert not in_window("2026-11-11T14:06:22.691Z", start, end)
+
+
 def test_logs_and_deployments_share_service_window_filter_and_documented_ports():
     source = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
     assert "from time_window import in_window, parse_utc" in source

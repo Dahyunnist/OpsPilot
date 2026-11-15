@@ -14,7 +14,7 @@ from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
     _refuse_unavailable_paid_response, _total_cap_covers,
     _planned_requests, _validate_new_run_id, _validate_prompt_payload,
-    _load_historical_provider_preflight, AUTHORIZATION_SCOPE,
+    AUTHORIZATION_SCOPE,
     FROZEN_LIVE_CASES, PriorPaidResponseUnavailable, _validate_authorized_retest_plan, main, run)
 from scripts.evaluate_agents import BudgetLimitExceeded, DuplicateBudgetRequest, RunBudget
 
@@ -256,25 +256,15 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             Decimal(str(CAP_USD))))
         self.assertEqual(Decimal("0.54455059"), latest_cumulative + MAX_EXPLICIT_RUN_RESERVE_USD)
 
-    def test_authorized_paid_replay_plan_matches_exact_frozen_run_and_budget(self):
+    def test_blocked_replay_plan_cannot_authorize_paid_execution(self):
         from decimal import Decimal
         from scripts.evaluate_op2_frozen import AUTHORIZED_RETEST_PLAN, ROOT
 
         frozen, cases = _load_frozen_cases(set(FROZEN_LIVE_CASES))
-        plan = _validate_authorized_retest_plan(AUTHORIZED_RETEST_PLAN,
-            ROOT / "reports/op3-multiagent-retest-2026-11-15-dbc4601c.json",
-            "dbc4601c-992d-428b-8bc6-8d49fc59a27a", frozen, cases, RUNNER_STRATEGIES,
-            Decimal("0.0230226"), _planned_requests(cases, RUNNER_STRATEGIES), 0.52152799)
-        self.assertTrue(plan["authorization"]["user_confirmed"])
-        history = _load_historical_provider_preflight(
-            ROOT / "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
-            plan, "deepseek-v4-flash")
-        self.assertFalse(history["fresh"])
-        self.assertEqual("2026-11-15T07:48:39.145866+00:00", history["observed_at"])
         with self.assertRaisesRegex(ValueError, "differs from run id"):
             _validate_authorized_retest_plan(AUTHORIZED_RETEST_PLAN,
                 ROOT / "reports/op3-multiagent-retest-2026-11-15-dbc4601c.json",
-                "fff674b6-f292-46fb-afe5-beeb5c64b563", frozen, cases, RUNNER_STRATEGIES,
+                "dbc4601c-992d-428b-8bc6-8d49fc59a27a", frozen, cases, RUNNER_STRATEGIES,
                 Decimal("0.0230226"), _planned_requests(cases, RUNNER_STRATEGIES), 0.52152799)
 
     def test_prompt_allowlist_accepts_only_current_snapshot_records_without_gold(self):
