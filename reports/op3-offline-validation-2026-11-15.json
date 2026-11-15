@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "r3_status": "partial",
+  "multi_synthetic_path": "experts parsed, conflicting findings merged, adjudicator invoked, final score exact with evidence precision and recall 1.0",
+  "interpretation": "Synthetic fake-model regression only; no real-model quality inference.",
+  "tests": {
+    "passed": 40,
+    "command": ".venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py"
+  },
+  "r3_multi": "0/3",
+  "negative_cases": [
+    "malformed usage",
+    "invalid evidence filtered",
+    "adjudicator failure"
+  ],
+  "stage": "OP-3",
+  "status": "completed_offline_validation",
+  "checkpoint_regression": "synthetic redacted usage fails before adjudication; numeric usage redaction fix preserves future checkpoint parsing",
+  "git_sha": "e0e89ef8b52cdf57baedfd0cc9684d0efd7df5bc",
+  "run_id": "op3-offline-2026-11-15",
+  "docker_started": false,
+  "r3_report": "reports/op3-op2-three-case-run-2026-11-14-r3.json",
+  "same_frozen_input": true,
+  "strategies": [
+    "rules",
+    "single",
+    "multi",
+    "auto"
+  ],
+  "model_calls": 0,
+  "real_model_result_changed": false
+}

@@ -123,3 +123,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 ## 2026-11-14 Multi 合成路径回归
 
 新增纯本地 fake model 回归：metrics 专家与 logs 专家给出相冲突的假设；解析器剔除各自伪造的 evidence ID；裁决器接收两个来源的有效发现并选择跨源支持根因；最终 `score_case()` 对固定合成 oracle 得到完整根因命中、evidence precision/recall 均为 1。另保留 checkpoint `[REDACTED]` usage、malformed usage、伪造/不足证据与裁决失败的负例断言。定向 `python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`：40 项通过。完整 `.venv` pytest：256 项、69 子测试通过；需将 pytest 临时目录设在仓库内，并允许本机 HTTP socket 测试。以上均为离线合成或本地集成测试，不是新的真实模型结果；R3 仍为 partial，真实 Multi 仍 0/3，原报告不改写，也未发起模型请求。
+
+## 2026-11-15 OP-3 离线闭环复核
+
+复跑 frozen evaluator 定向测试：40 项通过。纯本地 fake path 覆盖 rules/single/multi/auto 同一输入与评分；Multi 验证专家解析、冲突合并、裁决、gold 证据评分，以及 malformed usage、无效证据和裁决失败负例。Checkpoint 脱敏问题由合成 `[REDACTED]` usage fixture 复现；修复保留 usage 下数值计数，旧历史 checkpoint 不改。报告/manifest：`reports/op3-offline-validation-2026-11-15.json` 与同名 `.run-manifest.json`。R3 真实报告仍 partial、Multi 0/3，不作真实模型质量判断。模型调用 0、费用 0、Docker 未启动。三快照授权哈希存在一项不匹配，注册子集余额也不足完整三案峰值；不做真实回归。未读写 `.tmp/` 或历史 checkpoint。

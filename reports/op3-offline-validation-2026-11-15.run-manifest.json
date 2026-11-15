@@ -1,0 +1,22 @@
+{
+  "report_path": "reports/op3-offline-validation-2026-11-15.json",
+  "report_sha256": "4dd9ef3349930ae97e661e8196a433cbf29f7c1b5ecbc7cf51d1db84d9df012c",
+  "op_run_manifest": {
+    "status": "completed_offline_validation",
+    "split": "synthetic_regression",
+    "result_fingerprint_sha256": "4dd9ef3349930ae97e661e8196a433cbf29f7c1b5ecbc7cf51d1db84d9df012c",
+    "cost_usd_estimate": 0,
+    "parameters": {
+      "docker_started": false,
+      "test_count": 40,
+      "report_path": "reports/op3-offline-validation-2026-11-15.json",
+      "report_sha256": "4dd9ef3349930ae97e661e8196a433cbf29f7c1b5ecbc7cf51d1db84d9df012c",
+      "model_calls": 0
+    },
+    "model_id": "none",
+    "run_id": "op3-offline-2026-11-15",
+    "schema_version": 1,
+    "git_sha": "e0e89ef8b52cdf57baedfd0cc9684d0efd7df5bc",
+    "evaluation_id": "op3_offline_validation"
+  }
+}
