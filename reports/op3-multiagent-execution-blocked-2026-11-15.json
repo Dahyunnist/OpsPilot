@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3 multi-agent gain comparison",
+  "run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
+  "status": "local_execution_attempt_blocked_before_inference",
+  "created_at": "2026-11-15T06:00:00+00:00",
+  "offline_artifact": true,
+  "user_reported_preflight": {
+    "balance_available": true,
+    "model_family_available": true,
+    "frozen_snapshot_hashes_match": true,
+    "max_provider_requests": 18,
+    "prior_ledger_peak_usd": 0.52119297,
+    "authorized_run_reserve_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54421557,
+    "project_cap_usd": 0.6
+  },
+  "execution_attempt": {
+    "scope": "this executor attempt before the root workflow's unique run",
+    "provider_preflight_get": "blocked_by_WinError_10013",
+    "inference_started": false,
+    "model_calls": 0,
+    "new_cost_usd": 0,
+    "run_id_ledger_rows_at_attempt": 0,
+    "evaluation_report_written_at_attempt": false,
+    "request_checkpoint_written_at_attempt": false,
+    "retry_attempted": false
+  },
+  "approval_review": {
+    "status": "rejected",
+    "reason": "自动审批认为可信用户消息未明确授权本次具体推理请求或目的地，且暂停状态使授权更不明确。"
+  },
+  "comparison_results": null,
+  "follow_up_run_report": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
+  "interpretation": "根工作流唯一运行之前，本执行器尝试无法完成官方 provider GET，提权被自动审批拒绝；该次尝试无推理、费用、账本行或产物。后续根工作流结果见 follow_up_run_report。"
+}

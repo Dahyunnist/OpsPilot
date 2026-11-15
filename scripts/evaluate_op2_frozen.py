@@ -19,7 +19,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from opspilot.model_client import ChatModel, load_project_env, redact  # noqa: E402
+from opspilot.model_client import ChatModel, load_project_env, redact, usage_token_count  # noqa: E402
 from opspilot.live_investigation import investigate_live  # noqa: E402
 from opspilot.strategy_eval import (CAUSES, STRATEGIES, FrozenTelemetry, _auto_route,
     _source_for_records, evaluate_snapshot, score_case, summarize_cases)  # noqa: E402
@@ -94,6 +94,31 @@ def _checkpoint_path(output: Path) -> Path:
     return output.with_suffix(".requests.jsonl")
 
 
+def _checkpoint_response_has_usable_usage(response: Any) -> bool:
+    """Reject paid checkpoints whose redacted or malformed usage cannot be scored safely."""
+    if not isinstance(response, dict) or not isinstance(response.get("data"), dict):
+        return False
+    usage = response.get("usage")
+    if not isinstance(usage, dict):
+        return False
+    try:
+        prompt_tokens = usage_token_count(usage.get("prompt_tokens"), "prompt_tokens")
+        usage_token_count(usage.get("completion_tokens"), "completion_tokens")
+        usage_token_count(usage.get("total_tokens"), "total_tokens")
+        details = usage.get("prompt_tokens_details")
+        if isinstance(details, str):
+            details = json.loads(details)
+        if details is not None and not isinstance(details, dict):
+            return False
+        if isinstance(details, dict):
+            cached_tokens = usage_token_count(details.get("cached_tokens"), "cached_tokens")
+            if cached_tokens > prompt_tokens:
+                return False
+    except (ValueError, json.JSONDecodeError):
+        return False
+    return True
+
+
 def _load_request_checkpoints(path: Path | list[Path]) -> tuple[dict[tuple[str, str, str, int], dict[str, Any]], set[tuple[str, str, str, int]]]:
     """Load durable paid responses; pending entries are treated as possibly billed."""
     responses: dict[tuple[str, str, str, int], dict[str, Any]] = {}
@@ -110,13 +135,27 @@ def _load_request_checkpoints(path: Path | list[Path]) -> tuple[dict[tuple[str, 
             key = _request_key(record["case_id"], record["system_sha256"],
                 record["user_payload_sha256"], int(record["token_budget"]))
             status = record.get("status")
-            if status == "completed" and isinstance(record.get("response"), dict):
-                responses[key] = record["response"]
-                uncertain.discard(key)
+            if status == "completed":
+                response = record.get("response")
+                if _checkpoint_response_has_usable_usage(response):
+                    responses[key] = response
+                    uncertain.discard(key)
+                else:
+                    responses.pop(key, None)
+                    uncertain.add(key)
             elif status in {"pending", "failed_or_blocked"}:
                 responses.pop(key, None)
                 uncertain.add(key)
     return responses, uncertain
+
+
+def _refuse_unavailable_paid_response(
+        key: tuple[str, str, str, int],
+        prior_completed_requests: set[tuple[str, str, str, int]],
+        checkpoint_uncertain: set[tuple[str, str, str, int]]) -> None:
+    if key in prior_completed_requests or key in checkpoint_uncertain:
+        raise PriorPaidResponseUnavailable(
+            "prior paid response is unavailable or unusable; refusing duplicate inference")
 
 
 def _append_request_checkpoint(path: Path, record: dict[str, Any], lock: threading.Lock) -> None:
@@ -378,6 +417,10 @@ def run(output: Path, case_ids: list[str] | None = None,
                 "token_budget": token_budget, "status": "pending"}
             if key in prior_completed_requests or key in checkpoint_uncertain:
                 audit["previous_paid_response_unavailable"] = True
+                audit["status"] = "previous_paid_response_unavailable"
+                with audit_lock:
+                    request_audit.append(audit)
+                _refuse_unavailable_paid_response(key, prior_completed_requests, checkpoint_uncertain)
             with audit_lock:
                 request_audit.append(audit)
 

@@ -29,3 +29,17 @@ Windows A2A localhost 测试遇 `WinError 10013`；MCP 标准 SDK 测试挂起�
 本轮执行只读余额预检，Windows 网络层返回 `URLError` / `WinError 10013`，在收到 provider 响应前中止。余额未知；模型列表未查询；未发起推理，模型调用 `0` 次，新增费用 `$0`。未写评测结果或请求 checkpoint，未携带 Gold 标签。
 
 本地门禁通过：三份已授权快照 hash 匹配；冻结 spec hash 匹配；策略为 `rules/single/always-multi/auto`；请求上限 `18`；累计 worst-case `$0.54421557/$0.60`。provider 余额门禁未通过，因此没有策略比较结果。机器可读记录：`reports/op3-multiagent-provider-preflight-2026-11-15.json` 及其 `.run-manifest.json`。
+
+## 2026-11-15 推理执行环境与审批阻断
+
+用户回报授权 PowerShell 的只读预检通过：余额可用、模型族可用、三份冻结 SHA 匹配；18 次请求上限；累计 worst-case `$0.54421557/$0.60`。随后在本执行环境启动同 run ID 的对照，官方 provider GET 遇 `WinError 10013`，在推理前中止。账本无该 run ID 记录，模型调用 `0`、新增费用 `$0`，没有结果或请求 checkpoint；未重试。
+
+网络提权请求被自动审批拒绝，理由为可信用户消息未明确授权本次具体推理请求或目的地，且暂停状态使授权不明确。该记录只描述本执行环境的失败尝试；根工作流随后在授权通道完成唯一 run。最终请求、费用、失败分类和一致性审计见 `reports/op3-multiagent-run-audit-2026-11-15.json`。
+
+## 2026-11-15 OP-3 唯一 run 审计
+
+run `fff674b6-f292-46fb-afe5-beeb5c64b563` 完成 partial 评测。三份冻结快照、冻结清单及实际 runner/scorer/model-client 哈希均匹配运行时 HEAD。账本与 checkpoint 对应：新增 `completed_request` 1 条、`run_summary` 1 条；实际 provider inference 1 次，费用 `$0.00033502`，累计峰值 `$0.52152799/$0.60`。授权 worst-case reserve `$0.02302260` 覆盖实际费用；全程 worst-case `$0.54421557/$0.60`。未超 18 请求上限。
+
+multi 三案均因 `ValueError` 降级到 rules，不能作为有效多 Agent 对照。错误分类：本次 provider response/JSON 错误 `0`；旧 checkpoint usage 解析错误 `11`；其余 runner 错误 `0`。根因不是新响应 JSON 解析失败：旧 checkpoint 的 14 份安全响应均把 `prompt_tokens`、`completion_tokens`、`total_tokens` 脱敏成 `[REDACTED]`；usage parser 要求非负整数，因此专家结果读取时报 `ValueError`。本轮唯一新响应成功解析为 JSON 对象，usage 数字有效。rules 无新模型调用；single 复用既有模型 checkpoint；auto 一案走 rules、两案走 single 且复用 checkpoint。因此不能声称本轮完成四策略新鲜对照或有多 Agent 增益。
+
+安全审计未发现响应中的邮箱、Bearer 字符串、电话或原始 prompt 字段；Gold 仅用于本地评分。未重跑已见题、未改 Gold。新增纯离线 checkpoint usage 回归，确保用量脱敏或畸形的历史响应不被复用；定向 4 项测试通过。机器可读审计列出文件哈希和计数，不含原始响应正文或 Gold。

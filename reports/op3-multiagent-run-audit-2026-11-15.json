@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "artifact_type": "offline_postrun_consistency_audit",
+  "created_at": "2026-11-15T07:59:42.737087+00:00",
+  "run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
+  "status": "partial_no_valid_multiagent_comparison",
+  "source_artifacts": {
+    "report_path": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
+    "report_sha256": "ca2f913b57e36410bff10e0a159d43f0a4f0df8cf926e2e8c00fcf77afccd8d5",
+    "checkpoint_path": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.requests.jsonl",
+    "checkpoint_sha256": "32cd44693d51d068adf3004f9fbc4f08e6ce05da6ab2f4b8cee7aa0b89a77265",
+    "ledger_path": "reports/api-cost-ledger.jsonl",
+    "ledger_sha256": "01ed953514fbf4aa46c388f5899ac6a46690e3b7eb6fa80e862dcddce7e85a55"
+  },
+  "integrity": {
+    "frozen_spec_hash_matches": true,
+    "snapshot_hashes_match": {
+      "normal_slow_sql": true,
+      "missing_pool_evidence": true,
+      "contradictory_payment": true
+    },
+    "report_ledger_cost_consistent": true,
+    "report_checkpoint_unique_response_count_consistent": true,
+    "runner_and_scorer_hashes_match_execution_revision": {
+      "runner": true,
+      "strategy_eval": true,
+      "model_client": true,
+      "gold_scorer": true
+    }
+  },
+  "execution": {
+    "provider_inference_requests": 1,
+    "max_authorized_requests": 18,
+    "completed_checkpoint_records": 15,
+    "reused_checkpoint_records": 14,
+    "pending_checkpoint_records": 1,
+    "fresh_completed_responses": 1,
+    "actual_cost_usd": 0.00033502,
+    "run_summary_cost_usd": 0.00033502,
+    "prior_peak_usd": 0.52119297,
+    "cumulative_peak_usd": 0.5215279899999999,
+    "authorized_reserve_usd": 0.0230226,
+    "pre_run_worst_case_usd": 0.54421557,
+    "project_cap_usd": 0.6,
+    "remaining_after_reserved_worst_case_usd": 0.055784429999999996,
+    "stopped_before_overrun": false
+  },
+  "strategy_results": {
+    "rules": {
+      "cases": 3,
+      "completed_cases": 3,
+      "failed_cases": 0,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "p95_latency_ms": 0.01,
+      "exact_root_set_successes": 1,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      }
+    },
+    "single": {
+      "cases": 3,
+      "completed_cases": 3,
+      "failed_cases": 0,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "p95_latency_ms": 28.36,
+      "exact_root_set_successes": 1,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      }
+    },
+    "multi": {
+      "cases": 3,
+      "completed_cases": 0,
+      "failed_cases": 3,
+      "model_calls": 1,
+      "provider_rate_estimate_usd": 0.00033502,
+      "p95_latency_ms": null,
+      "exact_root_set_successes": 0,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      }
+    },
+    "auto": {
+      "cases": 3,
+      "completed_cases": 3,
+      "failed_cases": 0,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "p95_latency_ms": 23.07,
+      "exact_root_set_successes": 1,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      }
+    }
+  },
+  "selected_routes": {
+    "normal_slow_sql": {
+      "rules": {
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "single": {
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "multi": {
+        "selected_route": "multi",
+        "fallback_route": "rules",
+        "evaluation_status": "failed",
+        "model_calls": 0,
+        "failures": [
+          "ValueError",
+          "ValueError",
+          "ValueError",
+          "ValueError"
+        ]
+      },
+      "auto": {
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      }
+    },
+    "missing_pool_evidence": {
+      "rules": {
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "single": {
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "multi": {
+        "selected_route": "multi",
+        "fallback_route": "rules",
+        "evaluation_status": "failed",
+        "model_calls": 1,
+        "failures": [
+          "ValueError",
+          "ValueError",
+          "ValueError"
+        ]
+      },
+      "auto": {
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      }
+    },
+    "contradictory_payment": {
+      "rules": {
+        "selected_route": "rules",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "single": {
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      },
+      "multi": {
+        "selected_route": "multi",
+        "fallback_route": "rules",
+        "evaluation_status": "failed",
+        "model_calls": 0,
+        "failures": [
+          "ValueError",
+          "ValueError",
+          "ValueError",
+          "ValueError"
+        ]
+      },
+      "auto": {
+        "selected_route": "single",
+        "fallback_route": null,
+        "evaluation_status": "complete",
+        "model_calls": 0,
+        "failures": []
+      }
+    }
+  },
+  "failure_classification": {
+    "multi_cases_failed": 3,
+    "value_error_count": 11,
+    "cause": "Historical completed checkpoints had valid parsed data but usage token fields were redacted as [REDACTED]. usage_token_count requires integer counts and raised ValueError before expert findings could be aggregated.",
+    "provider_json_parse_failure": false,
+    "fresh_response_json_parsed": true,
+    "fallback": "multi fell back to rules for all three cases; these are not valid multi-agent scores.",
+    "provider_response_error_count": 0,
+    "old_checkpoint_usage_value_errors": 11,
+    "other_runner_error_count": 0,
+    "reused_checkpoint_data_objects_valid": true
+  },
+  "response_safety": {
+    "checked_checkpoint_responses": 15,
+    "reused_responses_with_redacted_usage": 14,
+    "credential_like_response_keys": 0,
+    "email_matches": 0,
+    "bearer_matches": 0,
+    "phone_matches": 0,
+    "raw_prompt_fields_present": false,
+    "gold_in_payload": false,
+    "gold_modified": false
+  },
+  "offline_regression": {
+    "test": "tests.test_op3_frozen_eval.FrozenOp3EvaluationTests.test_completed_checkpoint_with_redacted_usage_is_not_reused",
+    "targeted_tests_passed": 4,
+    "new_provider_calls": 0,
+    "reused_unusable_response": false,
+    "duplicate_inference_blocked": true
+  },
+  "interpretation": "Only one provider inference was new; 14 prior checkpoint responses were reused. rules was deterministic, single reused historical model responses, and auto selected rules once and single twice. Strategy metrics are not a fresh four-way comparison and do not establish multi-agent gain.",
+  "execution_source_revision": "9ffc266"
+}

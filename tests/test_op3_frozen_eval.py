@@ -11,9 +11,10 @@ from unittest.mock import patch
 from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
-    _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend, _total_cap_covers,
+    _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
+    _refuse_unavailable_paid_response, _total_cap_covers,
     _planned_requests, _validate_new_run_id, _validate_prompt_payload, AUTHORIZATION_SCOPE,
-    FROZEN_LIVE_CASES, main, run)
+    FROZEN_LIVE_CASES, PriorPaidResponseUnavailable, main, run)
 from scripts.evaluate_agents import BudgetLimitExceeded, DuplicateBudgetRequest, RunBudget
 
 
@@ -364,10 +365,30 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertNotIn(key, responses)
         self.assertIn(key, uncertain)
 
+    def test_completed_checkpoint_with_redacted_usage_is_not_reused(self):
+        with TemporaryDirectory() as temp:
+            checkpoint = Path(temp) / "requests.jsonl"
+            key = {"case_id": "synthetic_case", "system_sha256": "a" * 64,
+                "user_payload_sha256": "b" * 64, "token_budget": 320}
+            response = {"data": {"hypotheses": [], "missing_data": []}, "usage": {
+                "prompt_tokens": "[REDACTED]", "completion_tokens": "[REDACTED]",
+                "total_tokens": "[REDACTED]", "prompt_tokens_details": "[REDACTED]"}}
+            checkpoint.write_text(json.dumps({**key, "status": "completed", "response": response}) + "\n",
+                encoding="utf-8")
+
+            responses, uncertain = _load_request_checkpoints(checkpoint)
+
+        request_key = ("synthetic_case", "a" * 64, "b" * 64, 320)
+        self.assertNotIn(request_key, responses)
+        self.assertIn(request_key, uncertain)
+        with self.assertRaises(PriorPaidResponseUnavailable):
+            _refuse_unavailable_paid_response(request_key, set(), uncertain)
+
     def test_completed_checkpoint_can_be_reused_without_new_request(self):
         with TemporaryDirectory() as temp:
             checkpoint = Path(temp) / "requests.jsonl"
-            response = {"data": {"root_causes": ["example"]}, "usage": {"prompt_tokens": 1}}
+            response = {"data": {"root_causes": ["example"]}, "usage": {
+                "prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}}
             checkpoint.write_text(json.dumps({"case_id": "synthetic_case", "system_sha256": "a" * 64,
                 "user_payload_sha256": "b" * 64, "token_budget": 320,
                 "status": "completed", "response": response}) + "\n", encoding="utf-8")
@@ -385,7 +406,8 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             base = {"case_id": "synthetic_case", "system_sha256": "a" * 64,
                 "user_payload_sha256": "b" * 64, "token_budget": 320}
             older.write_text(json.dumps({**base, "status": "pending"}) + "\n", encoding="utf-8")
-            response = {"data": {"root_causes": ["example"]}, "usage": {"prompt_tokens": 1}}
+            response = {"data": {"root_causes": ["example"]}, "usage": {
+                "prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}}
             newer.write_text(json.dumps({**base, "status": "completed", "response": response}) + "\n",
                 encoding="utf-8")
 
