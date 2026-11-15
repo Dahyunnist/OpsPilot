@@ -1,10 +1,10 @@
 {
   "report_path": "reports/op3-full-offline-suite-2026-11-15.json",
-  "report_sha256": "f72706c63a66b392d07c75f8fc2e3d40adec3f61771bb6c78a2bf1e076769c8f",
+  "report_sha256": "e4914746366e9ae80131331e69d9b34872bfbb91d8dc3c9491d7ed2dcd7dcea6",
   "op_run_manifest": {
     "status": "full_suite_timed_out; focused_suite_passed",
     "split": "offline_verification",
-    "result_fingerprint_sha256": "f72706c63a66b392d07c75f8fc2e3d40adec3f61771bb6c78a2bf1e076769c8f",
+    "result_fingerprint_sha256": "e4914746366e9ae80131331e69d9b34872bfbb91d8dc3c9491d7ed2dcd7dcea6",
     "cost_usd_estimate": 0,
     "parameters": {
       "full_suite_collected": 259,
@@ -21,7 +21,9 @@
       "container_started": false,
       "a2a_sdk_pure_python": true,
       "protobuf_native_extension": "Windows .pyd",
-      "linux_wheelhouse_available": false
+      "linux_wheelhouse_available": false,
+      "linux_a2a_ci": "pending CI",
+      "workflow_path": ".github/workflows/a2a-sdk-interop.yml"
     },
     "model_id": "none",
     "run_id": "op3-full-offline-suite-2026-11-15",

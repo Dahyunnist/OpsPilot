@@ -76,6 +76,25 @@
     "container_started": false,
     "network_used": false
   },
+  "linux_a2a_ci": {
+    "workflow": ".github/workflows/a2a-sdk-interop.yml",
+    "status": "pending_ci",
+    "runner": "ubuntu-latest",
+    "python": "3.12",
+    "tests": [
+      "tests/test_a2a_sdk_interop.py::OfficialSdkInteropTests::test_official_sdk_client_discovers_and_uses_local_agent",
+      "tests/test_agents.py::AgentTests::test_a2a_card_message_task_poll_and_message_idempotency",
+      "tests/test_agents.py::AgentTests::test_a2a_task_cancel_is_terminal",
+      "tests/test_agents.py::AgentTests::test_a2a_transport_retry_reuses_idempotent_message",
+      "tests/test_agents.py::AgentTests::test_a2a_rejects_non_object_params",
+      "tests/test_agents.py::AgentTests::test_a2a_deadline_cancels_late_result"
+    ],
+    "sdk_import_required": true,
+    "protocol_assertions_changed": false,
+    "model_calls": 0,
+    "external_business_services": false,
+    "result_claimed": false
+  },
   "focused_suite": {
     "command": ".venv/Scripts/python.exe -m pytest -q -x -p no:cacheprovider --basetemp <repo-local-temp> tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
     "passed": 43,
