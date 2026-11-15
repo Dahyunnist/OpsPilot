@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "artifact_type": "op4_bad_release_host_verification",
+  "status": "passed",
+  "run_id": "cd8d4365-6be4-424c-845a-235dc148ceaf",
+  "compose_project": "opspilot-bad-release-cd8d43656be4",
+  "order_id": "bad-release-cd8d4365-6be4-424c-845a-235dc148ceaf",
+  "synthetic_only": true,
+  "request_attempts": 1,
+  "expected_http_status": 502,
+  "actual_http_status": 502,
+  "window_start_utc": "2026-11-15T14:03:45.9459284Z",
+  "window_end_utc": "2026-11-15T14:03:50.0033853Z",
+  "deployment": {
+    "record_id": "1948ab78-77c2-4fd5-96ca-0197e8dc38cb",
+    "run_id": "cd8d4365-6be4-424c-845a-235dc148ceaf",
+    "order_id": "bad-release-cd8d4365-6be4-424c-845a-235dc148ceaf",
+    "timestamp": "2026-11-15T14:03:45.9459284Z",
+    "service": "orders",
+    "version": "v2",
+    "synthetic": true
+  },
+  "matching_order_logs": [
+    {
+      "timestamp": "2026-11-15T14:03:49.98Z",
+      "severity": "error",
+      "message": "inventory dependency failed",
+      "service": "orders",
+      "service_version": "v2",
+      "trace_id": "22deb0a540a1abb4b8b7acf2daed4345",
+      "span_id": "2f041fe3bf8a8999",
+      "error_type": "URLError",
+      "order_id": "bad-release-cd8d4365-6be4-424c-845a-235dc148ceaf",
+      "dependency_host": "inventory-v2",
+      "error_reason": "[Errno -5] No address associated with hostname"
+    },
+    {
+      "timestamp": "2026-11-15T14:03:49.989Z",
+      "severity": "error",
+      "message": "request failed",
+      "service": "orders",
+      "service_version": "v2",
+      "trace_id": null,
+      "span_id": null,
+      "path": "/orders",
+      "error_type": "RuntimeError",
+      "order_id": "bad-release-cd8d4365-6be4-424c-845a-235dc148ceaf"
+    }
+  ],
+  "cleanup": {
+    "attempted": true,
+    "volumes_deleted": false,
+    "containers_empty": true
+  },
+  "report": "reports/op4-bad-release-host-cd8d4365-6be4-424c-845a-235dc148ceaf.json"
+}

@@ -19,6 +19,8 @@ Windows PowerShell 5.1 对单条管道输出的 `.Count` 与 PowerShell 7 行为
 
 修复后宿主 run `4830fe63-a445-4c8d-b47f-6951d45dc5f2` 完整通过：checkout 返回 502，唯一订单的日志含 `inventory-v2` 和 `[Errno -5] No address associated with hostname`；orders/v2 deployment 的 run/order ID 匹配。cleanup 确认容器清空、卷保留。报告见[宿主复验结果](../../reports/op4-bad-release-host-4830fe63-a445-4c8d-b47f-6951d45dc5f2.json)。Windows PowerShell 5.1 定向回归 4 项通过，覆盖 `error_reason` 单独命中；独立 Docker 宿主复跑也通过。
 
+2026-11-15 又完成一次可访问 Docker 的 Windows PowerShell 宿主复核。报告 [cd8d4365 宿主验收](../../reports/op4-bad-release-host-cd8d4365-6be4-424c-845a-235dc148ceaf.json) 为 `passed`：合成数据、一次请求、HTTP 502；唯一订单对应 orders/v2 deployment，且同一订单日志记录 `inventory-v2` DNS 错误 `[Errno -5] No address associated with hostname`。脚本报告容器已清空、卷保留。受限执行环境遇到 Docker pipe `Access Denied` 的失败不代表项目故障；该轮未把失败环境报告当成验收结果。对应宿主脚本回归命令：`pytest tests/test_op4_host_validation_script.py`。本报告未记录脚本 hash；这里只记录报告中的实际验收字段，不推断运行时源码版本。OP-3 仍停在授权计划准备阶段，没有发送模型请求。
+
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\lab\verify-bad-release.ps1
 ```
