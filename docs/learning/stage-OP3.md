@@ -152,4 +152,6 @@ Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，�
 
 为补 Linux 实测，新增 `.github/workflows/a2a-sdk-interop.yml`：Ubuntu/Python 3.12 安装项目固定的 pytest 与 A2A SDK 版本，先强制导入 SDK 防止用例被 skip，再运行官方 SDK 的本地合成互通用例及五项本地 A2A 协议单测。设置 loopback 直连，未改协议断言；不调用模型或业务服务。Linux 结果待 CI，当前不得称通过。
 
+Actions run `43673391511` 对提交 `2af48e9` 的结论为 `failure`，jobs API 返回 `total_count: 0`。没有 job 日志，失败原因未确认；不改 workflow、不猜根因。等待用户提供 Actions 页面错误和余额预检。详见[运行记录](op3-actions-run-43673391511.md)及[Actions 页面](https://github.com/Dahyunnist/OpsPilot/actions/runs/43673391511)。
+
 授权记录更正：对话中用户在看到完整 `contradictory_payment` SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 后明确回复“确认该文件”。此确认授权该冻结文件；先前短 SHA 已被更正，不作为当前授权值。数据范围未扩展。余额仍未知，因此不推理。
