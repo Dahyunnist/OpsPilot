@@ -154,6 +154,10 @@ Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，�
 
 Actions run `43673391511` 对提交 `2af48e9` 的结论为 `failure`，jobs API 返回 `total_count: 0`。没有 job 日志，失败原因未确认；不改 workflow、不猜根因。等待用户提供 Actions 页面错误和余额预检。详见[运行记录](op3-actions-run-43673391511.md)及[Actions 页面](https://github.com/Dahyunnist/OpsPilot/actions/runs/43673391511)。
 
+## 2026-11-15 历史人民币账单旁证
+
+用户提供的账单复核摘要显示：OpsPilot 别名有 1,305 次请求，按 token 单价推算 ¥3.79653708；全账户导出 4,402 次、¥10.91277486。别名 `0815` 的 1,471 次请求未归属，不分配给本项目。以上是 2026-10-17 至 2026-11-15 的历史人民币用量，与美元费用账本和 `$0.60` cap 分开，不做汇率换算，也不代表当前余额。账单摘要已记入 `reports/op3-multiagent-run-audit-2026-11-15.json`；原始 CSV 未复制进仓库。
+
 授权记录更正：对话中用户在看到完整 `contradictory_payment` SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 后明确回复“确认该文件”。此确认授权该冻结文件；先前短 SHA 已被更正，不作为当前授权值。数据范围未扩展。余额仍未知，因此不推理。
 
 ## 2026-11-15 OP-3 审计事件幂等加固
