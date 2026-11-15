@@ -118,6 +118,8 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 
 `run-host-matrix.ps1` 可不启动 Agent 逐案注入并评估 must-observe；Compose 只构建 `lab/service`，不挂载 `truth.json`。带 Agent 的 `evaluate-all.ps1` 原先以 `case_id` 作为 checkout `order_id`，像 `lab-release-01` 会随日志进入模型上下文，泄露场景语义。现在每案生成随机 GUID order ID；本地 evaluator 仍以 case ID 选择 truth，并在 `evaluate_snapshot` 后才调用 `score_case`，truth labels 不在遥测来源输入中。新增回归覆盖此隔离边界。
 
-恢复范围保持明确：`run-op1-case.ps1` 对连接池耗尽和依赖超时测 baseline/fault/recovery；slow SQL 垂直切片也测三阶段。其余十个案例只在矩阵末尾清理实验 project，没有逐案恢复请求/测量。
+历史矩阵报告没有逐案恢复数据。现有 `run-op1-case.ps1` 对连接池耗尽和依赖超时测 baseline/fault/recovery；slow SQL 垂直切片也测三阶段。新矩阵 runner 在每个故障后重启健康配置，记录随机恢复订单的 HTTP 状态、耗时、订单日志和 orders/v1 部署，并将恢复结果并入该案例及整轮通过条件；需宿主复跑后才能产生现场证据。
+
+矩阵报告只投影必要日志字段；不输出完整 `error_reason`。trace 标签只保留订单 ID 和 HTTP 状态，不保留请求头或 SQL 内容。finally 期间保留随机 `COMPOSE_PROJECT_NAME`，只停止并检查该项目；检查完成后才恢复调用者环境变量。Compose stop 不删 PostgreSQL/Redis 卷。
 
 `tests/test_op1_truth_isolation.py tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py`：54 项和 11 子测试通过。未启动 Docker、未调用 Agent/模型。

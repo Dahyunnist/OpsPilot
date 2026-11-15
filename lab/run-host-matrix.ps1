@@ -144,7 +144,7 @@ try {
         $signals=@(Get-ObservedSignals $case $id $logs $deploymentRecords $traceData $start $end)
         $missingSignals=@($signals | Where-Object { -not $_.observed } | ForEach-Object { $_.name })
         $scenarioPassed=Test-MatrixScenarioPass @{ExpectedStatusObserved=$expectedStatusObserved;VersionObserved=$versionObserved;DnsObserved=$dnsObserved;Logs=$logs;TraceSpans=$windowSpans;SignalResults=$signals}
-        $safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,error_reason,dependency_host,status,attempt,remaining,path)
+        $safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,dependency_host,status,attempt,remaining,path)
         $safeSpans=@($windowSpans | Select-Object service,trace_id,span_id,operation,start,duration,status,order_id,attributes)
         $recoveryOrderId = "matrix-recovery-$([guid]::NewGuid())"
         $recoveryStart = [DateTime]::UtcNow.ToString("o")

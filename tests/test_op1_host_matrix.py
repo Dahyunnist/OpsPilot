@@ -25,6 +25,11 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "finally" in script and "stop.ps1" in script and "ps --all" in script
     assert "$env:COMPOSE_PROJECT_NAME = $runId" in script
     assert script.index("$env:COMPOSE_PROJECT_NAME =") < script.index("foreach ($case in $truth.cases)")
+    cleanup_call = script.index('& (Join-Path $PSScriptRoot "stop.ps1")')
+    project_restore = script.index('Remove-Item Env:COMPOSE_PROJECT_NAME')
+    assert script.index("$env:COMPOSE_PROJECT_NAME = $runId") < cleanup_call < project_restore
+    assert "docker compose -p $env:COMPOSE_PROJECT_NAME @composeFiles ps --all --format json" in script
+    assert "docker compose @composeFiles down" in stop and "docker compose -p" not in stop
     assert scenario_runner.count("docker compose @composeFiles up --build") == 1
     assert "function Wait-LabReady([int]$TimeoutSeconds = 60)" in scenario_runner
     assert scenario_runner.count("\nWait-LabReady\n") == 1
@@ -72,6 +77,10 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "$missingTraceSignals.Count -eq 0 -and $missingLogSignals.Count -eq 0" in script
     assert "$windowSpans.Count -gt 0 -and $missingTraceSignals.Count -eq 0" in script
     assert "window_log_records=$safeLogs" in script and "window_trace_spans=$safeSpans" in script
+    assert "$safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,dependency_host,status,attempt,remaining,path)" in script
+    contract = (ROOT / "lab/op1-matrix-contract.ps1").read_text(encoding="utf-8-sig")
+    assert '"opspilot.order_id", "http.response.status_code"' in contract
+    assert 'Where-Object { $_.Name -in @("severity", "service_version", "error_type", "dependency_host", "status", "attempt", "remaining", "path") }' in contract
     assert "$settleAttempts=if ($case.fault -eq \"bad_release\") { 10 } else { 2 }" in script
     assert "for ($settle=0; $settle -le $settleAttempts; $settle++)" in script
     assert "@(502, 504)" in script and "expected_http_statuses=$expectedStatuses" in script
@@ -193,10 +202,13 @@ def test_matrix_log_and_jaeger_windows_are_start_inclusive_end_exclusive():
         "[pscustomobject]@{name='end';time=$end}); "
         "$logFlags=@($rows|ForEach-Object {[pscustomobject]@{name=$_.name;inside=(Test-InEvidenceWindow $_.time $start $end)}}); "
         "$spans=@(foreach($item in @(@{id='before';us=$startUs-1},@{id='start';us=$startUs},@{id='before-end';us=$endUs-1},@{id='end';us=$endUs})) "
-        "{[pscustomobject]@{processID='p';spanID=$item.id;operationName='orders/request';startTime=[long]$item.us;tags=@([pscustomobject]@{key='opspilot.order_id';value='order-1'})}}); "
+        "{[pscustomobject]@{processID='p';spanID=$item.id;operationName='orders/request';startTime=[long]$item.us;tags=@([pscustomobject]@{key='opspilot.order_id';value='order-1'},"
+        "[pscustomobject]@{key='http.response.status_code';value='502'},[pscustomobject]@{key='http.request.header.authorization';value='secret-header'},"
+        "[pscustomobject]@{key='db.statement';value='secret-query'})}}); "
         "$trace=[pscustomobject]@{traceID='trace';processes=[pscustomobject]@{p=[pscustomobject]@{serviceName='orders'}};spans=$spans}; "
         "$spanIds=@(Get-WindowSpans @($trace) $start $end 'order-1'|ForEach-Object {$_.span_id}); "
-        "[pscustomobject]@{logs=$logFlags;span_ids=$spanIds}|ConvertTo-Json -Depth 5 -Compress"
+        "$spanEvidence=@(Get-WindowSpans @($trace) $start $end 'order-1'); "
+        "[pscustomobject]@{logs=$logFlags;span_ids=$spanIds;span_attributes=$spanEvidence[0].attributes}|ConvertTo-Json -Depth 5 -Compress"
     )
     result = subprocess.run([powershell, "-NoProfile", "-NonInteractive", "-Command", command],
         capture_output=True, text=True, check=True, timeout=15)
@@ -204,6 +216,10 @@ def test_matrix_log_and_jaeger_windows_are_start_inclusive_end_exclusive():
     assert {item["name"]: item["inside"] for item in outcome["logs"]} == {
         "before": False, "start": True, "before-end": True, "end": False}
     assert outcome["span_ids"] == ["start", "before-end"]
+    assert outcome["span_attributes"] == [
+        {"key": "opspilot.order_id", "value": "order-1"},
+        {"key": "http.response.status_code", "value": "502"},
+    ]
 
 
 def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
@@ -234,6 +250,7 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         "inventory_remaining_zero": {"service": "inventory", "severity": "warning", "message": "inventory exhausted", "remaining": 0},
         "reservation_rejected": {"service": "orders", "severity": "warning", "message": "inventory reservation rejected"},
     }
+    logs_by_signal["inventory_connection_errors"]["error_reason"] = "Name or service not known; authorization=matrix-secret-marker"
     start = dt.datetime(2026, 11, 13, tzinfo=dt.timezone.utc)
     end = start + dt.timedelta(hours=1)
     logs = []
@@ -277,6 +294,7 @@ def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
         capture_output=True, text=True, check=True, timeout=15,
     )
     outcome = json.loads(result.stdout.strip().splitlines()[-1])
+    assert "matrix-secret-marker" not in result.stdout
     observed = outcome["all"]
     assert len(observed) == 25
     assert all(item["observed"] for item in observed), [item["name"] for item in observed if not item["observed"]]

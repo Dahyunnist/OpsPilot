@@ -37,7 +37,7 @@ function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$Orde
                     duration = [long]$span.duration
                     status = Get-SpanTag $span "http.response.status_code"
                     order_id = $spanOrderId
-                    attributes = @($span.tags | Where-Object { $_.key -match "^(opspilot\.order_id|http\.|db\.|error\.)" } | ForEach-Object { [pscustomobject]@{key=$_.key;value=$_.value} })
+                    attributes = @($span.tags | Where-Object { $_.key -in @("opspilot.order_id", "http.response.status_code") } | ForEach-Object { [pscustomobject]@{key=$_.key;value=$_.value} })
                 }
             }
         }
@@ -84,7 +84,7 @@ function Get-ObservedSignals($Case, [string]$OrderId, $Logs, $Deployments, $Trac
                 else { "$($_.service):$($_.timestamp):$($_.message):$($_.order_id)" }
             $attributes = $_.attributes
             if ($source -eq "logs") {
-                $attributes = @($_.PSObject.Properties | Where-Object { $_.Name -in @("severity", "service_version", "error_type", "error_reason", "dependency_host", "status", "attempt", "remaining", "path") } | ForEach-Object { [pscustomobject]@{key=$_.Name;value=$_.Value} })
+                $attributes = @($_.PSObject.Properties | Where-Object { $_.Name -in @("severity", "service_version", "error_type", "dependency_host", "status", "attempt", "remaining", "path") } | ForEach-Object { [pscustomobject]@{key=$_.Name;value=$_.Value} })
             }
             [pscustomobject]@{source=$source;record_id=$recordId;service=$_.service;timestamp=$_.timestamp;trace_id=$_.trace_id;span_id=$_.span_id;operation=$_.operation;message=$_.message;order_id=$_.order_id;attributes=$attributes}
         })
