@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3 multi-agent gain comparison",
+  "status": "prepared_provider_balance_pending",
+  "run_id": "op3-multiagent-offline-prereg-2026-11-15",
+  "offline_only": true,
+  "inference_calls": 0,
+  "provider_balance_check": "not_performed",
+  "provider_model_list_check": "not_performed",
+  "frozen_input": {
+    "spec": "reports/op2-model-subset.json",
+    "spec_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "case_count": 3,
+    "synthetic": true,
+    "cases": [
+      {
+        "case_id": "normal_slow_sql",
+        "mechanism": "slow_sql",
+        "snapshot_sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+        "sources": [
+          "deployments",
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "independent_question_count": 2
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "mechanism": "db_pool_exhaustion",
+        "snapshot_sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+        "sources": [
+          "deployments",
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "independent_question_count": 2
+      },
+      {
+        "case_id": "contradictory_payment",
+        "mechanism": "dependency_timeout",
+        "snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+        "sources": [
+          "deployments",
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "independent_question_count": 2
+      }
+    ]
+  },
+  "strategies": [
+    {
+      "id": "rules",
+      "label": "rules"
+    },
+    {
+      "id": "single",
+      "label": "single"
+    },
+    {
+      "id": "multi",
+      "label": "always-multi"
+    },
+    {
+      "id": "auto",
+      "label": "auto"
+    }
+  ],
+  "request_plan": {
+    "count_basis": "unique prompts across selected routes; truncation retries disabled",
+    "per_case": [
+      {
+        "case_id": "normal_slow_sql",
+        "auto_route": "rules",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "rules"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "missing_pool_evidence",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      },
+      {
+        "case_id": "contradictory_payment",
+        "auto_route": "single",
+        "nonempty_sources": 4,
+        "selected_routes": {
+          "rules": "rules",
+          "single": "single",
+          "multi": "multi",
+          "auto": "single"
+        },
+        "max_provider_requests": 6
+      }
+    ],
+    "max_provider_requests": 18
+  },
+  "budget": {
+    "project_cap_usd": 0.6,
+    "recorded_cumulative_peak_usd": 0.52119297,
+    "authorized_run_reserve_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54421557,
+    "within_project_cap": true,
+    "max_provider_requests": 18
+  },
+  "metric_contract": {
+    "root_cause_complete_set": "exact_root_set_successes",
+    "top_1": "top1_rate",
+    "evidence": [
+      "evidence_precision",
+      "evidence_recall"
+    ],
+    "provider_cost": "provider_rate_estimate_usd",
+    "latency": "p95_latency_ms",
+    "failures": "per-strategy failures and sanitized error_trace",
+    "cancellations": {
+      "status": "not_recorded_by_frozen_sync_runner",
+      "note": "A2A task cancellation is a separate protocol probe; Windows localhost tests are blocked."
+    }
+  },
+  "results": null,
+  "interpretation": "Input hashes, sources, strategy plan, and budget are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
+  "created_at": "2026-11-15T04:53:07.340661+00:00",
+  "result_fingerprint_sha256": "2b5964f0940997ab1de648eef7955cccd8181b9765a44ac9cfce28b8f9d07a64",
+  "op_run_manifest": {
+    "schema_version": 1,
+    "project": "OpsPilot",
+    "run_id": "op3-multiagent-offline-prereg-2026-11-15",
+    "evaluation_id": "op3-multiagent-offline-prereg-2026-11-15",
+    "dataset_id": "op2_model_paired_subset",
+    "dataset_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "truth_sha256": null,
+    "split": "authorized_frozen_three_case_subset",
+    "evaluator_sha256": "66aa1ac7573bb7af76baa59fc61953f4a5f185584d5cadac168a7d94430446e2",
+    "result_fingerprint_sha256": "2b5964f0940997ab1de648eef7955cccd8181b9765a44ac9cfce28b8f9d07a64",
+    "git_sha": "383bc9c44abb7db5d8a00e17a865e1e61b9e0679",
+    "model_id": "none",
+    "prompt_sha": null,
+    "tool_schema_sha": null,
+    "runtime_digest": null,
+    "max_steps": 1,
+    "max_tokens": null,
+    "scorer_sha": "01803a05022296db8d15af999b262db31752d62ef6eca551f68c5a9ad7f67d30",
+    "gold_source": "not_applicable",
+    "cost_usd_estimate": 0.0,
+    "trace_id": "op3-multiagent-offline-prereg-2026-11-15",
+    "started_at": "2026-11-15T04:53:07.340661+00:00",
+    "ended_at": "2026-11-15T04:53:07.340661+00:00",
+    "parameters": {
+      "artifact_type": "offline_preflight_audit",
+      "strategies": [
+        "rules",
+        "single",
+        "multi",
+        "auto"
+      ],
+      "max_provider_requests": 18,
+      "authorized_run_reserve_usd": 0.0230226,
+      "provider_balance_check": "not_performed"
+    },
+    "status": "completed"
+  }
+}
