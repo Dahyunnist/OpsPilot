@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "run_id": "op3-op2-r4-preflight-2026-11-15",
+  "status": "blocked_before_inference",
+  "frozen_snapshots": {
+    "normal_slow_sql": {
+      "sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "matches_registry": true
+    },
+    "missing_pool_evidence": {
+      "sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "matches_registry": true
+    },
+    "contradictory_payment": {
+      "sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "matches_registry": true
+    }
+  },
+  "offline_failure_case": {
+    "test": "tests/test_strategy_eval.py::StrategyEvaluationTests::test_redacted_checkpoint_usage_fails_before_multi_adjudication",
+    "passed": 1,
+    "failed": 0,
+    "duration_seconds": 0.07
+  },
+  "budget": {
+    "project_cap_usd": 0.6,
+    "latest_ledger_cumulative_peak_usd": 0.52119297,
+    "authorized_full_run_peak_reserve_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54421557,
+    "within_project_cap": true,
+    "inference_calls": 0,
+    "new_cost_usd": 0
+  },
+  "provider_preflight": {
+    "balance_get": "blocked_before_response",
+    "error_type": "URLError",
+    "error_code": "WinError 10013",
+    "account_balance": "unknown",
+    "models_get": "not_reached",
+    "inference_started": false
+  },
+  "a2a_hang_diagnosis": {
+    "proactor": "stalls at socket._fallback_socketpair -> accept during event-loop setup",
+    "selector": "same stall at socket._fallback_socketpair -> accept during event-loop setup",
+    "protocol_assertions_weakened": false,
+    "cross_platform_environment_block_confirmed": false
+  },
+  "docker_started": false,
+  "external_data_sent": false,
+  "gold_sent": false,
+  "secrets_sent": false,
+  "r3_report_changed": false,
+  "git_sha_before_commit": "c7080c0b80e32e70310d37f809746f71882ed2ed"
+}

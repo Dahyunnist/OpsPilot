@@ -143,3 +143,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，但仓库唯一已跟踪 Dockerfile `lab/service/Dockerfile` 只安装 `lab/service/requirements.txt`；开发测试依赖 `pytest` 与可选 `a2a-sdk==0.3.8` 分别在 `requirements-dev.txt`、`requirements-a2a-interop.txt`，没有镜像构建依赖。故没有可确认包含项目测试依赖的 Linux 镜像；未启动容器、未拉镜像、未安装或联网。Linux A2A 对照未运行，尚不能标记 Windows 跨平台环境阻塞。详见本报告新增容器门禁记录。
 
 本机 `.venv` 只读依赖核验：`a2a-sdk 0.3.8` 共 168 个发行文件，无 `.pyd/.dll/.so`，属于纯 Python；其已安装的默认依赖包含 `httpx 0.28.1`、`protobuf 7.36.2`、`pydantic 2.14.1`、`google-api-core`、`httpx-sse` 等。`protobuf` 含 Windows 专用 `google/_upb/_message.pyd`。pip wheel cache 与 HTTP cache 均为 0 字节、0 文件，没有可复用 Linux wheelhouse。故不能把 Windows venv 直接搬入 Linux；当前项目服务镜像也未装 `pytest` 或 `a2a-sdk`。未尝试安装或联网。用户可在有权限的宿主机运行此前提供的单测命令并保留故障栈。
+
+## 2026-11-15 OP-3 新授权评测门禁
+
+`test_redacted_checkpoint_usage_fails_before_multi_adjudication` 离线测试 1 项通过；三份冻结快照 SHA 全匹配。账本峰值 `$0.52119297`，加获准最坏预留 `$0.02302260` 为 `$0.54421557/$0.60`。DeepSeek 余额 GET 遭本机网络权限错误 `WinError 10013`，余额未知，未到模型列表检查；立即停止，推理 0 次、费用 `$0`。真实评测不运行。A2A Proactor 与 Selector 对照均停在 Windows `socket._fallback_socketpair → accept`，未进入协议断言；未改弱协议检查，也未宣称跨平台阻塞已证实。记录见 `reports/op3-op2-r4-preflight-blocked-2026-11-15.json`。

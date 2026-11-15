@@ -1,0 +1,25 @@
+{
+  "report_path": "reports/op3-op2-r4-preflight-blocked-2026-11-15.json",
+  "report_sha256": "ace9815e7718156bd73f2a6adef34e1c8a91bb185b162f28c88a9a4e8ca742e5",
+  "op_run_manifest": {
+    "status": "blocked_before_inference",
+    "split": "authorized_frozen_synthetic_subset",
+    "result_fingerprint_sha256": "ace9815e7718156bd73f2a6adef34e1c8a91bb185b162f28c88a9a4e8ca742e5",
+    "cost_usd_estimate": 0,
+    "parameters": {
+      "offline_failure_test_passed": true,
+      "snapshot_hashes_match": true,
+      "cumulative_worst_case_usd": 0.54421557,
+      "project_cap_usd": 0.6,
+      "provider_balance": "unknown",
+      "provider_preflight_error": "WinError 10013",
+      "model_calls": 0,
+      "docker_started": false
+    },
+    "model_id": "deepseek-v4-flash",
+    "run_id": "op3-op2-r4-preflight-2026-11-15",
+    "schema_version": 1,
+    "git_sha": "c7080c0b80e32e70310d37f809746f71882ed2ed",
+    "evaluation_id": "op3_op2_r4_preflight"
+  }
+}
