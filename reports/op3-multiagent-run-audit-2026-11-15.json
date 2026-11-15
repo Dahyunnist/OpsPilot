@@ -266,6 +266,9 @@
     },
     "cost_csv": {
       "currency": "CNY",
+      "export_window": "2026-10-17 through 2026-11-15",
+      "coverage_status": "complete_export_window",
+      "zero_usage_windows_omitted_by_export": true,
       "observed_rows": 6,
       "observed_cost_total": 10.91277486,
       "observed_windows": [
@@ -278,9 +281,9 @@
       ]
     },
     "reconciliation_limits": [
-      "amount_csv total is derived from per-key token amounts multiplied by exported prices.",
+      "amount_csv total is derived from all per-key token amount rows multiplied by exported prices, excluding request_count.",
       "cost_csv is account-level and cannot be assigned to OpsPilot because it has no api_key_name field.",
-      "cost_csv contains six observed daily windows only; missing windows are not treated as proven zero spend.",
+      "The cost export covers the full 2026-10-17 through 2026-11-15 window and omits zero-usage days; six populated daily windows do not indicate an incomplete period.",
       "CNY provider amounts are kept separate from the local USD estimate; no exchange-rate conversion is asserted."
     ],
     "raw_csv_copied_to_repository": false,
