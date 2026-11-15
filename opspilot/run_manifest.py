@@ -39,7 +39,7 @@ OP_RUN_MANIFEST_REQUIRED = {
     "max_tokens", "scorer_sha", "gold_source", "cost_usd_estimate", "trace_id", "started_at", "ended_at",
     "parameters",
 }
-OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split", "model_id", "gold_source", "trace_id")
+OP_RUN_IDENTITY_FIELDS = ("project", "run_id", "evaluation_id", "dataset_id", "split", "model_id", "gold_source")
 OP_RUN_HASH_FIELDS = ("dataset_sha256", "truth_sha256", "evaluator_sha256", "result_fingerprint_sha256", "prompt_sha", "tool_schema_sha", "runtime_digest", "scorer_sha")
 
 
@@ -134,6 +134,7 @@ def normalize_host_manifest(source: dict[str, Any], *, source_manifest_sha256: s
         "evaluation_id": "not_recorded", "environment": "not_recorded", "dataset_sha256": "recorded",
         "truth_sha256": "recorded", "report_sha256": "recorded", "prompt_sha256": "not_applicable",
         "tool_schema_sha256": "not_applicable",
+        "trace_id": "not_recorded",
         "scorer_sha256": "blocked", "runtime.digest_sha256": "blocked",
         "runtime.platform": "blocked", "runtime.lock_sha256": "blocked",
         "runtime.python": "recorded", "runtime.container_image": "recorded",
@@ -141,6 +142,15 @@ def normalize_host_manifest(source: dict[str, Any], *, source_manifest_sha256: s
         "model_version": "not_applicable", "max_tokens": "not_applicable",
         "budget.cap_usd": "blocked", "budget.spent_usd": "recorded",
     }
+    telemetry_evidence = source.get("telemetry_evidence")
+    if not isinstance(telemetry_evidence, list):
+        telemetry_evidence = []
+    recorded_trace_ids = {item.get("trace_id") for item in telemetry_evidence
+        if isinstance(item, dict) and isinstance(item.get("trace_id"), str)}
+    source_trace_id = source.get("trace_id")
+    trace_id = source_trace_id if source_trace_id in recorded_trace_ids else None
+    if trace_id is not None:
+        field_status["trace_id"] = "recorded"
     field_status.update(evaluation_id="blocked", environment="blocked")
     blocked_fields = sorted(field for field, state in field_status.items() if state == "blocked")
     runtime = {
@@ -156,7 +166,7 @@ def normalize_host_manifest(source: dict[str, Any], *, source_manifest_sha256: s
         "schema_version": PUBLIC_MANIFEST_VERSION,
         "normalizer_sha256": normalizer_sha256,
         "project": source.get("project"), "run_id": source.get("run_id"),
-        "trace_id": source.get("trace_id"), "evaluation_id": None, "environment": None,
+        "trace_id": trace_id, "evaluation_id": None, "environment": None,
         "git_sha": source.get("git_sha"), "dataset_id": source.get("dataset_id"),
         "dataset_sha256": truth_sha256, "truth_sha256": truth_sha256, "report_sha256": report_sha256,
         "prompt_sha256": None, "tool_schema_sha256": None, "scorer_sha256": None, "split": source.get("split"),
@@ -205,9 +215,15 @@ def validate_public_manifest(value: Any) -> list[str]:
         elif isinstance(item, str) and item.strip().casefold() == "unknown":
             errors.append(f"unknown placeholder is forbidden: {key}")
     walk(value)
-    for field in ("project", "run_id", "trace_id", "dataset_id", "split", "gold_source"):
+    for field in ("project", "run_id", "dataset_id", "split", "gold_source"):
         if not isinstance(value.get(field), str) or not value[field].strip():
             errors.append(f"{field} must be a non-empty string")
+    field_status = value.get("field_status")
+    if value.get("trace_id") is None:
+        if not isinstance(field_status, dict) or field_status.get("trace_id") not in PUBLIC_FIELD_STATES:
+            errors.append("null trace_id requires explicit field_status")
+    elif not isinstance(value.get("trace_id"), str) or not value["trace_id"].strip():
+        errors.append("trace_id must be a non-empty string or explicitly null")
     sha40 = re.compile(r"^[0-9a-f]{40}$")
     for field in ("git_sha",):
         if not isinstance(value.get(field), str) or not sha40.fullmatch(value[field]):
@@ -332,21 +348,33 @@ def validate_op_run_manifest(value: Any) -> list[str]:
     for field in OP_RUN_IDENTITY_FIELDS:
         if field in value and (not isinstance(value[field], str) or not value[field].strip()):
             errors.append(f"{field} must be a non-empty string")
+    if "trace_id" in value and value["trace_id"] is not None and (
+            not isinstance(value["trace_id"], str) or not value["trace_id"].strip()):
+        errors.append("trace_id must be null or a non-empty string linked to recorded trace evidence")
     parameters = value.get("parameters")
     no_truth_artifact = (value.get("model_id") == "none"
         and value.get("gold_source") == "not_applicable"
         and isinstance(parameters, dict)
-        and parameters.get("artifact_type") in {"evidence_snapshot", "action_dry_run", "offline_preflight_audit"})
+        and parameters.get("artifact_type") in {"evidence_snapshot", "action_dry_run", "offline_preflight_audit", "verification_report"})
     for field in OP_RUN_HASH_FIELDS:
+        parameters_for_provenance = value.get("parameters")
+        explicitly_unrecorded = (value.get(field) is None
+            and isinstance(parameters_for_provenance, dict)
+            and parameters_for_provenance.get(f"{field}_not_recorded") is True)
         optional_mock_hash = value.get("model_id") == "none" and field in {"prompt_sha", "tool_schema_sha", "runtime_digest"} and value.get(field) is None
         optional_no_truth = field == "truth_sha256" and no_truth_artifact and value.get(field) is None
-        if field in value and not optional_mock_hash and not optional_no_truth and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
+        if field in value and not explicitly_unrecorded and not optional_mock_hash and not optional_no_truth and (not isinstance(value[field], str) or not SHA256.fullmatch(value[field])):
             errors.append(f"{field} must be 64 hexadecimal characters")
     if "git_sha" in value and (not isinstance(value["git_sha"], str) or not SHA.fullmatch(value["git_sha"])):
         errors.append("git_sha must be 40 hexadecimal characters")
     for field in ("max_steps", "max_tokens"):
-        optional_mock_tokens = field == "max_tokens" and value.get("model_id") == "none" and value.get(field) is None
-        if field in value and not optional_mock_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
+        parameters_for_budget = value.get("parameters")
+        optional_tokens = value.get(field) is None and (
+            field == "max_tokens" and value.get("model_id") == "none"
+            or isinstance(parameters_for_budget, dict)
+            and parameters_for_budget.get(f"{field}_not_recorded") is True
+        )
+        if field in value and not optional_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
             errors.append(f"{field} must be a positive integer")
     if "cost_usd_estimate" in value:
         cost = value["cost_usd_estimate"]
@@ -368,13 +396,17 @@ def validate_op_run_manifest(value: Any) -> list[str]:
         errors.append("model_id must identify the model or be none")
     for field in ("started_at", "ended_at"):
         if field in value:
+            parameters_for_time = value.get("parameters")
+            if value[field] is None and isinstance(parameters_for_time, dict) and parameters_for_time.get(f"{field}_not_recorded") is True:
+                continue
             try:
                 stamp = datetime.fromisoformat(str(value[field]).replace("Z", "+00:00"))
                 if stamp.tzinfo is None:
                     raise ValueError
             except (TypeError, ValueError):
                 errors.append(f"{field} must be an ISO-8601 timestamp with timezone")
-    if "started_at" in value and "ended_at" in value and not any(e.startswith("started_at") or e.startswith("ended_at") for e in errors):
+    if (isinstance(value.get("started_at"), str) and isinstance(value.get("ended_at"), str)
+            and not any(e.startswith("started_at") or e.startswith("ended_at") for e in errors)):
         if datetime.fromisoformat(value["ended_at"].replace("Z", "+00:00")) < datetime.fromisoformat(value["started_at"].replace("Z", "+00:00")):
             errors.append("ended_at must not precede started_at")
     if "status" in value and (not isinstance(value["status"], str) or value["status"] not in STATUSES):
@@ -383,12 +415,12 @@ def validate_op_run_manifest(value: Any) -> list[str]:
 
 
 def build_op_run_manifest(*, project: str, run_id: str, evaluation_id: str, dataset_id: str,
-                          dataset_sha256: str, truth_sha256: str | None, split: str,
-                          evaluator_sha256: str, result_fingerprint_sha256: str,
+                          dataset_sha256: str | None, truth_sha256: str | None, split: str,
+                          evaluator_sha256: str | None, result_fingerprint_sha256: str,
                           git_sha: str, model_id: str, prompt_sha: str | None, tool_schema_sha: str | None,
-                          runtime_digest: str | None, max_steps: int, max_tokens: int | None,
-                          scorer_sha: str, gold_source: str, cost_usd_estimate: float,
-                          trace_id: str, started_at: str, ended_at: str, parameters: dict[str, Any],
+                          runtime_digest: str | None, max_steps: int | None, max_tokens: int | None,
+                          scorer_sha: str | None, gold_source: str, cost_usd_estimate: float,
+                          trace_id: str | None, started_at: str | None, ended_at: str | None, parameters: dict[str, Any],
                           status: str = "completed") -> dict[str, Any]:
     """Build and validate a new OP manifest before its report is written."""
     value = {

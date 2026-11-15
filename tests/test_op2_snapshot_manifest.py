@@ -24,7 +24,7 @@ class Op2SnapshotManifestTests(unittest.TestCase):
         self.assertFalse(report["original_capture_times_recorded"])
 
     def test_committed_snapshot_coverage_record_has_three_valid_manifests(self):
-        path = Path(__file__).resolve().parents[1] / "reports" / "op2-snapshot-manifest-audit-2026-11-14.json"
+        path = Path(__file__).resolve().parents[1] / "reports" / "op2-snapshot-manifest-audit-2026-11-15.json"
         report = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual([], validate_op_run_artifact(report, is_new_run=True))
         self.assertEqual(3, len(report["snapshots"]))

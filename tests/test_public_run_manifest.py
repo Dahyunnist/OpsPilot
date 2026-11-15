@@ -39,11 +39,17 @@ class PublicRunManifestTests(unittest.TestCase):
         self.assertEqual("blocked", value["field_status"]["runtime.digest_sha256"])
         self.assertEqual("blocked", value["field_status"]["scorer_sha256"])
         self.assertEqual("blocked", value["field_status"]["environment"])
+        self.assertIsNone(value["trace_id"])
+        self.assertEqual("not_recorded", value["field_status"]["trace_id"])
         self.assertEqual("passed", value["status"])
         self.assertEqual("blocked", value["conformance_status"])
         self.assertNotIn("unknown", json.dumps(value).casefold())
         self.assertTrue(all(item["count"] == 0 and item["coverage"] == "not_covered"
                             for item in value["trace_event_coverage"].values()))
+        source = json.loads((ROOT / "reports" / "op1-host-matrix-run-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(48, len(source["telemetry_evidence"]))
+        self.assertTrue(all(item["span_id"] and item["trace_id"] for item in source["telemetry_evidence"]))
+        self.assertNotIn(source["trace_id"], {item["trace_id"] for item in source["telemetry_evidence"]})
 
     def test_rejects_unknown_and_missing_identity(self):
         value = normalized_host_manifest()
@@ -69,6 +75,11 @@ class PublicRunManifestTests(unittest.TestCase):
         value["scorer_sha256"] = None
         value["field_status"].pop("scorer_sha256")
         self.assertTrue(any("scorer_sha256" in error for error in validate_public_manifest(value)))
+
+    def test_null_trace_id_requires_explicit_state(self):
+        value = normalized_host_manifest()
+        value["field_status"].pop("trace_id")
+        self.assertIn("null trace_id requires explicit field_status", validate_public_manifest(value))
 
     def test_committed_public_view_matches_reproducible_normalization(self):
         expected = normalized_host_manifest()

@@ -46,7 +46,7 @@
         "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
         "gold_source": "not_applicable",
         "cost_usd_estimate": 0.0,
-        "trace_id": "op2-snapshot-audit-trace-a121b1ee-ffda-4953-9681-024603967102",
+        "trace_id": null,
         "started_at": "2026-11-14T04:18:48.655463+00:00",
         "ended_at": "2026-11-14T04:18:48.655463+00:00",
         "parameters": {
@@ -95,7 +95,7 @@
         "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
         "gold_source": "not_applicable",
         "cost_usd_estimate": 0.0,
-        "trace_id": "op2-snapshot-audit-trace-0076d07f-aa82-4275-a751-c502e764d859",
+        "trace_id": null,
         "started_at": "2026-11-14T04:18:48.655463+00:00",
         "ended_at": "2026-11-14T04:18:48.655463+00:00",
         "parameters": {
@@ -144,7 +144,7 @@
         "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
         "gold_source": "not_applicable",
         "cost_usd_estimate": 0.0,
-        "trace_id": "op2-snapshot-audit-trace-9fdd1782-a946-47a4-a402-2ed40f77eca0",
+        "trace_id": null,
         "started_at": "2026-11-14T04:18:48.655463+00:00",
         "ended_at": "2026-11-14T04:18:48.655463+00:00",
         "parameters": {
@@ -168,7 +168,7 @@
     "truth_sha256": null,
     "split": "registered_frozen_snapshots",
     "evaluator_sha256": "e953cfe21601743b89504ad97901c0407a099339185bd386914889c0040eb92b",
-    "result_fingerprint_sha256": "eb8dc87186dcc336d47e84392f020c7cf5d01d93b61073d8a4072757edd3320b",
+    "result_fingerprint_sha256": "e19c824ed105bea61a47158b4c6538186d5b4ad806912eebbd2c11ac6825a696",
     "git_sha": "13d4ed657715dd2e977071e54d8b1db278ddf173",
     "model_id": "none",
     "prompt_sha": null,
@@ -179,7 +179,7 @@
     "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
     "gold_source": "not_applicable",
     "cost_usd_estimate": 0.0,
-    "trace_id": "op2-snapshot-manifest-audit-trace-43f6007f-a626-4c3d-a7db-42fc6ea571f8",
+    "trace_id": null,
     "started_at": "2026-11-14T04:18:48.655463+00:00",
     "ended_at": "2026-11-14T04:18:48.655463+00:00",
     "parameters": {

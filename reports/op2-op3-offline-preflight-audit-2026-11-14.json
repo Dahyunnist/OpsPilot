@@ -168,7 +168,7 @@
     "scorer_sha": "cf505607163737bd8c1ccb7b0d47aed8d74dcfc4bfef60b50df0eab012f15b28",
     "gold_source": "not_applicable",
     "cost_usd_estimate": 0.0,
-    "trace_id": "op2-op3-offline-audit-trace-ab499112-dc2d-419c-b180-57334839b853",
+    "trace_id": null,
     "started_at": "2026-11-14T04:35:04.870979+00:00",
     "ended_at": "2026-11-14T04:35:04.933371+00:00",
     "parameters": {

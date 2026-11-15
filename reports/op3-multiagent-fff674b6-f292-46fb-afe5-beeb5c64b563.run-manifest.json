@@ -1,0 +1,43 @@
+{
+  "report_path": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
+  "report_sha256": "ca2f913b57e36410bff10e0a159d43f0a4f0df8cf926e2e8c00fcf77afccd8d5",
+  "op_run_manifest": {
+    "schema_version": 1,
+    "project": "OpsPilot",
+    "run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
+    "evaluation_id": "op3_multiagent_frozen_subset",
+    "dataset_id": "op2_model_subset_v1",
+    "dataset_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "truth_sha256": "d613f33c6a23cc8f809fcc47dd000c498f5b6818d6766c71a53a80618447e960",
+    "split": "registered_frozen_snapshots",
+    "evaluator_sha256": "5e934b3ac0a793a11880f27299a5f64e903db038e373afb3ed7796d44d4c7859",
+    "result_fingerprint_sha256": "ca2f913b57e36410bff10e0a159d43f0a4f0df8cf926e2e8c00fcf77afccd8d5",
+    "git_sha": "9ffc2661a831dec6744f7742703f8cb04aac8d91",
+    "model_id": "deepseek-v4-flash",
+    "prompt_sha": null,
+    "tool_schema_sha": null,
+    "runtime_digest": null,
+    "max_steps": null,
+    "max_tokens": 512,
+    "scorer_sha": "28f18d1f3f4ce2c4f444955952d7475a00ff40ecadc68cd986f6ff9834c7a882",
+    "gold_source": "independent",
+    "cost_usd_estimate": 0.00033502,
+    "trace_id": null,
+    "started_at": "2026-11-15T07:48:39.145866+00:00",
+    "ended_at": null,
+    "parameters": {
+      "artifact_type": "model_evaluation",
+      "multi_agent_valid_comparison": false,
+      "prompt_sha_not_recorded": true,
+      "tool_schema_sha_not_recorded": true,
+      "runtime_digest_not_recorded": true,
+      "max_steps_not_recorded": true,
+      "ended_at_not_recorded": true,
+      "trace_id_not_recorded": true,
+      "trace_event_evidence": "checkpoint and response metadata only; no trace/span IDs",
+      "checkpoint_path": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.requests.jsonl",
+      "source_audit": "reports/op3-multiagent-run-audit-2026-11-15.json"
+    },
+    "status": "failed"
+  }
+}

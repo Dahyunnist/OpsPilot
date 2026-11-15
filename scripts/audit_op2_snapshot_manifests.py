@@ -40,6 +40,7 @@ def build_audit_report(*, started_at: str | None = None, ended_at: str | None = 
     spec = json.loads(spec_bytes)
     evaluator_sha = _sha256(Path(__file__).read_bytes())
     scorer_sha = _sha256((ROOT / "opspilot" / "telemetry.py").read_bytes())
+    audit_run_id = f"op2-snapshot-manifest-audit-{uuid.uuid4()}"
     entries = []
     for item in spec["cases"]:
         relative_path = Path(item["snapshot"])
@@ -64,14 +65,14 @@ def build_audit_report(*, started_at: str | None = None, ended_at: str | None = 
                 for name in sorted(SOURCE_NAMES)} if source_shape_ok else {},
             "status": status}
         manifest = build_op_run_manifest(
-            project="OpsPilot", run_id=f"op2-snapshot-audit-{item['id']}-{uuid.uuid4()}",
+            project="OpsPilot", run_id=audit_run_id,
             evaluation_id="op2_snapshot_integrity_audit", dataset_id=item["id"],
             dataset_sha256=actual_sha, truth_sha256=None, split="frozen_snapshot",
             evaluator_sha256=evaluator_sha, result_fingerprint_sha256=_json_sha256(summary),
             git_sha=revision, model_id="none", prompt_sha=None, tool_schema_sha=None,
             runtime_digest=None, max_steps=max(1, len(summary["record_counts"])), max_tokens=None,
             scorer_sha=scorer_sha, gold_source="not_applicable", cost_usd_estimate=0.0,
-            trace_id=f"op2-snapshot-audit-trace-{uuid.uuid4()}", started_at=started_at,
+            trace_id=None, started_at=started_at,
             ended_at=ended_at, parameters={"artifact_type": "evidence_snapshot",
                 "artifact_path": item["snapshot"], "manifest_expected_sha256": item["sha256"],
                 "source_hash_match": hash_match, "original_capture_time_recorded": False}, status=status)
@@ -88,14 +89,14 @@ def build_audit_report(*, started_at: str | None = None, ended_at: str | None = 
         "snapshots": entries}
     all_passed = all(item["status"] == "completed" for item in entries)
     audit_core["op_run_manifest"] = build_op_run_manifest(
-        project="OpsPilot", run_id=f"op2-snapshot-manifest-audit-{uuid.uuid4()}",
+        project="OpsPilot", run_id=audit_run_id,
         evaluation_id="op2_snapshot_manifest_coverage", dataset_id="op2_model_subset_v1",
         dataset_sha256=_sha256(spec_bytes), truth_sha256=None, split="registered_frozen_snapshots",
         evaluator_sha256=evaluator_sha, result_fingerprint_sha256=_json_sha256(entries),
         git_sha=revision, model_id="none", prompt_sha=None, tool_schema_sha=None,
         runtime_digest=None, max_steps=max(1, len(entries)), max_tokens=None,
         scorer_sha=scorer_sha, gold_source="not_applicable", cost_usd_estimate=0.0,
-        trace_id=f"op2-snapshot-manifest-audit-trace-{uuid.uuid4()}", started_at=started_at,
+        trace_id=None, started_at=started_at,
         ended_at=ended_at, parameters={"artifact_type": "evidence_snapshot",
             "snapshot_count": len(entries), "original_capture_times_recorded": False},
         status="completed" if all_passed else "failed")

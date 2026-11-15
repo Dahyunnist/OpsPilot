@@ -336,7 +336,7 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
     def test_offline_preflight_audit_binds_frozen_manifests_and_preserves_partial_result(self):
         root = Path(__file__).resolve().parents[1]
         audit = json.loads((root / "reports" /
-            "op2-op3-offline-preflight-audit-2026-11-14.json").read_text(encoding="utf-8"))
+            "op2-op3-offline-preflight-audit-2026-11-15.json").read_text(encoding="utf-8"))
         self.assertEqual([], validate_op_run_artifact(audit, is_new_run=True))
         self.assertEqual(3, len(audit["frozen_cases"]))
         self.assertTrue(all(item["snapshot_hash_match"] and item["snapshot_manifest_valid"]

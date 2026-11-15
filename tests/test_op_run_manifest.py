@@ -45,12 +45,104 @@ def valid_op_manifest():
 
 
 class OpRunManifestTests(unittest.TestCase):
+    def test_four_project_artifacts_have_minimum_manifest_fields_and_execution_provenance(self):
+        minimum = {"project", "git_sha", "dataset_id", "dataset_sha256", "split", "model_id",
+            "prompt_sha", "tool_schema_sha", "runtime_digest", "max_steps", "max_tokens",
+            "scorer_sha", "gold_source", "cost_usd_estimate"}
+        paths = [
+            ROOT / "reports" / "op1-host-matrix-reproduction-2026-11-15.run-manifest.json",
+            ROOT / "reports" / "op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.run-manifest.json",
+            ROOT / "reports" / "op3-offline-validation-2026-11-15.run-manifest.json",
+            ROOT / "reports" / "op4-approval-safety-evidence-matrix-2026-11-14.run-manifest.json",
+        ]
+        manifests = []
+        for path in paths:
+            with self.subTest(path=path.name):
+                artifact = json.loads(path.read_text(encoding="utf-8"))
+                manifest = artifact["op_run_manifest"]
+                self.assertTrue(minimum <= manifest.keys())
+                self.assertEqual([], validate_op_run_artifact(artifact, is_new_run=True))
+                manifests.append(manifest)
+
+        op1_report = json.loads((ROOT / "reports" / "op1-host-matrix-reproduction-2026-11-15.json").read_text(encoding="utf-8"))
+        trace_ids = set()
+        span_ids = set()
+        def collect_traces(value):
+            if isinstance(value, dict):
+                if isinstance(value.get("trace_id"), str):
+                    trace_ids.add(value["trace_id"])
+                if isinstance(value.get("span_id"), str):
+                    span_ids.add(value["span_id"])
+                for child in value.values():
+                    collect_traces(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect_traces(child)
+        collect_traces(op1_report)
+        self.assertIn(manifests[0]["trace_id"], trace_ids)
+        self.assertTrue(span_ids)
+        self.assertEqual(op1_report["run_id"], manifests[0]["run_id"])
+
+        op2_report = json.loads((ROOT / "reports" / "op2-snapshot-manifest-audit-2026-11-15.json").read_text(encoding="utf-8"))
+        self.assertIsNone(op2_report["op_run_manifest"]["trace_id"])
+        self.assertTrue(all(item["op_run_manifest"]["trace_id"] is None for item in op2_report["snapshots"]))
+        self.assertTrue(all(item["op_run_manifest"]["run_id"] == op2_report["op_run_manifest"]["run_id"]
+            for item in op2_report["snapshots"]))
+        self.assertIsNone(json.loads((ROOT / "reports" /
+            "op2-op3-offline-preflight-audit-2026-11-15.json").read_text(encoding="utf-8"))["op_run_manifest"]["trace_id"])
+        historical_op2 = json.loads((ROOT / "reports" /
+            "op2-snapshot-manifest-audit-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual([], validate_op_run_artifact(historical_op2, is_new_run=True))
+        self.assertIsNone(historical_op2["op_run_manifest"]["trace_id"])
+        self.assertTrue(all(item["op_run_manifest"]["trace_id"] is None for item in historical_op2["snapshots"]))
+        historical_preflight = json.loads((ROOT / "reports" /
+            "op2-op3-offline-preflight-audit-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual([], validate_op_run_artifact(historical_preflight, is_new_run=True))
+        self.assertIsNone(historical_preflight["op_run_manifest"]["trace_id"])
+
+        op3_run = json.loads((ROOT / "reports" / "op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json").read_text(encoding="utf-8"))
+        self.assertEqual(op3_run["run_id"], manifests[1]["run_id"])
+        self.assertIsNone(manifests[1]["trace_id"])
+        self.assertIn("trace_event_evidence", manifests[1]["parameters"])
+
+        op4_report = json.loads((ROOT / "reports" / "op4-approval-safety-evidence-matrix-2026-11-14.json").read_text(encoding="utf-8"))
+        self.assertEqual(op4_report["verification"]["run_id"], manifests[3]["run_id"])
+        self.assertIsNone(manifests[3]["trace_id"])
+        self.assertIsNone(manifests[3]["dataset_sha256"])
+        self.assertTrue(manifests[3]["parameters"]["dataset_sha256_not_recorded"])
+
     def test_builds_and_accepts_versioned_shared_op_manifest(self):
         value = valid_op_manifest()
         built = build_op_run_manifest(**{key: item for key, item in value.items() if key != "schema_version"})
         self.assertEqual(value, built)
         self.assertEqual([], validate_op_run_manifest(built))
         self.assertEqual([], validate_op_run_artifact({"op_run_manifest": built}, is_new_run=True))
+
+    def test_unknown_trace_is_null_unless_execution_trace_was_recorded(self):
+        manifest = valid_op_manifest()
+        manifest["trace_id"] = None
+        self.assertEqual([], validate_op_run_manifest(manifest))
+        manifest["trace_id"] = " "
+        self.assertTrue(any("trace_id must be null" in error for error in validate_op_run_manifest(manifest)))
+
+    def test_unrecorded_max_steps_must_be_explicitly_marked(self):
+        manifest = valid_op_manifest()
+        manifest.update(max_steps=None, parameters={"max_steps_not_recorded": True})
+        self.assertEqual([], validate_op_run_manifest(manifest))
+        manifest["parameters"] = {}
+        self.assertTrue(any("max_steps must be a positive integer" in error
+                            for error in validate_op_run_manifest(manifest)))
+
+    def test_unknown_provenance_and_times_must_be_explicitly_marked(self):
+        manifest = valid_op_manifest()
+        manifest.update(evaluator_sha256=None, scorer_sha=None, started_at=None, ended_at=None,
+            max_tokens=None, parameters={"evaluator_sha256_not_recorded": True,
+                "scorer_sha_not_recorded": True, "started_at_not_recorded": True,
+                "ended_at_not_recorded": True, "max_tokens_not_recorded": True})
+        self.assertEqual([], validate_op_run_manifest(manifest))
+        manifest["parameters"].pop("ended_at_not_recorded")
+        self.assertTrue(any(error.startswith("ended_at must be an ISO-8601")
+                            for error in validate_op_run_manifest(manifest)))
 
     def test_rejects_missing_identity_hash_and_split_fields(self):
         for field in ("run_id", "evaluation_id", "dataset_sha256", "truth_sha256", "evaluator_sha256",

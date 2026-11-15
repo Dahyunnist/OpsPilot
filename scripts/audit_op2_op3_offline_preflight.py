@@ -14,11 +14,11 @@ sys.path.insert(0, str(ROOT))
 
 from opspilot.live_investigation import investigate_live
 from opspilot.run_manifest import build_op_run_manifest, current_git_sha, validate_op_run_artifact
-from scripts.evaluate_op2_frozen import AUTHORIZED_LIVE_CASES, _load_frozen_cases
+from scripts.evaluate_op2_frozen import _load_frozen_cases
 
 
-OUTPUT = ROOT / "reports" / "op2-op3-offline-preflight-audit-2026-11-14.json"
-SNAPSHOT_MANIFEST = ROOT / "reports" / "op2-snapshot-manifest-audit-2026-11-14.json"
+OUTPUT = ROOT / "reports" / "op2-op3-offline-preflight-audit-2026-11-15.json"
+SNAPSHOT_MANIFEST = ROOT / "reports" / "op2-snapshot-manifest-audit-2026-11-15.json"
 FIXED_REPORT = ROOT / "reports" / "op3-op2-subset-evaluation-fixed-2026-11-14.json"
 BLOCKED_REPORT = ROOT / "reports" / "op3-op2-authorized-two-preflight-blocked-2026-11-14.json"
 
@@ -173,7 +173,7 @@ def build_report(*, started_at: str | None = None, git_sha: str | None = None) -
         prompt_sha=None, tool_schema_sha=None, runtime_digest=None, max_steps=max(1, len(cases)),
         max_tokens=None, scorer_sha=_sha((ROOT / "opspilot" / "telemetry.py").read_bytes()),
         gold_source="not_applicable", cost_usd_estimate=0.0,
-        trace_id=f"op2-op3-offline-audit-trace-{uuid.uuid4()}", started_at=started_at,
+        trace_id=None, started_at=started_at,
         ended_at=core["ended_at"], parameters={"artifact_type": "offline_preflight_audit",
             "snapshot_count": len(cases), "model_calls": 0, "sources_modified": False},
         status="completed" if checks_passed else "failed")
@@ -184,11 +184,18 @@ def build_report(*, started_at: str | None = None, git_sha: str | None = None) -
 
 
 def main() -> int:
-    if OUTPUT.exists():
-        raise FileExistsError(f"refusing to overwrite audit report: {OUTPUT.name}")
+    global SNAPSHOT_MANIFEST
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--snapshot-manifest", type=Path, default=SNAPSHOT_MANIFEST)
+    args = parser.parse_args()
+    SNAPSHOT_MANIFEST = args.snapshot_manifest
+    if args.output.exists():
+        raise FileExistsError(f"refusing to overwrite audit report: {args.output.name}")
     report = build_report()
-    OUTPUT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(OUTPUT), "frozen_cases": len(report["frozen_cases"]),
+    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"output": str(args.output), "frozen_cases": len(report["frozen_cases"]),
         "passed": report["op2_readonly_regressions"]["passed"], "model_calls": 0,
         "incremental_cost_usd": 0.0}, ensure_ascii=False))
     return 0 if report["op2_readonly_regressions"]["passed"] else 1
