@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "artifact_type": "reviewable_rerun_plan",
+  "status": "awaiting_owner_approval",
+  "run_id": "dbc4601c-992d-428b-8bc6-8d49fc59a27a",
+  "planned_output": "reports/op3-multiagent-retest-2026-11-15-dbc4601c.json",
+  "previous_run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
+  "previous_run_reused": false,
+  "scope": {
+    "spec_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
+    "case_ids": [
+      "normal_slow_sql",
+      "missing_pool_evidence",
+      "contradictory_payment"
+    ],
+    "snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "strategies": ["rules", "single", "multi", "auto"],
+    "retries_enabled": false
+  },
+  "preflight": {
+    "status": "blocked_before_inference",
+    "attempted": "read-only provider balance GET",
+    "error": "WinError 10013",
+    "balance": "unknown in current run; historical user-reported preflight said available",
+    "historical_balance_evidence": {
+      "source": "reports/op3-multiagent-execution-blocked-2026-11-15.json",
+      "evidence_timestamp": "2026-11-15T06:00:00+00:00",
+      "value": "available",
+      "basis": "user-reported; not verified during this run; may be stale"
+    },
+    "inference_calls": 0,
+    "new_cost_usd": 0,
+    "report_written": false
+  },
+  "checkpoint_recovery": {
+    "checkpoint_files_scanned": 3,
+    "usable_paid_response_keys": 0,
+    "unusable_paid_response_keys": 17,
+    "unusable_by_case": {
+      "normal_slow_sql": 5,
+      "missing_pool_evidence": 7,
+      "contradictory_payment": 5
+    },
+    "policy": "exclude unusable paid checkpoints; fail closed before any duplicate paid request"
+  },
+  "request_plan": {
+    "basis": "unique prompts across all selected strategies; truncation retries disabled",
+    "max_provider_requests": 18,
+    "per_case_max_provider_requests": 6,
+    "prior_authorized_worst_case_reserve_usd": 0.0230226
+  },
+  "budget": {
+    "latest_ledger_peak_usd": 0.52119297,
+    "run_reserve_limit_usd": 0.0230226,
+    "cumulative_worst_case_usd": 0.54421557,
+    "project_cap_usd": 0.6,
+    "within_project_cap": true,
+    "provider_balance": "current balance unknown; prior timestamped evidence is not live"
+  },
+  "result_metrics_to_capture": [
+    "case and strategy completion status",
+    "exact root-set success, Top-1, and Top-3",
+    "evidence precision and recall",
+    "provider request count, token usage, and cost",
+    "latency and p95",
+    "fallback route and error category",
+    "explicit timeout and cancellation counts"
+  ],
+  "data_safety": {
+    "synthetic_frozen_snapshots_only": true,
+    "gold_sent_to_provider": false,
+    "secrets_or_credentials_written": false,
+    "previous_reports_overwritten": false
+  },
+  "offline_validation": {
+    "command": ".venv/Scripts/python.exe -m unittest tests.test_op3_frozen_eval tests.test_strategy_eval tests.test_model_client_errors -q",
+    "tests_passed": 55,
+    "inference_calls": 0
+  },
+  "approval_gate": "Do not start inference until owner explicitly approves this exact run scope and reserve."
+}
