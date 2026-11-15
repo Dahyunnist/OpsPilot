@@ -1,10 +1,10 @@
 {
   "report_path": "reports/op3-multi-r3-runner-preflight-2026-11-15.json",
-  "report_sha256": "ed81c863e585aa0d0b89dffa01c955fde05a09f812c3ea28837cacc207bdb8a2",
+  "report_sha256": "7175aff5293828c0d172c2e6528a0c4c277872cd27eed65bcd17387f8f551ca1",
   "op_run_manifest": {
     "status": "blocked_at_read_only_provider_preflight",
     "split": "authorized_synthetic_development_only",
-    "result_fingerprint_sha256": "ed81c863e585aa0d0b89dffa01c955fde05a09f812c3ea28837cacc207bdb8a2",
+    "result_fingerprint_sha256": "7175aff5293828c0d172c2e6528a0c4c277872cd27eed65bcd17387f8f551ca1",
     "cost_usd_estimate": 0,
     "parameters": {
       "strategies": [
@@ -16,7 +16,8 @@
       "tests_passed": 43,
       "model_calls": 0,
       "provider_balance_preflight": "WinError 10013",
-      "docker_started": false
+      "docker_started": false,
+      "report_sha256": "7175aff5293828c0d172c2e6528a0c4c277872cd27eed65bcd17387f8f551ca1"
     },
     "model_id": "deepseek-v4-flash",
     "run_id": "op3-multi-r3-runner-preflight-2026-11-15",
@@ -24,4 +25,4 @@
     "git_sha": "d7fe198af47bcde47b3341dbb6d019d602be1bfc",
     "evaluation_id": "op3_multi_r3_runner_preflight"
   }
-}\n
+}
