@@ -199,6 +199,27 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
                     run(Path(temp) / "new-report.json")
                 load_env.assert_not_called()
 
+    def test_runner_accepts_multi_only_and_rejects_duplicate_or_unknown_strategies(self):
+        from scripts.evaluate_op2_frozen import _validate_strategy_selection
+
+        _validate_strategy_selection(("multi",))
+        with self.assertRaisesRegex(ValueError, "unsupported or empty"):
+            _validate_strategy_selection(())
+        with self.assertRaisesRegex(ValueError, "unsupported or empty"):
+            _validate_strategy_selection(("not-a-strategy",))
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            _validate_strategy_selection(("multi", "multi"))
+
+    def test_multi_only_hard_reserve_fits_current_project_ledger(self):
+        from decimal import Decimal
+        from scripts.evaluate_op2_frozen import CAP_USD, MAX_EXPLICIT_RUN_RESERVE_USD, _total_cap_covers
+
+        latest_cumulative = Decimal("0.52119297")
+        self.assertEqual(Decimal("0.07880703"), Decimal(str(CAP_USD)) - latest_cumulative)
+        self.assertTrue(_total_cap_covers(float(latest_cumulative), MAX_EXPLICIT_RUN_RESERVE_USD,
+            Decimal(str(CAP_USD))))
+        self.assertEqual(Decimal("0.54119297"), latest_cumulative + MAX_EXPLICIT_RUN_RESERVE_USD)
+
     def test_prompt_allowlist_accepts_only_current_snapshot_records_without_gold(self):
         _spec, cases = _load_frozen_cases()
         records = {row["record_id"]: row for result in cases[0]["sources"].values()

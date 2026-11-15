@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "status": "blocked_at_read_only_provider_preflight",
+  "run_id": "op3-multi-r3-runner-preflight-2026-11-15",
+  "supersedes": "reports/op3-multi-r3-gate-2026-11-15.json authorization hash conclusion",
+  "authorization_correction": {
+    "verified_snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "user_confirmed_third_snapshot_sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+    "superseded_short_text": "de76add2b1dc15e4da2207632d44c39c39ba813",
+    "snapshot_registry_match": true,
+    "all_three_authorized_hashes_match": true
+  },
+  "execution_scope": {
+    "cases": ["normal_slow_sql", "missing_pool_evidence", "contradictory_payment"],
+    "strategies": ["multi"],
+    "analysis_runs_max": 1,
+    "retry_same_request": false,
+    "snapshots_synthetic_and_frozen": true,
+    "development_only": true
+  },
+  "budget": {
+    "project_cap_usd": 0.6,
+    "latest_ledger_cumulative_peak_usd": 0.52119297,
+    "remaining_before_run_usd": 0.07880703,
+    "hard_new_run_reserve_usd": 0.02,
+    "cumulative_worst_case_usd": 0.54119297,
+    "within_project_cap": true,
+    "new_requests": 0,
+    "new_cost_usd": 0
+  },
+  "provider_preflight": {
+    "balance_check": "blocked_before_response",
+    "models_check": "not_reached",
+    "error_type": "URLError",
+    "error_code": "WinError 10013",
+    "inference_started": false
+  },
+  "offline_validation": {
+    "tests_passed": 43,
+    "command": ".venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
+    "multi_only_runner": true,
+    "request_reserve_enforced_before_each_call": true,
+    "truncation_retry_disabled_for_this_run": true
+  },
+  "per_case": {
+    "normal_slow_sql": {"status": "not_run", "evidence_score": null},
+    "missing_pool_evidence": {"status": "not_run", "evidence_score": null},
+    "contradictory_payment": {"status": "not_run", "evidence_score": null}
+  },
+  "r3_partial_report_changed": false,
+  "docker_started": false,
+  "git_sha_before_commit": "d7fe198af47bcde47b3341dbb6d019d602be1bfc"
+}

@@ -234,6 +234,22 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(multi["evaluation_status"], "failed")
         self.assertTrue(all(trace["code"] == "truncated_json" for trace in multi["error_trace"]))
 
+    def test_explicit_no_retry_sends_one_attempt_for_truncated_response(self) -> None:
+        from opspilot.strategy_eval import _model_complete
+
+        calls = []
+
+        def gate(operation, instance, system, user, budget):
+            calls.append(budget)
+            raise ModelError("truncated", category="response_schema", code="truncated_json",
+                retryable=True, finish_reason="length", completion_tokens=budget,
+                completion_token_budget=budget)
+
+        with self.assertRaisesRegex(ModelError, "truncated"):
+            _model_complete(FakeChatModel(), gate, "policy", {"evidence": []}, 320,
+                retry_truncated=False)
+        self.assertEqual([320], calls)
+
     def test_single_truncation_recovers_once_without_fallback(self) -> None:
         class TruncateOnce(FakeChatModel):
             def __init__(self):

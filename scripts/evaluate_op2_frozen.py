@@ -28,6 +28,7 @@ CAP_USD = 0.60
 AUTHORIZATION_SCOPE = "three_case_frozen_subset"
 FIXED_WORST_CASE_USD = 0.0230226
 FIXED_COMPLETION_LIMIT = 512
+MAX_EXPLICIT_RUN_RESERVE_USD = Decimal("0.02")
 DEFAULT_OUTPUT = ROOT / "reports" / "op3-op2-subset-evaluation.json"
 ALLOWED_SNAPSHOT_HASHES = {
     "op2-normal_slow_sql-snapshot.json": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
@@ -246,13 +247,19 @@ def _validate_prompt_payload(system: str, user: str, records_by_id: dict[str, di
         raise ValueError("empty evaluation prompt")
 
 
-def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
-    if output.exists():
+def run(output: Path, case_ids: list[str] | None = None,
+        strategies: tuple[str, ...] = STRATEGIES,
+        max_run_reserve_usd: Decimal | None = None,
+        preflight_only: bool = False) -> dict[str, Any]:
+    if not preflight_only and output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
     if case_ids is None or set(case_ids) != set(FROZEN_LIVE_CASES) or len(case_ids) != len(FROZEN_LIVE_CASES):
         raise ValueError("live execution requires every case in the hash-verified frozen manifest")
+    _validate_strategy_selection(strategies)
+    if max_run_reserve_usd is not None and max_run_reserve_usd > MAX_EXPLICIT_RUN_RESERVE_USD:
+        raise ValueError("explicit run reserve exceeds the authorized $0.02 maximum")
     checkpoint_path = _checkpoint_path(output)
-    if checkpoint_path.exists():
+    if not preflight_only and checkpoint_path.exists():
         raise FileExistsError(f"refusing to overwrite prior request checkpoint: {checkpoint_path.name}")
     load_project_env(ROOT / ".env")
     configured_model = os.getenv("LLM_MODEL", "")
@@ -271,7 +278,10 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
 
     ledger = ROOT / "reports" / "api-cost-ledger.jsonl"
     prior_eval_spend = _prior_subset_spend(ledger)
-    reserved_case_cap = sum((Decimal(str(case["spec"]["worst_case_usd"])) for case in cases), Decimal("0"))
+    reserved_case_cap = (max_run_reserve_usd if max_run_reserve_usd is not None else
+        sum((Decimal(str(case["spec"]["worst_case_usd"])) for case in cases), Decimal("0")))
+    if reserved_case_cap <= 0:
+        raise ValueError("run reserve must be positive")
     budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap))
     if not _total_cap_covers(budget.prior_spent_usd, reserved_case_cap, Decimal(str(CAP_USD))):
         raise ValueError("remaining project cap cannot cover the complete selected-case peak reserve; no inference calls sent")
@@ -297,6 +307,15 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     model_ids = {item.get("id") for item in models.get("data", []) if isinstance(item, dict)}
     if not model_ids or not model_ids.intersection({"deepseek-flash", "deepseek-v4-flash"}):
         raise ValueError("provider does not list the frozen Flash model family; no inference calls sent")
+    if preflight_only:
+        return {"status": "preflight_passed", "provider_balance_available": True,
+            "provider_model_ids": sorted(model_ids), "strategies": list(strategies),
+            "case_ids": [case["spec"]["id"] for case in cases],
+            "case_sha256": {case["spec"]["id"]: case["snapshot_sha256"] for case in cases},
+            "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
+            "max_run_reserve_usd": float(reserved_case_cap),
+            "cumulative_worst_case_usd": round(budget.prior_spent_usd + float(reserved_case_cap), 8),
+            "project_cap_usd": CAP_USD, "inference_calls": 0}
 
     # Frozen registry caps completions at 512 regardless of the wider .env setting.
     os.environ["LLM_MAX_COMPLETION_TOKENS"] = str(FIXED_COMPLETION_LIMIT)
@@ -383,7 +402,8 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
             return result
 
         report = evaluate_snapshot(case["spec"]["id"], case["start"], case["end"],
-            case["sources"], model, audited_call, STRATEGIES, token_budget=2048)
+            case["sources"], model, audited_call, strategies, token_budget=2048,
+            retry_truncated=False)
         truth = case["spec"]["root_causes"]
         report = score_case(report, truth, _gold_evidence(truth, case["sources"]))
         report["frozen_case"] = {"id": case["spec"]["id"], "fault": case["spec"]["fault"],
@@ -400,12 +420,12 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
     has_failures = any(item["failures"] for case in scored_cases
         for item in case["strategies"].values())
     budget._append({"kind": "run_summary", "run_id": budget.run_id,
-        "benchmark": "opspilot_op2_frozen_real_agent", "strategies": list(STRATEGIES),
+        "benchmark": "opspilot_op2_frozen_real_agent", "strategies": list(strategies),
         "case_ids": [case["spec"]["id"] for case in cases], "peak_rate_estimate_usd": actual,
         "provider_rate_estimate_usd": round(sum(item["provider_rate_estimate_usd"]
             for case in scored_cases for item in case["strategies"].values()), 8),
         "cumulative_peak_estimate_usd": cumulative, "limit_usd": CAP_USD,
-        "authorization_scope": AUTHORIZATION_SCOPE,
+        "authorization_scope": f"{AUTHORIZATION_SCOPE}_{'_'.join(strategies)}",
         "authorized_case_reserve_usd": float(reserved_case_cap),
         "prior_op3_subset_spend_usd": float(prior_eval_spend),
         "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
@@ -423,13 +443,13 @@ def run(output: Path, case_ids: list[str] | None = None) -> dict[str, Any]:
             "inference_preflight": "GET /models succeeded"},
         "frozen_dataset": {"spec": str(SUBSET_PATH.relative_to(ROOT)),
             "spec_sha256": frozen["spec_sha256"], "case_count": len(cases),
-            "strategies": list(STRATEGIES), "multi_label": "always-multi",
+            "strategies": list(strategies), "multi_label": "always-multi",
             "cases": [{"id": case["spec"]["id"], "snapshot": case["spec"]["snapshot"],
                 "snapshot_sha256": case["snapshot_sha256"], "root_causes": case["spec"]["root_causes"],
                 "gold_evidence_ids": sorted(_gold_evidence(case["spec"]["root_causes"], case["sources"]))}
                 for case in cases]},
         "budget": {"cap_usd": CAP_USD, "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
-            "authorization_scope": AUTHORIZATION_SCOPE,
+            "authorization_scope": f"{AUTHORIZATION_SCOPE}_{'_'.join(strategies)}",
             "preregistered_worst_case_usd": float(reserved_case_cap),
             "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
             "remaining_after_full_reserve_usd": round(CAP_USD - budget.prior_spent_usd - float(reserved_case_cap), 8),
@@ -456,19 +476,33 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--case-ids", nargs="+", choices=sorted(FROZEN_LIVE_CASES),
         help="all hash-verified cases in the frozen manifest must be listed")
+    parser.add_argument("--strategies", nargs="+", choices=STRATEGIES, default=list(STRATEGIES),
+        help="strategies to evaluate; omitted means all preregistered strategies")
+    parser.add_argument("--max-run-reserve-usd", type=Decimal,
+        help="hard run reserve ceiling, enforced before each request")
+    parser.add_argument("--preflight-only", action="store_true",
+        help="verify frozen hashes, budget and provider without inference or report writes")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")
     try:
-        report = run(args.output, case_ids=args.case_ids)
+        report = run(args.output, case_ids=args.case_ids, strategies=tuple(args.strategies),
+            max_run_reserve_usd=args.max_run_reserve_usd, preflight_only=args.preflight_only)
     except Exception as exc:
         print(json.dumps({"status": "stopped_before_or_during_run", "error": type(exc).__name__,
             "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
-    print(json.dumps({"report": str(args.output), "run_id": report["run_id"],
+    print(json.dumps(report if args.preflight_only else {"report": str(args.output), "run_id": report["run_id"],
         "case_count": len(report["per_case"]), "budget": report["budget"],
         "strategy_summary": report["strategy_summary"]}, ensure_ascii=False, indent=2))
     return 0
+
+
+def _validate_strategy_selection(strategies: tuple[str, ...]) -> None:
+    if not strategies or any(strategy not in STRATEGIES for strategy in strategies):
+        raise ValueError("unsupported or empty strategy selection")
+    if len(set(strategies)) != len(strategies):
+        raise ValueError("duplicate strategy selection")
 
 
 if __name__ == "__main__":
