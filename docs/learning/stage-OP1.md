@@ -4,7 +4,7 @@
 
 `lab/compose.yaml` 编排 gateway、orders、inventory、payment、PostgreSQL、Redis、OpenTelemetry Collector、Jaeger 和 Prometheus。四个业务服务共用一个轻量 HTTP 服务镜像，通过角色配置组成真实网络调用链；订单写入 PostgreSQL 和 Redis，服务指标由 Prometheus 抓取，跨服务 trace 通过 OTLP 导入 Jaeger，结构化日志由各服务提供有界只读查询。
 
-`lab/scenarios/truth.json` 当前列出十二个独立故障场景，包含数据库连接占满、支付依赖超时、错误服务配置发布、慢 SQL、重试放大、双根因、库存延迟、支付拒绝、陈旧库存、重复投递、Redis 不可用和库存耗尽。真值文件不挂载进容器。服务没有故障注入或清理 HTTP 路由；只有本机 PowerShell 启动脚本可选择故障并重建实验服务。
+`lab/scenarios/truth.json` 当前列出十二个故障案例：十一类基础机制，加一个由慢 SQL 与 payment timeout 组成的双根因复合案例。基础机制包括数据库连接占满、支付依赖超时、错误服务配置发布、慢 SQL、重试放大、库存延迟、支付拒绝、陈旧库存、重复投递、Redis 不可用和库存耗尽。真值文件不挂载进容器。服务没有故障注入或清理 HTTP 路由；只有本机 PowerShell 启动脚本可选择故障并重建实验服务。
 
 当前真值清单 SHA-256：`9c08b4abbef988c76a0fdf9d77f81a515d439b06fbc712c0d66a882064cb9694`。
 
@@ -111,3 +111,13 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 复跑现有宿主矩阵：正常对照通过，12 个既有故障 12/12 通过，包含 bad_release 与其余 11 场；`cleanup.empty=true`，未删除卷。报告和 manifest 分别见[矩阵结果](../../reports/op1-host-matrix-reproduction-2026-11-15.json)与[运行清单](../../reports/op1-host-matrix-reproduction-2026-11-15.run-manifest.json)。矩阵期间 worktree 有未提交修改，manifest 的 `git_sha` 是基线 `1e52b5dec2e741c04b2d5d1924d0fedc92f27831`；执行代码由 `implementation_diff_sha256=7f0b5633188aefee0632150d76b2c4742c38417961d170714026aba9bc529384` 绑定，作用文件是 `lab/service/app.py` 与 `tests/test_lab_checkout_e2e.py`。报告哈希已重算并同步至 manifest。模型调用为 0。
 
 验证：OP-1 定向测试 15 项通过；全套 `.venv` pytest 为 256 项及 69 子测试通过。该矩阵是本机 Docker Compose 合成环境验收，不是生产证据，也不证明 Agent 诊断准确率。
+
+## 2026-11-15 场景机制、真值隔离与恢复范围审计
+
+静态核对确认 12 个 fault 值分别映射到独立代码分支；其中 `dependency_timeout` 与 `payment_reject` 分别是慢响应超时和即时 HTTP 503，`retry_storm` 是前三次临时拒绝后重试，`stale_inventory` 和 `inventory_depleted` 分别是陈旧副本信号与容量为零。`double_root` 是唯一组合案例，不作为第十二种单一原子机制。
+
+`run-host-matrix.ps1` 可不启动 Agent 逐案注入并评估 must-observe；Compose 只构建 `lab/service`，不挂载 `truth.json`。带 Agent 的 `evaluate-all.ps1` 原先以 `case_id` 作为 checkout `order_id`，像 `lab-release-01` 会随日志进入模型上下文，泄露场景语义。现在每案生成随机 GUID order ID；本地 evaluator 仍以 case ID 选择 truth，并在 `evaluate_snapshot` 后才调用 `score_case`，truth labels 不在遥测来源输入中。新增回归覆盖此隔离边界。
+
+恢复范围保持明确：`run-op1-case.ps1` 对连接池耗尽和依赖超时测 baseline/fault/recovery；slow SQL 垂直切片也测三阶段。其余十个案例只在矩阵末尾清理实验 project，没有逐案恢复请求/测量。
+
+`tests/test_op1_truth_isolation.py tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py`：54 项和 11 子测试通过。未启动 Docker、未调用 Agent/模型。

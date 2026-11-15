@@ -247,7 +247,8 @@ def _read_ledger_unlocked(ledger_path: Path) -> list[dict[str, Any]]:
 def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetime) -> None:
     _audit(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
         "timestamp": _iso(now), "approval_id": approval.get("approval_id"),
-        "case_id": approval.get("case_id"), "reason": code, "external_system_calls": 0})
+        "case_id": approval.get("case_id"), "reason": code,
+        "external_system_calls": 0, "external_writes": 0})
     raise ActionRejected(code)
 
 
@@ -401,12 +402,14 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
                 for event in events):
             _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
                 "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
-                "case_id": approval.get("case_id"), "reason": "approval_revoked", "external_system_calls": 0})
+                "case_id": approval.get("case_id"), "reason": "approval_revoked",
+                "external_system_calls": 0, "external_writes": 0})
             raise ActionRejected("approval_revoked")
         if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == approval["nonce"] for event in events):
             _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
                 "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
-                "case_id": approval.get("case_id"), "reason": "approval_replayed", "external_system_calls": 0})
+                "case_id": approval.get("case_id"), "reason": "approval_replayed",
+                "external_system_calls": 0, "external_writes": 0})
             raise ActionRejected("approval_replayed")
         _append_unlocked(ledger_path, result)
     return result

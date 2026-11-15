@@ -86,6 +86,7 @@ class ActionSafetyTests(unittest.TestCase):
                 investigation_report=self.report(), principal=self.principal(), now=NOW + timedelta(seconds=121))
         self.assertEqual(self.events()[0]["reason"], "approval_expired_or_invalid")
         self.assertEqual(0, self.events()[0]["external_system_calls"])
+        self.assertEqual(0, self.events()[0]["external_writes"])
 
     def test_approval_expires_at_exact_boundary(self) -> None:
         approval = self.approval(ttl_seconds=120)
@@ -94,6 +95,7 @@ class ActionSafetyTests(unittest.TestCase):
                 investigation_report=self.report(), principal=self.principal(), now=NOW + timedelta(seconds=120))
         self.assertEqual("approval_expired_or_invalid", self.events()[0]["reason"])
         self.assertEqual(0, self.events()[0]["external_system_calls"])
+        self.assertEqual(0, self.events()[0]["external_writes"])
 
     def test_approval_ttl_outside_policy_fails_before_issue(self) -> None:
         for ttl in (29, 301):
@@ -223,6 +225,7 @@ class ActionSafetyTests(unittest.TestCase):
             execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual([event["event_type"] for event in self.events()], ["dry_run_completed", "dry_run_rejected"])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+        self.assertTrue(all(event["external_writes"] == 0 for event in self.events()))
 
     def test_concurrent_replay_consumes_approval_once_within_process(self) -> None:
         approval = self.approval()
@@ -308,6 +311,7 @@ class ActionSafetyTests(unittest.TestCase):
             execute_dry_run(altered, key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual(len(self.events()), 2)
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+        self.assertTrue(all(event["external_writes"] == 0 for event in self.events()))
 
     def test_approval_is_bound_to_exact_action_and_target(self) -> None:
         approval = self.approval(action="restart_service", target="orders", role="operator")
@@ -380,6 +384,7 @@ class ActionSafetyTests(unittest.TestCase):
                 ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual(["environment_mismatch", "role_scope_denied"], [event["reason"] for event in self.events()])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+        self.assertTrue(all(event["external_writes"] == 0 for event in self.events()))
 
     def test_different_principal_cannot_consume_approval(self) -> None:
         approval = self.approval()

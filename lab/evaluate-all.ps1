@@ -27,8 +27,9 @@ foreach ($case in $truth.cases) {
     if (-not $ready) { throw "Service dependencies did not become ready: $($case.case_id)" }
 
     $start = [DateTime]::UtcNow.AddSeconds(-5).ToString("o")
+    $orderId = [guid]::NewGuid().ToString("N")
     try {
-        Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18080/checkout" -ContentType "application/json" -Body (@{ order_id = $case.case_id } | ConvertTo-Json) -TimeoutSec 8 | Out-Null
+        Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18080/checkout" -ContentType "application/json" -Body (@{ order_id = $orderId } | ConvertTo-Json) -TimeoutSec 8 | Out-Null
     } catch {
         # Failed checkout is expected for timeout, bad-release and pressure scenarios.
     }
