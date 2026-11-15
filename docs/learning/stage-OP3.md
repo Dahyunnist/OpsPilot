@@ -127,3 +127,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 ## 2026-11-15 OP-3 离线闭环复核
 
 复跑 frozen evaluator 定向测试：40 项通过。纯本地 fake path 覆盖 rules/single/multi/auto 同一输入与评分；Multi 验证专家解析、冲突合并、裁决、gold 证据评分，以及 malformed usage、无效证据和裁决失败负例。Checkpoint 脱敏问题由合成 `[REDACTED]` usage fixture 复现；修复保留 usage 下数值计数，旧历史 checkpoint 不改。报告/manifest：`reports/op3-offline-validation-2026-11-15.json` 与同名 `.run-manifest.json`。R3 真实报告仍 partial、Multi 0/3，不作真实模型质量判断。模型调用 0、费用 0、Docker 未启动。三快照授权哈希存在一项不匹配，注册子集余额也不足完整三案峰值；不做真实回归。未读写 `.tmp/` 或历史 checkpoint。
+
+## 2026-11-15 Multi R3 真实回归门禁
+
+未发送推理请求。最新账本末条累计峰值 `$0.52119297/$0.60`，项目余量 `$0.07880703`；R3 记录的 DeepSeek 余额预检为可用，但本轮未重新请求余额。三份冻结 SHA 与注册值一致；第三案注册 SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 与此前记录的用户确认 SHA `de76add2b1dc15e4da2207632d44c39c39ba813` 不一致。当前 runner 固定执行 rules/single/multi/auto，且完整三案峰值预留 `$0.02302260`，无法满足本轮“最多 `$0.02` 新增最坏预留”和 Multi-only 条件。因此真实 Multi 状态为 blocked，0 次请求、`$0` 新增费用；R3 原报告不变。离线回归仍确认 Multi 合成流程完整，但不作为真实回归证据。

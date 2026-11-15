@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "stage": "OP-3",
+  "status": "blocked_before_inference",
+  "run_id": "op3-multi-r3-gate-2026-11-15",
+  "authorization_scope": "three_user_authorized_synthetic_snapshots",
+  "snapshots": [
+    {
+      "case_id": "normal_slow_sql",
+      "sha256": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "registry_match": true,
+      "authorization_hash_match": true,
+      "status": "blocked"
+    },
+    {
+      "case_id": "missing_pool_evidence",
+      "sha256": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "registry_match": true,
+      "authorization_hash_match": true,
+      "status": "blocked"
+    },
+    {
+      "case_id": "contradictory_payment",
+      "sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+      "registry_match": true,
+      "previously_recorded_user_authorization_sha256": "de76add2b1dc15e4da2207632d44c39c39ba813",
+      "authorization_hash_match": false,
+      "status": "blocked"
+    }
+  ],
+  "budget": {
+    "project_cap_usd": 0.6,
+    "latest_ledger_cumulative_peak_usd": 0.52119297,
+    "project_remaining_usd": 0.07880703,
+    "max_new_worst_case_reserve_usd": 0.02,
+    "full_runner_three_case_reserve_usd": 0.0230226,
+    "new_requests": 0,
+    "new_cost_usd": 0
+  },
+  "provider_balance": {
+    "latest_recorded_preflight_available": true,
+    "source": "reports/op3-op2-three-case-run-2026-11-14-r3.json",
+    "rechecked_this_run": false
+  },
+  "execution_gate_failures": [
+    "recorded user authorization SHA for contradictory_payment differs from the frozen snapshot SHA",
+    "runner forces rules/single/multi/auto and cannot isolate Multi",
+    "full three-case reserve exceeds the authorized $0.02 maximum"
+  ],
+  "multi_case_status": {
+    "normal_slow_sql": "not_run",
+    "missing_pool_evidence": "not_run",
+    "contradictory_payment": "not_run",
+    "evidence_scores": "not_scored",
+    "inference_calls": 0
+  },
+  "offline_evidence": {
+    "multi_synthetic_path": "previous fake-model regression completed expert parsing, conflict merge, adjudication and exact evidence scoring",
+    "real_model_claim": "none",
+    "r3_partial_report_changed": false
+  },
+  "docker_started": false,
+  "git_sha": "303354bdcb63c0e7b520d1b79d99ad307fafa2a6"
+}

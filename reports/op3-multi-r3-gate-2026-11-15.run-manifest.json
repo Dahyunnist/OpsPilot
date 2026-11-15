@@ -1,0 +1,22 @@
+{
+  "report_path": "reports/op3-multi-r3-gate-2026-11-15.json",
+  "report_sha256": "2f093025fa3d1053a3ffbfaf85d2959574daedf0a6ede8357fa30586835ec03f",
+  "op_run_manifest": {
+    "status": "blocked_before_inference",
+    "split": "synthetic_frozen_subset_gate_audit",
+    "result_fingerprint_sha256": "2f093025fa3d1053a3ffbfaf85d2959574daedf0a6ede8357fa30586835ec03f",
+    "cost_usd_estimate": 0,
+    "parameters": {
+      "model_calls": 0,
+      "docker_started": false,
+      "provider_balance_rechecked": false,
+      "full_runner_reserve_usd": 0.0230226,
+      "authorized_max_new_reserve_usd": 0.02
+    },
+    "model_id": "none",
+    "run_id": "op3-multi-r3-gate-2026-11-15",
+    "schema_version": 1,
+    "git_sha": "303354bdcb63c0e7b520d1b79d99ad307fafa2a6",
+    "evaluation_id": "op3_multi_r3_gate"
+  }
+}\n
