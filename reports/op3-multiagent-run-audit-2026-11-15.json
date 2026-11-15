@@ -238,6 +238,7 @@
   "interpretation": "Only one provider inference was new; 14 prior checkpoint responses were reused. rules was deterministic, single reused historical model responses, and auto selected rules once and single twice. Strategy metrics are not a fresh four-way comparison and do not establish multi-agent gain.",
   "execution_source_revision": "9ffc266",
   "provider_billing_csv_reconciliation": {
+    "reconciliation_ledger": "reports/provider-billing-reconciliation-ledger.jsonl",
     "source_files": [
       "amount-2026-10-17_2026-11-15.csv",
       "cost-2026-10-17_2026-11-15.csv"

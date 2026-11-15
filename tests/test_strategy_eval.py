@@ -129,6 +129,19 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(4, redacted["usage"]["prompt_tokens_details"]["cached_tokens"])
         self.assertEqual("[REDACTED]", redacted["api_token"])
 
+    def test_redaction_preserves_frozen_record_ids_but_still_masks_phone_numbers(self) -> None:
+        references = ["metrics:f3df38791134e3fc86db", "2e18842b-6dcf-4236-a60a-304537970dd1"]
+        value = {"all_evidence_ids": references,
+            "evidence_by_root": {"slow_database_query": references},
+            "comment": "Call +1 202 555 0188", "api_token": "secret-value"}
+
+        redacted = redact(value)
+
+        self.assertEqual(references, redacted["all_evidence_ids"])
+        self.assertEqual(references, redacted["evidence_by_root"]["slow_database_query"])
+        self.assertNotIn("202 555 0188", redacted["comment"])
+        self.assertEqual("[REDACTED]", redacted["api_token"])
+
     def test_multi_synthetic_experts_merge_conflict_adjudicate_and_score(self) -> None:
         class ConflictModel(FakeChatModel):
             def complete(self, system: str, user: str, budget: int) -> dict:

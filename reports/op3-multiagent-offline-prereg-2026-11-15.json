@@ -113,11 +113,28 @@
   },
   "budget": {
     "project_cap_usd": 0.6,
-    "recorded_cumulative_peak_usd": 0.52119297,
+    "recorded_cumulative_peak_usd": 0.52152799,
     "authorized_run_reserve_usd": 0.0230226,
-    "cumulative_worst_case_usd": 0.54421557,
+    "cumulative_worst_case_usd": 0.54455059,
     "within_project_cap": true,
     "max_provider_requests": 18
+  },
+  "provider_billing_reconciliation": {
+    "ledger": "reports/provider-billing-reconciliation-ledger.jsonl",
+    "currency": "CNY",
+    "export_window": {
+      "start": "2026-10-17T00:00:00+08:00",
+      "end_exclusive": "2026-11-15T00:00:00+08:00",
+      "coverage_status": "complete",
+      "zero_usage_days_omitted": true
+    },
+    "account_cost_cny": 10.91277486,
+    "amount_csv_recalculated_total_cny": 10.91277486,
+    "opspilot_key_derived_cost_cny": 3.79653708,
+    "opspilot_request_count": 1305,
+    "account_and_key_totals_are_additive": false,
+    "usd_api_cost_ledger_modified": false,
+    "fx_conversion_applied": false
   },
   "metric_contract": {
     "root_cause_complete_set": "exact_root_set_successes",
@@ -158,9 +175,9 @@
     "model_calls": 0
   },
   "results": null,
-  "interpretation": "Input hashes, sources, strategy plan, and budget are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
-  "created_at": "2026-11-15T05:00:08.117817+00:00",
-  "result_fingerprint_sha256": "f013d235e7b74b60632655304bfc2a4570081d305ff6526450e38ea63a9701c5",
+  "interpretation": "Input hashes, sources, strategy plan, USD budget, and separate CNY provider billing reconciliation are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
+  "created_at": "2026-11-15T09:50:08.884629+00:00",
+  "result_fingerprint_sha256": "14dfce4ed87c582be358d3cf39daa3a7cc634d55c005ba9089709cb0c57d7e91",
   "op_run_manifest": {
     "schema_version": 1,
     "project": "OpsPilot",
@@ -170,9 +187,9 @@
     "dataset_sha256": "5016c47f8247bf4e22ae219e51cec4cdf1909a9d3d4f1d3b4de97278ce591741",
     "truth_sha256": null,
     "split": "authorized_frozen_three_case_subset",
-    "evaluator_sha256": "3f9b20ff0548d7c8bda36d616f65bf4a16a97016e83829ec771d00c614edfcff",
-    "result_fingerprint_sha256": "f013d235e7b74b60632655304bfc2a4570081d305ff6526450e38ea63a9701c5",
-    "git_sha": "25f50a7b12540f2e71ec463ab980d9440d263e67",
+    "evaluator_sha256": "61c8fab2ca3868a9f8148e79ecedc8a303f5e19544d8e6a455acb5b27a1d55f3",
+    "result_fingerprint_sha256": "14dfce4ed87c582be358d3cf39daa3a7cc634d55c005ba9089709cb0c57d7e91",
+    "git_sha": "ce7f0d466d1d03f15886cf3a47cf1536541d5604",
     "model_id": "none",
     "prompt_sha": null,
     "tool_schema_sha": null,
@@ -183,8 +200,8 @@
     "gold_source": "not_applicable",
     "cost_usd_estimate": 0.0,
     "trace_id": "op3-multiagent-offline-prereg-2026-11-15",
-    "started_at": "2026-11-15T05:00:08.117817+00:00",
-    "ended_at": "2026-11-15T05:00:08.117817+00:00",
+    "started_at": "2026-11-15T09:50:08.884629+00:00",
+    "ended_at": "2026-11-15T09:50:08.884629+00:00",
     "parameters": {
       "artifact_type": "offline_preflight_audit",
       "strategies": [

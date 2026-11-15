@@ -22,10 +22,45 @@ from scripts.evaluate_op2_frozen import (FIXED_WORST_CASE_USD, _load_frozen_case
 OUTPUT = ROOT / "reports" / "op3-multiagent-offline-prereg-2026-11-15.json"
 CAP_USD = 0.60
 MAX_REQUESTS = 18
+BILLING_LEDGER = ROOT / "reports" / "provider-billing-reconciliation-ledger.jsonl"
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _provider_billing_reconciliation() -> dict[str, Any]:
+    records = [json.loads(line) for line in BILLING_LEDGER.read_text(encoding="utf-8").splitlines()
+        if line.strip()]
+    matching = [row for row in records if row.get("kind") == "provider_export_reconciliation"
+        and row.get("provider") == "DeepSeek"]
+    if len(matching) != 1:
+        raise ValueError("expected exactly one DeepSeek provider billing reconciliation")
+    row = matching[0]
+    if row.get("currency") != "CNY" or row.get("export_window", {}).get("coverage_status") != "complete":
+        raise ValueError("provider billing reconciliation currency or coverage is invalid")
+    account_cost = row.get("account_cost", {}).get("amount")
+    all_keys_cost = row.get("all_keys_amount_recalculation", {}).get("amount")
+    key_cost = row.get("opspilot_key", {}).get("derived_cost_cny")
+    if account_cost != 10.91277486 or all_keys_cost != account_cost or key_cost != 3.79653708:
+        raise ValueError("provider billing reconciliation totals differ from reviewed CSV evidence")
+    if row.get("account_and_key_totals_are_additive") is not False:
+        raise ValueError("account and key totals must remain non-additive")
+    usd_ledger = row.get("usd_api_cost_ledger", {})
+    if usd_ledger.get("modified") is not False or usd_ledger.get("fx_conversion_applied") is not False:
+        raise ValueError("CNY reconciliation must not alter or convert the USD API ledger")
+    return {
+        "ledger": BILLING_LEDGER.relative_to(ROOT).as_posix(),
+        "currency": "CNY",
+        "export_window": row["export_window"],
+        "account_cost_cny": account_cost,
+        "amount_csv_recalculated_total_cny": all_keys_cost,
+        "opspilot_key_derived_cost_cny": key_cost,
+        "opspilot_request_count": row["opspilot_key"]["request_count"],
+        "account_and_key_totals_are_additive": False,
+        "usd_api_cost_ledger_modified": False,
+        "fx_conversion_applied": False,
+    }
 
 
 def prepare_report() -> dict[str, Any]:
@@ -41,6 +76,7 @@ def prepare_report() -> dict[str, Any]:
     ledger_path = ROOT / "reports" / "api-cost-ledger.jsonl"
     budget = RunBudget(CAP_USD, ledger_path, "deepseek-v4-flash")
     cumulative_reserve = budget.prior_spent_usd + FIXED_WORST_CASE_USD
+    billing_reconciliation = _provider_billing_reconciliation()
     cases_summary = []
     for case in cases:
         sources = case["sources"]
@@ -95,6 +131,7 @@ def prepare_report() -> dict[str, Any]:
             "within_project_cap": cumulative_reserve <= CAP_USD,
             "max_provider_requests": MAX_REQUESTS,
         },
+        "provider_billing_reconciliation": billing_reconciliation,
         "metric_contract": {
             "root_cause_complete_set": "exact_root_set_successes",
             "top_1": "top1_rate",
@@ -106,7 +143,7 @@ def prepare_report() -> dict[str, Any]:
         },
         "offline_fault_metric_fixture": fault_metric_fixture,
         "results": None,
-        "interpretation": "Input hashes, sources, strategy plan, and budget are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
+        "interpretation": "Input hashes, sources, strategy plan, USD budget, and separate CNY provider billing reconciliation are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
         "created_at": now,
     }
     fingerprint = hashlib.sha256(json.dumps(core, ensure_ascii=False,

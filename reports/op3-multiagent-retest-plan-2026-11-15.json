@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "OP-3",
   "artifact_type": "reviewable_rerun_plan",
-  "status": "awaiting_owner_approval",
+  "status": "authorized_for_execution",
   "run_id": "dbc4601c-992d-428b-8bc6-8d49fc59a27a",
   "planned_output": "reports/op3-multiagent-retest-2026-11-15-dbc4601c.json",
   "previous_run_id": "fff674b6-f292-46fb-afe5-beeb5c64b563",
@@ -22,6 +22,27 @@
     "strategies": ["rules", "single", "multi", "auto"],
     "retries_enabled": false
   },
+  "authorization": {
+    "user_confirmed": true,
+    "source": "current conversation confirmation",
+    "run_id": "dbc4601c-992d-428b-8bc6-8d49fc59a27a",
+    "case_ids": [
+      "normal_slow_sql",
+      "missing_pool_evidence",
+      "contradictory_payment"
+    ],
+    "snapshot_sha256": {
+      "normal_slow_sql": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
+      "missing_pool_evidence": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
+      "contradictory_payment": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813"
+    },
+    "strategies": ["rules", "single", "multi", "auto"],
+    "max_provider_requests": 18,
+    "reserve_usd": 0.0230226,
+    "gold_sent_to_provider": false,
+    "secrets_sent_in_payload": false,
+    "private_or_real_customer_data_sent": false
+  },
   "preflight": {
     "status": "blocked_before_inference",
     "attempted": "read-only provider balance GET",
@@ -36,6 +57,22 @@
     "inference_calls": 0,
     "new_cost_usd": 0,
     "report_written": false
+  },
+  "historical_provider_preflight": {
+    "source": "reports/op3-multiagent-fff674b6-f292-46fb-afe5-beeb5c64b563.json",
+    "sha256": "ca2f913b57e36410bff10e0a159d43f0a4f0df8cf926e2e8c00fcf77afccd8d5",
+    "observed_at": "2026-11-15T07:48:39.145866+00:00",
+    "balance_available": true,
+    "model_family_available": true,
+    "freshness": "historical_non_live",
+    "user_direction": "Use timestamped prior evidence; do not retry provider balance GET."
+  },
+  "prompt_review": {
+    "artifact": "reports/op3-multiagent-payload-review-2026-11-15.json",
+    "sha256": "f85c863ee98c22f47e37ed1e0d754e004cf952435be3769b06815882f6643fcb",
+    "static_request_hash_count": 15,
+    "dynamic_adjudicator_count": 3,
+    "dynamic_user_payload_hashes": "captured before each adjudicator send in run audit"
   },
   "checkpoint_recovery": {
     "checkpoint_files_scanned": 3,
@@ -55,13 +92,14 @@
     "prior_authorized_worst_case_reserve_usd": 0.0230226
   },
   "budget": {
-    "latest_ledger_peak_usd": 0.52119297,
+    "latest_ledger_peak_usd": 0.52152799,
     "run_reserve_limit_usd": 0.0230226,
-    "cumulative_worst_case_usd": 0.54421557,
+    "cumulative_worst_case_usd": 0.54455059,
     "project_cap_usd": 0.6,
     "within_project_cap": true,
     "provider_balance": "current balance unknown; prior timestamped evidence is not live"
   },
+  "billing_reconciliation_ledger": "reports/provider-billing-reconciliation-ledger.jsonl",
   "result_metrics_to_capture": [
     "case and strategy completion status",
     "exact root-set success, Top-1, and Top-3",
@@ -82,5 +120,5 @@
     "tests_passed": 55,
     "inference_calls": 0
   },
-  "approval_gate": "Do not start inference until owner explicitly approves this exact run scope and reserve."
+  "approval_gate": "Owner confirmed exact synthetic snapshot scope, strategies, 18-request maximum, and $0.0230226 reserve."
 }

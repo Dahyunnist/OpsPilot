@@ -12,6 +12,10 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+_FROZEN_RECORD_ID_RE = re.compile(
+    r"^(?:(?:metrics|logs|traces|deployments):[0-9a-f]{20}|"
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$", re.I)
+
 
 def load_project_env(path: Path = Path(".env")) -> None:
     if not path.exists():
@@ -34,6 +38,8 @@ def redact(value: Any, *, _usage: bool = False) -> Any:
     if isinstance(value, list):
         return [redact(item, _usage=_usage) for item in value]
     if isinstance(value, str):
+        if _FROZEN_RECORD_ID_RE.fullmatch(value):
+            return value
         value = re.sub(r"(?i)\bBearer\s+\S+", "Bearer [REDACTED]", value)
         value = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED_EMAIL]", value)
         value = re.sub(r"(?<!\d)(?:\+?\d[\s-]?){8,15}(?!\d)", "[REDACTED_PHONE]", value)

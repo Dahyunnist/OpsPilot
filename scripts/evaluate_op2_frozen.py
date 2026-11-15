@@ -33,6 +33,7 @@ FIXED_WORST_CASE_USD = 0.0230226
 FIXED_COMPLETION_LIMIT = 512
 MAX_EXPLICIT_RUN_RESERVE_USD = Decimal("0.0230226")
 DEFAULT_OUTPUT = ROOT / "reports" / "op3-op2-subset-evaluation.json"
+AUTHORIZED_RETEST_PLAN = ROOT / "reports" / "op3-multiagent-retest-plan-2026-11-15.json"
 ALLOWED_SNAPSHOT_HASHES = {
     "op2-normal_slow_sql-snapshot.json": "d450db5fc6851dabf7d732cd07ea7e229a872c76e29cfc39a3add2466749c9d8",
     "op2-missing_pool_evidence-snapshot.json": "d244e00980dfb160831df77ae187208c186a4ba0489831d1b4bda81ef68bbbe7",
@@ -303,7 +304,9 @@ def _validate_prompt_payload(system: str, user: str, records_by_id: dict[str, di
 def run(output: Path, case_ids: list[str] | None = None,
         strategies: tuple[str, ...] = STRATEGIES,
         max_run_reserve_usd: Decimal | None = None,
-        preflight_only: bool = False, run_id: str | None = None) -> dict[str, Any]:
+        preflight_only: bool = False, run_id: str | None = None,
+        allow_authorized_paid_replay: bool = False,
+        historical_provider_preflight: Path | None = None) -> dict[str, Any]:
     if not preflight_only and output.exists():
         raise FileExistsError(f"refusing to overwrite prior evaluation report: {output.name}")
     if case_ids is None or set(case_ids) != set(FROZEN_LIVE_CASES) or len(case_ids) != len(FROZEN_LIVE_CASES):
@@ -340,6 +343,20 @@ def run(output: Path, case_ids: list[str] | None = None,
     budget = RunBudget(CAP_USD, ledger, configured_model, run_limit_usd=float(reserved_case_cap), run_id=run_id)
     if not _total_cap_covers(budget.prior_spent_usd, reserved_case_cap, Decimal(str(CAP_USD))):
         raise ValueError("remaining project cap cannot cover the complete selected-case peak reserve; no inference calls sent")
+    request_plan = _planned_requests(cases, strategies)
+    authorized_replay_plan = None
+    historical_preflight = None
+    if allow_authorized_paid_replay:
+        if preflight_only:
+            raise ValueError("authorized paid replay requires an execution run, not preflight-only mode")
+        if historical_provider_preflight is None:
+            raise ValueError("authorized paid replay requires the timestamped preflight evidence in its plan")
+        authorized_replay_plan = _validate_authorized_retest_plan(AUTHORIZED_RETEST_PLAN,
+            output, run_id, frozen, cases, strategies, reserved_case_cap, request_plan, budget.prior_spent_usd)
+        historical_preflight = _load_historical_provider_preflight(historical_provider_preflight,
+            authorized_replay_plan, configured_model)
+    elif historical_provider_preflight is not None:
+        raise ValueError("historical provider evidence is accepted only with its exact authorized replay plan")
 
     prior_report_paths = _prior_reports(output)
     prior_completed_requests, prior_request_audit = _prior_completed_requests(prior_report_paths)
@@ -352,18 +369,31 @@ def run(output: Path, case_ids: list[str] | None = None,
     checkpoint_responses = {key: value for key, value in checkpoint_responses.items() if key[0] in selected_ids}
     checkpoint_uncertain = {key for key in checkpoint_uncertain if key[0] in selected_ids}
 
-    # Both authenticated GETs are free preflight calls. No inference request is sent here.
-    balance = _json_request("https://api.deepseek.com/user/balance", api_key)
-    models = _json_request("https://api.deepseek.com/models", api_key)
-    if balance.get("is_available") is not True:
-        raise ValueError("provider reports insufficient balance; no inference calls sent")
-    if not any(float(item.get("total_balance", 0)) > 0 for item in balance.get("balance_infos", [])):
-        raise ValueError("provider balance is zero; no inference calls sent")
-    model_ids = {item.get("id") for item in models.get("data", []) if isinstance(item, dict)}
+    if historical_preflight is not None:
+        model_ids = set(historical_preflight["provider_model_ids"])
+        provider_preflight_details = {"balance_available": True,
+            "balance_currencies_available": historical_preflight["balance_currencies_available"],
+            "inference_preflight": "historical GET /models succeeded",
+            "fresh": False, "source": historical_preflight["source"],
+            "source_sha256": historical_preflight["source_sha256"],
+            "observed_at": historical_preflight["observed_at"]}
+    else:
+        # These authenticated GETs are free preflight calls. No inference request is sent here.
+        balance = _json_request("https://api.deepseek.com/user/balance", api_key)
+        models = _json_request("https://api.deepseek.com/models", api_key)
+        if balance.get("is_available") is not True:
+            raise ValueError("provider reports insufficient balance; no inference calls sent")
+        if not any(float(item.get("total_balance", 0)) > 0 for item in balance.get("balance_infos", [])):
+            raise ValueError("provider balance is zero; no inference calls sent")
+        model_ids = {item.get("id") for item in models.get("data", []) if isinstance(item, dict)}
+        provider_preflight_details = {"balance_available": True,
+            "balance_currencies_available": sorted(item.get("currency", "")
+                for item in balance.get("balance_infos", []) if float(item.get("total_balance", 0)) > 0),
+            "inference_preflight": "GET /models succeeded", "fresh": True}
     if not model_ids or not model_ids.intersection({"deepseek-flash", "deepseek-v4-flash"}):
         raise ValueError("provider does not list the frozen Flash model family; no inference calls sent")
     if preflight_only:
-        return {"status": "preflight_passed", "run_id": run_id, "provider_balance_available": True,
+        return {"status": "preflight_passed", "run_id": run_id, "provider_preflight": provider_preflight_details,
             "provider_model_ids": sorted(model_ids), "strategies": list(strategies),
             "case_ids": [case["spec"]["id"] for case in cases],
             "case_sha256": {case["spec"]["id"]: case["snapshot_sha256"] for case in cases},
@@ -379,6 +409,8 @@ def run(output: Path, case_ids: list[str] | None = None,
     started = datetime.now(timezone.utc).isoformat()
     request_audit: list[dict[str, Any]] = []
     audit_lock = threading.Lock()
+    request_attempt_lock = threading.Lock()
+    provider_request_attempts = 0
     checkpoint_lock = threading.Lock()
     in_run_responses: dict[tuple[str, str, str, int], dict[str, Any]] = {}
     provider_response_metadata: dict[tuple[str, str, str, int], dict[str, Any]] = {}
@@ -389,18 +421,46 @@ def run(output: Path, case_ids: list[str] | None = None,
 
         def audited_call(operation: Any, instance: Any, system: str, user: str, token_budget: int) -> dict[str, Any]:
             _validate_prompt_payload(system, user, records_by_id)
-            key = _request_key(case["spec"]["id"], hashlib.sha256(system.encode("utf-8")).hexdigest(),
-                hashlib.sha256(user.encode("utf-8")).hexdigest(), token_budget)
+            system_hash = hashlib.sha256(system.encode("utf-8")).hexdigest()
+            user_hash = hashlib.sha256(user.encode("utf-8")).hexdigest()
+            key = _request_key(case["spec"]["id"], system_hash, user_hash, token_budget)
+            model_cap = min(instance.max_tokens, max(64, token_budget))
+            request_body = {"model": configured_model, "temperature": 0, "max_tokens": model_cap,
+                **({"reasoning_effort": "none"} if configured_model.startswith("deepseek-v4") else {}),
+                "response_format": {"type": "json_object"},
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+            request_body_hash = hashlib.sha256(json.dumps(request_body).encode("utf-8")).hexdigest()
+            request_payload = json.loads(user)
+            if authorized_replay_plan is not None:
+                review = authorized_replay_plan["_validated_payload_review"]
+                static_keys = {(item["case_id"], item["system_sha256"],
+                    item["user_payload_sha256"], item["token_budget"]): item["request_body_sha256"]
+                    for item in review["static_request_hashes"]}
+                if "experts" in request_payload:
+                    expected_adjudicator_hash = hashlib.sha256(
+                        review["system_prompts"]["adjudicator"].encode("utf-8")).hexdigest()
+                    expected_ids = sorted(records_by_id)[:1000]
+                    expected_sources = sorted(source for source, result in case["sources"].items()
+                        if result.get("records"))
+                    actual_sources = sorted(item.get("source") for item in request_payload.get("experts", []))
+                    if (system_hash != expected_adjudicator_hash
+                            or request_payload.get("all_evidence_ids") != expected_ids
+                            or actual_sources != expected_sources):
+                        raise ValueError("adjudicator payload differs from authorized source scope")
+                elif (key not in static_keys or static_keys[key] != request_body_hash):
+                    raise ValueError("static prompt hash differs from authorized payload review")
             with audit_lock:
                 prior_result = in_run_responses.get(key)
                 if prior_result is not None:
                     request_audit.append({"case_id": key[0], "system_sha256": key[1],
-                        "user_payload_sha256": key[2], "token_budget": token_budget, "status": "reused_in_run"})
+                        "user_payload_sha256": key[2], "request_body_sha256": request_body_hash,
+                        "token_budget": token_budget, "status": "reused_in_run"})
                     return prior_result
                 prior_checkpoint = checkpoint_responses.get(key)
                 if prior_checkpoint is not None:
                     request_audit.append({"case_id": key[0], "system_sha256": key[1],
-                        "user_payload_sha256": key[2], "token_budget": token_budget, "status": "reused_checkpoint"})
+                        "user_payload_sha256": key[2], "request_body_sha256": request_body_hash,
+                        "token_budget": token_budget, "status": "reused_checkpoint"})
                     _append_request_checkpoint(checkpoint_path, {"case_id": key[0], "system_sha256": key[1],
                         "user_payload_sha256": key[2], "token_budget": token_budget, "run_id": budget.run_id,
                         "status": "completed", "reused_existing_checkpoint": True,
@@ -414,18 +474,23 @@ def run(output: Path, case_ids: list[str] | None = None,
                     return prior_checkpoint
             audit = {"case_id": case["spec"]["id"],
                 "system_sha256": key[1], "user_payload_sha256": key[2],
+                "request_body_sha256": request_body_hash,
                 "token_budget": token_budget, "status": "pending"}
             if key in prior_completed_requests or key in checkpoint_uncertain:
+                if authorized_replay_plan is None:
+                    audit["previous_paid_response_unavailable"] = True
+                    audit["status"] = "previous_paid_response_unavailable"
+                    with audit_lock:
+                        request_audit.append(audit)
+                    _refuse_unavailable_paid_response(key, prior_completed_requests, checkpoint_uncertain)
                 audit["previous_paid_response_unavailable"] = True
-                audit["status"] = "previous_paid_response_unavailable"
-                with audit_lock:
-                    request_audit.append(audit)
-                _refuse_unavailable_paid_response(key, prior_completed_requests, checkpoint_uncertain)
+                audit["prior_paid_replay_authorized"] = True
             with audit_lock:
                 request_audit.append(audit)
 
             request_record = {"case_id": key[0], "system_sha256": key[1],
-                "user_payload_sha256": key[2], "token_budget": token_budget, "run_id": budget.run_id}
+                "user_payload_sha256": key[2], "request_body_sha256": request_body_hash,
+                "token_budget": token_budget, "run_id": budget.run_id}
 
             def checkpointed_operation(target: Any, fixed_system: str, fixed_user: str, fixed_budget: int) -> dict[str, Any]:
                 _append_request_checkpoint(checkpoint_path,
@@ -441,11 +506,19 @@ def run(output: Path, case_ids: list[str] | None = None,
                     raise
                 return response
 
+            nonlocal provider_request_attempts
+            with request_attempt_lock:
+                if provider_request_attempts >= request_plan["max_provider_requests"]:
+                    raise ValueError("provider request attempt limit exceeded")
+                provider_request_attempts += 1
             try:
                 result = budget.call(checkpointed_operation, instance, system, user, token_budget,
                     request_metadata={"case_id": key[0], "system_sha256": key[1],
                         "user_payload_sha256": key[2], "token_budget": token_budget,
-                        "request_scope": budget.run_id})
+                        "request_body_sha256": request_body_hash,
+                        "request_scope": budget.run_id,
+                        "prior_paid_replay_authorized": authorized_replay_plan is not None and
+                            (key in prior_completed_requests or key in checkpoint_uncertain)})
             except Exception as exc:
                 audit.update({"status": "failed_or_blocked", "error_type": type(exc).__name__})
                 raise
@@ -487,6 +560,8 @@ def run(output: Path, case_ids: list[str] | None = None,
         "cumulative_peak_estimate_usd": cumulative, "limit_usd": CAP_USD,
         "authorization_scope": f"{AUTHORIZATION_SCOPE}_{'_'.join(strategies)}",
         "authorized_case_reserve_usd": float(reserved_case_cap),
+        "authorized_prior_paid_replay": authorized_replay_plan is not None,
+        "provider_request_attempts": provider_request_attempts,
         "prior_op3_subset_spend_usd": float(prior_eval_spend),
         "project_remaining_before_run_usd": round(CAP_USD - budget.prior_spent_usd, 8),
         "stopped_before_overrun": stopped})
@@ -497,10 +572,7 @@ def run(output: Path, case_ids: list[str] | None = None,
         "runner": "real_chat_model_and_strategy_eval", "model": {"configured_id": configured_model,
             "temperature": 0, "route_token_budget": 2048, "completion_cap": FIXED_COMPLETION_LIMIT,
             "provider_model_ids": sorted(model_ids)},
-        "provider_preflight": {"balance_available": balance["is_available"],
-            "balance_currencies_available": sorted(item.get("currency", "")
-                for item in balance.get("balance_infos", []) if float(item.get("total_balance", 0)) > 0),
-            "inference_preflight": "GET /models succeeded"},
+        "provider_preflight": provider_preflight_details,
         "frozen_dataset": {"spec": str(SUBSET_PATH.relative_to(ROOT)),
             "spec_sha256": frozen["spec_sha256"], "case_count": len(cases),
             "strategies": list(strategies), "multi_label": "always-multi",
@@ -515,7 +587,12 @@ def run(output: Path, case_ids: list[str] | None = None,
             "remaining_after_full_reserve_usd": round(CAP_USD - budget.prior_spent_usd - float(reserved_case_cap), 8),
             "prior_op3_subset_spend_usd": float(prior_eval_spend), "actual_run_peak_usd": actual,
             "cumulative_peak_usd": cumulative, "remaining_usd": round(CAP_USD - cumulative, 8),
-            "cost_ledger": str(ledger.relative_to(ROOT))},
+            "cost_ledger": str(ledger.relative_to(ROOT)),
+            "provider_request_attempts": provider_request_attempts,
+            "max_provider_requests": request_plan["max_provider_requests"],
+            "authorized_prior_paid_replay": authorized_replay_plan is not None},
+        "authorization": ({"manifest": AUTHORIZED_RETEST_PLAN.relative_to(ROOT).as_posix(),
+            "status": "authorized_exact_scope"} if authorized_replay_plan is not None else None),
         "code_sha256": {name: _sha256(ROOT / path) for name, path in {
             "runner": "scripts/evaluate_op2_frozen.py", "strategy_eval": "opspilot/strategy_eval.py",
             "model_client": "opspilot/model_client.py", "gold_scorer": "scripts/evaluate_lab.py"}.items()},
@@ -543,13 +620,18 @@ def main() -> int:
     parser.add_argument("--preflight-only", action="store_true",
         help="verify frozen hashes, budget and provider without inference or report writes")
     parser.add_argument("--run-id", help="UUID shared by preflight and execution")
+    parser.add_argument("--allow-authorized-paid-replay", action="store_true",
+        help="permit re-requesting prior paid prompts only when the committed OP-3 authorization plan matches exactly")
+    parser.add_argument("--historical-provider-preflight", type=Path,
+        help="use timestamped provider evidence named by the exact approved replay plan; never refreshed by this option")
     args = parser.parse_args()
     if not args.execute:
         parser.error("pass --execute to run the preregistered real-agent comparison")
     try:
         report = run(args.output, case_ids=args.case_ids, strategies=tuple(args.strategies),
             max_run_reserve_usd=args.max_run_reserve_usd, preflight_only=args.preflight_only,
-            run_id=args.run_id)
+            run_id=args.run_id, allow_authorized_paid_replay=args.allow_authorized_paid_replay,
+            historical_provider_preflight=args.historical_provider_preflight)
     except Exception as exc:
         print(json.dumps({"status": "stopped_before_or_during_run", "error": type(exc).__name__,
             "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
@@ -585,6 +667,97 @@ def _planned_requests(cases: list[dict[str, Any]], strategies: tuple[str, ...]) 
             "max_provider_requests": planned})
     return {"count_basis": "unique prompts across selected routes; truncation retries disabled",
         "per_case": per_case, "max_provider_requests": total}
+
+
+def _validate_authorized_retest_plan(plan_path: Path, output: Path, run_id: str,
+        frozen: dict[str, Any], cases: list[dict[str, Any]], strategies: tuple[str, ...],
+        reserve_usd: Decimal, request_plan: dict[str, Any], prior_peak_usd: float) -> dict[str, Any]:
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("authorized replay plan is unreadable") from exc
+    authorization = plan.get("authorization", {})
+    expected_cases = [case["spec"]["id"] for case in cases]
+    expected_hashes = {case["spec"]["id"]: case["snapshot_sha256"] for case in cases}
+    checks = [
+        plan.get("status") == "authorized_for_execution",
+        authorization.get("user_confirmed") is True,
+        authorization.get("run_id") == run_id == plan.get("run_id"),
+        plan.get("planned_output") == output.resolve().relative_to(ROOT.resolve()).as_posix(),
+        plan.get("scope", {}).get("spec_sha256") == frozen["spec_sha256"],
+        plan.get("scope", {}).get("case_ids") == expected_cases,
+        plan.get("scope", {}).get("snapshot_sha256") == expected_hashes,
+        plan.get("scope", {}).get("strategies") == list(strategies) == ["rules", "single", "multi", "auto"],
+        plan.get("scope", {}).get("retries_enabled") is False,
+        authorization.get("case_ids") == expected_cases,
+        authorization.get("snapshot_sha256") == expected_hashes,
+        authorization.get("strategies") == list(strategies),
+        authorization.get("max_provider_requests") == request_plan["max_provider_requests"] == 18,
+        authorization.get("reserve_usd") == float(reserve_usd) == float(FIXED_WORST_CASE_USD),
+        plan.get("request_plan", {}).get("max_provider_requests") == request_plan["max_provider_requests"],
+        plan.get("budget", {}).get("latest_ledger_peak_usd") == round(prior_peak_usd, 8),
+        plan.get("budget", {}).get("cumulative_worst_case_usd") == round(prior_peak_usd + float(reserve_usd), 8),
+        plan.get("data_safety", {}).get("synthetic_frozen_snapshots_only") is True,
+        plan.get("data_safety", {}).get("gold_sent_to_provider") is False,
+        plan.get("data_safety", {}).get("secrets_or_credentials_written") is False,
+        plan.get("historical_provider_preflight", {}).get("freshness") == "historical_non_live",
+    ]
+    if not all(checks):
+        raise ValueError("authorized replay plan differs from run id, frozen payload, route, or budget")
+    prompt_review_ref = plan.get("prompt_review", {})
+    expected_review_path = ROOT / "reports" / "op3-multiagent-payload-review-2026-11-15.json"
+    if prompt_review_ref.get("artifact") != expected_review_path.relative_to(ROOT).as_posix():
+        raise ValueError("authorized payload review path differs from plan")
+    if _sha256(expected_review_path) != prompt_review_ref.get("sha256"):
+        raise ValueError("authorized payload review hash differs from plan")
+    try:
+        payload_review = json.loads(expected_review_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("authorized payload review is unreadable") from exc
+    static_requests = payload_review.get("static_request_hashes", [])
+    if (payload_review.get("status") != "verified_frozen_inputs_and_prompt_contract"
+            or payload_review.get("spec_sha256") != frozen["spec_sha256"]
+            or payload_review.get("request_plan_max_provider_requests") != 18
+            or payload_review.get("worst_case_reserve_usd") != float(reserve_usd)
+            or len(static_requests) != 15
+            or payload_review.get("dynamic_adjudicator_count") != 3
+            or payload_review.get("validation", {}).get("gold_in_payload") is not False
+            or payload_review.get("validation", {}).get("credentials_in_payload") is not False
+            or payload_review.get("validation", {}).get("real_customer_data_in_payload") is not False):
+        raise ValueError("authorized payload review differs from frozen scope or send limits")
+    if prompt_review_ref.get("static_request_hash_count") != len(static_requests):
+        raise ValueError("authorized static prompt count differs from payload review")
+    prompt_review_ref["static_request_hash_count"] = len(static_requests)
+    plan["_validated_payload_review"] = payload_review
+    return plan
+
+
+def _load_historical_provider_preflight(path: Path, plan: dict[str, Any], model_id: str) -> dict[str, Any]:
+    evidence = plan.get("historical_provider_preflight", {})
+    if path.resolve().relative_to(ROOT.resolve()).as_posix() != evidence.get("source"):
+        raise ValueError("historical provider preflight path differs from approved plan")
+    if _sha256(path) != evidence.get("sha256"):
+        raise ValueError("historical provider preflight report hash differs from approved plan")
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("historical provider preflight report is unreadable") from exc
+    checked_at = report.get("started_at")
+    preflight = report.get("provider_preflight", {})
+    models = report.get("model", {}).get("provider_model_ids", [])
+    if checked_at != evidence.get("observed_at") or preflight.get("balance_available") is not True:
+        raise ValueError("historical provider balance evidence does not match approved plan")
+    if preflight.get("inference_preflight") != "GET /models succeeded":
+        raise ValueError("historical model-list preflight did not succeed")
+    if report.get("model", {}).get("configured_id") != model_id:
+        raise ValueError("historical provider preflight used a different configured model")
+    if not set(models).intersection({"deepseek-flash", "deepseek-v4-flash"}):
+        raise ValueError("historical provider model list does not include the approved model family")
+    return {"observed_at": checked_at, "balance_available": True,
+        "balance_currencies_available": preflight.get("balance_currencies_available", []),
+        "provider_model_ids": models, "fresh": False,
+        "source": path.resolve().relative_to(ROOT.resolve()).as_posix(),
+        "source_sha256": evidence["sha256"]}
 
 
 if __name__ == "__main__":
