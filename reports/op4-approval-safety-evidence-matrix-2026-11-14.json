@@ -3,9 +3,11 @@
   "audit_type": "op4_approval_safety_evidence_matrix",
   "execution_scope": "local synthetic fixtures only",
   "targeted_tests": {
-    "command": ".\\.venv\\Scripts\\python.exe -m unittest tests.test_action_safety tests.test_action_cli -q",
-    "passed": 24,
-    "failed": 0
+    "git_sha": "c9584072ab095aaa1187f468138821c2bec9a8b4",
+    "passed": 33,
+    "failed": 0,
+    "command": ".venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
+    "subtests": 9
   },
   "coverage": [
     {
@@ -66,11 +68,19 @@
     }
   ],
   "uncovered_boundaries": [
-    "cross-process atomic nonce consumption; current lock is process-local and ledger is sequential-use only",
     "real IdP authentication and independent human review",
     "real rollback, health verification, production system behavior"
   ],
   "external_system_calls": 0,
   "production_validation": false,
-  "existing_learning_report_accuracy": "consistent: docs/learning/stage-OP4.md states no IdP, separate human-review state, real rollback, or production proof"
+  "existing_learning_report_accuracy": "consistent: docs/learning/stage-OP4.md states no IdP, separate human-review state, real rollback, or production proof",
+  "verification": {
+    "external_system_calls": 0,
+    "worktree_git_sha": "c9584072ab095aaa1187f468138821c2bec9a8b4",
+    "cross_process_replay": "covered and passed on local filesystem",
+    "run_id": "op4-verification-2026-11-15",
+    "docker_started": false,
+    "external_writes": 0,
+    "model_calls": 0
+  }
 }

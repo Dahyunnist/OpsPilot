@@ -1,0 +1,23 @@
+{
+  "report_sha256": "da3297bec95fbcfbc68d515b7a865b4e7922d9355737e3db56bb24d62a7fa7fe",
+  "op_run_manifest": {
+    "cost_usd_estimate": 0,
+    "model_id": "none",
+    "split": "synthetic_local",
+    "git_sha": "c9584072ab095aaa1187f468138821c2bec9a8b4",
+    "evaluation_id": "op4_approval_safety",
+    "result_fingerprint_sha256": "da3297bec95fbcfbc68d515b7a865b4e7922d9355737e3db56bb24d62a7fa7fe",
+    "status": "verified",
+    "schema_version": 1,
+    "run_id": "op4-verification-2026-11-15",
+    "parameters": {
+      "report_path": "reports/op4-approval-safety-evidence-matrix-2026-11-14.json",
+      "report_sha256": "da3297bec95fbcfbc68d515b7a865b4e7922d9355737e3db56bb24d62a7fa7fe",
+      "subtests": 9,
+      "model_calls": 0,
+      "docker_started": false,
+      "external_writes": 0,
+      "targeted_test_count": 33
+    }
+  }
+}
