@@ -70,6 +70,8 @@ Full test collection found 219 tests. `pytest -vv -s` stalled first at `tests/te
 
 User host `bad_release` JSONL confirms nine services started, healthy baseline passed, orders/v2 deployment observed, checkout HTTP 502, logs returned, then cleanup removed 10 containers and one network; `compose ps --all` was empty. Source is user-provided host summary. It lacks exact window, order ID, record contents/counts and detailed failure cause, so this does not establish an Agent root-cause hit. Evidence: `reports/op1-bad-release-host-result-2026-11-13.json`.
 
+2026-11-15 的另一轮宿主复测回传显示 checkout HTTP 502、部署记录和日志均出现 orders v2，stop 后容器状态为空。该轮未提供时间窗、订单 ID、完整记录或 trace/指标，不据此声称根因或 Agent 命中。此前 2026-11-11 的 HTTP 504 与 `inventory-v2` DNS 错误是另一轮失败，保持独立记录。详见[本轮复测记录](op1-bad-release-host-retest-2026-11-15.md)。
+
 ## 2026-11-14 OP-3 冻结响应复用与离线重评分
 
 仅检查三份登记快照及其受控请求 checkpoint；三份本地快照 SHA 均匹配 manifest。用户授权引用按文件名对应，但第三个授权哈希文本 `de76add2b1dc15e4da2207632d44c39c39ba813` 与本地 SHA-256 `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 不同，因此标记 `authorization_hash_match=false`，不得称三份哈希均获逐字授权。checkpoint 含 6 份历史成功 provider 响应正文（normal_slow_sql 4、missing_pool_evidence 1、contradictory_payment 1），仅用于离线重评分；没有新模型调用。使用 fixed 报告已保存的策略预测、冻结 truth 和快照派生 gold 证据运行 `score_case`，审计结果见 `reports/op3-op2-response-audit-2026-11-14.json`。本轮模型调用 0、新增费用 `$0`；OP-3 仍为 partial，只有 complete 项计为有效评分，失败策略不纳入命中比较。未访问 `.tmp/`。
