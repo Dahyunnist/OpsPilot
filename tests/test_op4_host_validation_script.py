@@ -45,20 +45,26 @@ if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -n
     throw "Expected Windows PowerShell 5.1, got $($PSVersionTable.PSVersion)."
 }
 $matchingLogs = @(
+    [pscustomobject]@{ dependency_host = 'orders'; error_reason = '[Errno -5] No address associated with hostname' }
     [pscustomobject]@{ dependency_host = 'inventory-v2'; error_reason = '[Errno -5] No address associated with hostname' }
     [pscustomobject]@{ dependency_host = 'database'; error_reason = '' }
 )
 $dnsEvidence = @($matchingLogs | Where-Object {
-    $_.dependency_host -eq 'inventory-v2' -or
-    $_.error_reason -match 'inventory-v2|Name or service not known|No address associated'
+    $dependencyHost = [string]$_.dependency_host
+    $errorReason = [string]$_.error_reason
+    $dependencyHost -eq 'inventory-v2' -or
+    $errorReason -match 'inventory-v2|Name or service not known|No address associated with hostname'
 })
-if ($dnsEvidence.Count -ne 1) { throw "Expected one DNS record, found $($dnsEvidence.Count)." }
-Write-Output "Windows PowerShell 5.1 DNS evidence count: $($dnsEvidence.Count)"
+$reasonOnlyEvidence = @($dnsEvidence | Where-Object { $_.dependency_host -ne 'inventory-v2' })
+if ($dnsEvidence.Count -ne 2 -or $reasonOnlyEvidence.Count -ne 1) {
+    throw "Expected two DNS records including one error_reason-only record, found $($dnsEvidence.Count)."
+}
+Write-Output "Windows PowerShell 5.1 DNS evidence count: $($dnsEvidence.Count); reason-only: $($reasonOnlyEvidence.Count)"
 """
     result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-Command", powershell],
         capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr or result.stdout
-    assert "Windows PowerShell 5.1 DNS evidence count: 1" in result.stdout
+    assert "Windows PowerShell 5.1 DNS evidence count: 2; reason-only: 1" in result.stdout
 
 
 def test_host_validation_guide_lists_each_blocked_socket_test_separately():

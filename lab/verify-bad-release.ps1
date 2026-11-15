@@ -130,8 +130,10 @@ try {
         throw "Expected exactly one orders/v2 deployment record for run $runId in the reported UTC window."
     }
     $dnsEvidence = @($matchingLogs | Where-Object {
-        $_.dependency_host -eq "inventory-v2" -or
-        $_.error_reason -match "inventory-v2|Name or service not known|No address associated"
+        $dependencyHost = [string]$_.dependency_host
+        $errorReason = [string]$_.error_reason
+        $dependencyHost -eq "inventory-v2" -or
+        $errorReason -match "inventory-v2|Name or service not known|No address associated with hostname"
     })
     if ($dnsEvidence.Count -eq 0) {
         throw "Logs did not prove the inventory-v2 DNS failure for order $orderId."
