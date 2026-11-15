@@ -54,6 +54,12 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert "$priorLabFault = $env:LAB_FAULT" in script
     assert "$env:LAB_FAULT=$priorLabFault" in script
     assert "expected_deployment_observed" in script and "scenario_passed=$scenarioPassed" in script
+    assert '$recoveryOrderId = "matrix-recovery-$([guid]::NewGuid())"' in script
+    assert '& $runScript -Scenario none' in script and "recovery.http_status -eq 200" in script
+    assert '18081/logs?start=$recoveryFrom&end=$recoveryTo&limit=100' in script
+    assert '18080/deployments?start=$recoveryFrom&end=$recoveryTo&limit=100' in script
+    assert 'recovery=$recovery' in script
+    assert '-not $_.scenario_passed -or -not $_.recovery.passed' in script
     assert "$telemetryObserved=$logsObserved -and $tracesObserved" in script
     assert "logs_observed=$logsObserved" in script and "traces_observed=$tracesObserved" in script
     assert "Test-MatrixScenarioPass" in script

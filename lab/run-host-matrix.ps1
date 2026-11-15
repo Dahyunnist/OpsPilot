@@ -146,7 +146,33 @@ try {
         $scenarioPassed=Test-MatrixScenarioPass @{ExpectedStatusObserved=$expectedStatusObserved;VersionObserved=$versionObserved;DnsObserved=$dnsObserved;Logs=$logs;TraceSpans=$windowSpans;SignalResults=$signals}
         $safeLogs=@($logs | Select-Object timestamp,service,severity,message,order_id,trace_id,span_id,service_version,error_type,error_reason,dependency_host,status,attempt,remaining,path)
         $safeSpans=@($windowSpans | Select-Object service,trace_id,span_id,operation,start,duration,status,order_id,attributes)
-        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;window_log_records=$safeLogs;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;window_trace_spans=$safeSpans;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;live_run=($null -ne $status)}
+        $recoveryOrderId = "matrix-recovery-$([guid]::NewGuid())"
+        $recoveryStart = [DateTime]::UtcNow.ToString("o")
+        $recovery = [ordered]@{order_id=$recoveryOrderId;start=$recoveryStart;end=$null;http_status=$null;duration_ms=$null;log_count=0;logs_observed=$false;deployment_version_observed=$false;error=$null;passed=$false}
+        try {
+            & $runScript -Scenario none
+            if ($LASTEXITCODE -ne 0) { throw "healthy recovery startup failed ($LASTEXITCODE)" }
+            $recoveryWatch = [Diagnostics.Stopwatch]::StartNew()
+            try {
+                Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18080/checkout" -ContentType "application/json" -Body (@{order_id=$recoveryOrderId}|ConvertTo-Json) -TimeoutSec 15 | Out-Null
+                $recovery.http_status = 200
+            } catch {
+                if ($_.Exception.Response) { $recovery.http_status = [int]$_.Exception.Response.StatusCode }
+                else { throw }
+            } finally { $recoveryWatch.Stop() }
+            $recovery.duration_ms = $recoveryWatch.ElapsedMilliseconds
+            $recovery.end = [DateTime]::UtcNow.ToString("o")
+            $recoveryFrom = [uri]::EscapeDataString($recovery.start)
+            $recoveryTo = [uri]::EscapeDataString($recovery.end)
+            $recoveryLogs = Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$recoveryFrom&end=$recoveryTo&limit=100"
+            $recoveryOrderLogs = @($recoveryLogs.records | Where-Object { $_.order_id -eq $recoveryOrderId })
+            $recovery.log_count = $recoveryOrderLogs.Count
+            $recovery.logs_observed = $recoveryOrderLogs.Count -gt 0
+            $recoveryDeployments = Invoke-RestMethod "http://127.0.0.1:18080/deployments?start=$recoveryFrom&end=$recoveryTo&limit=100"
+            $recovery.deployment_version_observed = @($recoveryDeployments.records | Where-Object { $_.service -eq "orders" -and $_.version -eq "v1" }).Count -gt 0
+            $recovery.passed = ($recovery.http_status -eq 200 -and $null -ne $recovery.duration_ms -and $recovery.logs_observed -and $recovery.deployment_version_observed)
+        } catch { $recovery.error = $_.Exception.Message; $recovery.end = [DateTime]::UtcNow.ToString("o") }
+        $rows += [pscustomobject]@{case_id=$case.case_id;scenario=$case.fault;order_id=$id;start=$start;end=$end;http_status=$status;expected_http_statuses=$expectedStatuses;error=$message;log_count=$logs.Count;logs_observed=$logsObserved;window_log_records=$safeLogs;deployment_count=$deploymentRecords.Count;deployment_records=$deploymentRecords;expected_deployment_version=$expectedVersion;expected_deployment_observed=$versionObserved;expected_failure=$expectedFailure;expected_status_observed=$expectedStatusObserved;dns_failure_observed=$dnsObserved;trace_count=$windowSpans.Count;traces_observed=$tracesObserved;window_trace_spans=$safeSpans;telemetry_observed=$telemetryObserved;expected_signals=$case.must_observe;signal_results=$signals;missing_signals=$missingSignals;scenario_passed=$scenarioPassed;recovery=$recovery;live_run=($null -ne $status)}
       }
     }
 } finally {
@@ -164,10 +190,10 @@ try {
     if ($null -eq $priorOrdersVersion) { Remove-Item Env:LAB_ORDERS_VERSION -ErrorAction SilentlyContinue } else { $env:LAB_ORDERS_VERSION=$priorOrdersVersion }
     if ($null -eq $priorInventoryUrl) { Remove-Item Env:LAB_INVENTORY_URL -ErrorAction SilentlyContinue } else { $env:LAB_INVENTORY_URL=$priorInventoryUrl }
 }
-$matrixPassed = ($clean -and $normalControl.passed -and @($rows | Where-Object { -not $_.scenario_passed }).Count -eq 0)
+$matrixPassed = ($clean -and $normalControl.passed -and @($rows | Where-Object { -not $_.scenario_passed -or -not $_.recovery.passed }).Count -eq 0)
 $runStatus = if ($matrixPassed) { "completed" } else { "failed" }
 $endedAt = [DateTime]::UtcNow.ToString("o")
-$passedCount = @($rows | Where-Object { $_.scenario_passed }).Count
+$passedCount = @($rows | Where-Object { $_.scenario_passed -and $_.recovery.passed }).Count
 $result=@{project=$projectName;run_id=$runId;trace_id=$traceId;started_at=$runStartedAt;ended_at=$endedAt;status=$runStatus;run_manifest_path=$manifestPath;preflight=@{passed=$true;error=$null;lab_started=$true};normal_control=$normalControl;cases=$rows;cleanup=@{stop_exit=$stopCode;stop_error=$stopError;remaining_error=$remainingError;empty=$clean};volume_deletion=$false}
 $parent=Split-Path -Parent $OutputFile; New-Item -ItemType Directory -Force $parent|Out-Null
 $result|ConvertTo-Json -Depth 10|Set-Content -Encoding utf8 $OutputFile
