@@ -1,0 +1,91 @@
+{
+    "schema_version":  1,
+    "artifact_type":  "op2_mcp_bad_release_host_verification",
+    "status":  "passed",
+    "run_id":  "a06d8717-5d71-497c-af8b-04dfbea9029f",
+    "compose_project":  "opspilot-bad-release-a06d87175d71",
+    "order_id":  "bad-release-a06d8717-5d71-497c-af8b-04dfbea9029f",
+    "synthetic_only":  true,
+    "request_attempts":  1,
+    "expected_http_status":  502,
+    "actual_http_status":  502,
+    "window_start_utc":  "2026-11-15T13:23:54.8214169Z",
+    "window_end_utc":  "2026-11-15T13:23:59.2811747Z",
+    "deployment":  {
+                       "record_id":  "8c74a124-029d-4f6b-b893-d027c8a39be8",
+                       "run_id":  "a06d8717-5d71-497c-af8b-04dfbea9029f",
+                       "order_id":  "bad-release-a06d8717-5d71-497c-af8b-04dfbea9029f",
+                       "timestamp":  "2026-11-15T13:23:54.8214169Z",
+                       "service":  "orders",
+                       "version":  "v2",
+                       "synthetic":  true
+                   },
+    "matching_order_logs":  [
+                                {
+                                    "timestamp":  "2026-11-15T13:23:58.969Z",
+                                    "severity":  "error",
+                                    "message":  "inventory dependency failed",
+                                    "service":  "orders",
+                                    "service_version":  "v2",
+                                    "trace_id":  "25083e77cc4f218d995dc37e6f7da158",
+                                    "span_id":  "519e5f06c819b33d",
+                                    "error_type":  "URLError",
+                                    "order_id":  "bad-release-a06d8717-5d71-497c-af8b-04dfbea9029f",
+                                    "dependency_host":  "inventory-v2",
+                                    "error_reason":  "[Errno -5] No address associated with hostname"
+                                },
+                                {
+                                    "timestamp":  "2026-11-15T13:23:58.973Z",
+                                    "severity":  "error",
+                                    "message":  "request failed",
+                                    "service":  "orders",
+                                    "service_version":  "v2",
+                                    "trace_id":  null,
+                                    "span_id":  null,
+                                    "path":  "/orders",
+                                    "error_type":  "RuntimeError",
+                                    "order_id":  "bad-release-a06d8717-5d71-497c-af8b-04dfbea9029f"
+                                }
+                            ],
+    "cleanup":  {
+                    "volumes_deleted":  false,
+                    "attempted":  true,
+                    "containers_empty":  true
+                },
+    "mcp_verification":  {
+                             "status":  "passed",
+                             "protocol":  {
+                                              "initialize":  "completed",
+                                              "tools_list":  "passed",
+                                              "read_only_tool_calls":  "passed"
+                                          },
+                             "tools":  [
+                                           "investigate_live_incident",
+                                           "query_live_deployments",
+                                           "query_live_logs",
+                                           "query_live_metrics",
+                                           "query_live_traces"
+                                       ],
+                             "read_calls":  {
+                                                "query_live_logs":  1,
+                                                "query_live_deployments":  1,
+                                                "query_live_traces":  1,
+                                                "investigate_live_incident":  1
+                                            },
+                             "order_id":  "bad-release-a06d8717-5d71-497c-af8b-04dfbea9029f",
+                             "run_id":  "a06d8717-5d71-497c-af8b-04dfbea9029f",
+                             "evidence":  {
+                                              "log_record_id":  "logs:fb826bf2dce4b7f29c3c",
+                                              "deployment_record_id":  "8c74a124-029d-4f6b-b893-d027c8a39be8",
+                                              "deployment_version":  "v2",
+                                              "trace_id":  "25083e77cc4f218d995dc37e6f7da158",
+                                              "trace_record_ids":  [
+                                                                       "traces:e30b58aa83d4afc0c63d"
+                                                                   ],
+                                              "dns_dependency_host":  "inventory-v2",
+                                              "investigation_status":  "concluded",
+                                              "investigation_evidence_count":  27
+                                          }
+                         },
+    "report":  "reports/op2-mcp-bad-release-host-a06d8717-5d71-497c-af8b-04dfbea9029f.json"
+}

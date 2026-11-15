@@ -48,3 +48,9 @@ MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 
 审计发现 PowerShell `Test-InEvidenceWindow` 和 Jaeger `Get-WindowSpans` 将 end 边界也纳入窗口，与 Python adapter 的 `[start,end)` 不一致。现在日志/deployment 时刻用 `instant < end`；Jaeger microsecond `startTime` 转为 .NET ticks 比较，避免先降到毫秒导致边界漂移。新增 PowerShell 回归检查 start 前、start、end 前和 end 精确值；只有 `[start,end)` 内信号保留。
 
 同轮离线复核现有 OP-2 adapter：请求限 24h 和 1–1000 条、先筛窗再全局限量、stable source pointer、source missing/partial/error、乱序 deployment、矛盾信号弃答都有既有测试。`tests/test_op1_host_matrix.py tests/test_live_telemetry.py tests/test_op2_telemetry_robustness.py tests/test_op2_source_status.py tests/test_op2_frozen_snapshot_readonly.py tests/test_lab_time_window.py`：59 项和 18 子测试通过；未启动 MCP/服务或模型。
+
+## 2026-11-15 新 bad_release 窗口 MCP 宿主验收
+
+`.\lab\verify-bad-release.ps1 -VerifyMcp` 在全新隔离项目中启动合成 `bad_release`，通过 Python MCP 标准客户端的 stdio transport 完成 initialize 与 tools/list。验证确认只暴露既有五个只读工具，然后对同一 UTC 窗口调用 logs、deployments、traces 与 `investigate_live_incident`。结果绑定唯一 order ID、run ID、orders/v2 deployment、inventory-v2 DNS 错误日志和同订单/同 trace 的 orders span；只读调查结果引用了这三类记录。
+
+完整结构化结果见[新窗口 MCP 宿主验收报告](../../reports/op2-mcp-bad-release-host-a06d8717-5d71-497c-af8b-04dfbea9029f.json)。cleanup 显示容器清空，卷保留。测试只访问本地合成实验台，没有调用模型或生产遥测；这补齐新 Docker 故障窗口上的 MCP 全链路证据，不构成生产连接验收。离线回归 `tests.test_op2_mcp_host_validation tests.test_mcp tests.test_live_telemetry tests.test_op2_telemetry_robustness tests.test_op2_source_status`：49 项通过。

@@ -1,6 +1,7 @@
 param(
     [int] $ReadyTimeoutSeconds = 90,
-    [int] $EvidenceTimeoutSeconds = 20
+    [int] $EvidenceTimeoutSeconds = 20,
+    [switch] $VerifyMcp
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,7 +20,7 @@ foreach ($name in @("COMPOSE_PROJECT_NAME", "LAB_FAULT", "LAB_GATEWAY_VERSION", 
 
 $result = [ordered]@{
     schema_version = 1
-    artifact_type = "op4_bad_release_host_verification"
+    artifact_type = $(if ($VerifyMcp) { "op2_mcp_bad_release_host_verification" } else { "op4_bad_release_host_verification" })
     status = "running"
     run_id = $runId
     compose_project = $projectName
@@ -34,6 +35,7 @@ $result = [ordered]@{
     matching_order_logs = @()
     cleanup = @{ attempted = $false; containers_empty = $false; volumes_deleted = $false }
 }
+if ($VerifyMcp) { $result.mcp_verification = $null }
 $composeAttempted = $false
 $failure = $null
 
@@ -134,6 +136,17 @@ try {
     if ($dnsEvidence.Count -eq 0) {
         throw "Logs did not prove the inventory-v2 DNS failure for order $orderId."
     }
+
+    if ($VerifyMcp) {
+        $result.window_end_utc = [DateTime]::UtcNow.ToString("o")
+        $python = Join-Path $root '.venv\Scripts\python.exe'
+        if (-not (Test-Path -LiteralPath $python)) { throw 'Run .\scripts\setup.ps1 first.' }
+        $mcpOutput = & $python -m lab.verify_bad_release_mcp `
+            --start $result.window_start_utc --end $result.window_end_utc `
+            --order-id $orderId --run-id $runId
+        if ($LASTEXITCODE -ne 0) { throw "MCP host verification failed for order $orderId." }
+        $result.mcp_verification = ($mcpOutput -join [Environment]::NewLine) | ConvertFrom-Json
+    }
     $result.status = "passed"
 } catch {
     $failure = $_
@@ -164,8 +177,9 @@ try {
     }
     Set-Location $originalLocation
     [IO.Directory]::CreateDirectory($reportDirectory) | Out-Null
-    $reportPath = Join-Path $reportDirectory "op4-bad-release-host-$runId.json"
-    $result.report = "reports/op4-bad-release-host-$runId.json"
+    $reportPrefix = if ($VerifyMcp) { "op2-mcp-bad-release-host" } else { "op4-bad-release-host" }
+    $reportPath = Join-Path $reportDirectory "$reportPrefix-$runId.json"
+    $result.report = "reports/$reportPrefix-$runId.json"
     [IO.File]::WriteAllText($reportPath, (($result | ConvertTo-Json -Depth 8) + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
 }
 
