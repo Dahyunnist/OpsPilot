@@ -33,10 +33,14 @@ class OfflinePreregistrationTests(unittest.TestCase):
 
         assert_no_gold_keys(report)
 
-    def test_cancellation_metric_gap_is_explicit(self):
+    def test_offline_timeout_cancel_fixture_is_separate_from_experiment(self):
         report = prepare_report()
-        self.assertEqual("not_recorded_by_frozen_sync_runner",
-            report["metric_contract"]["cancellations"]["status"])
+        fixture = report["offline_fault_metric_fixture"]
+        self.assertEqual("metric_contract_test_fixture_not_experiment_result", fixture["status"])
+        self.assertEqual(0, fixture["model_calls"])
+        expected = {"timeouts": 1, "cancellations": 1}
+        self.assertEqual({strategy: expected for strategy in ("rules", "single", "multi", "auto")},
+            fixture["per_strategy_counts"])
 
 
 if __name__ == "__main__":

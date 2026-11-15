@@ -68,6 +68,23 @@ def _failure_diagnostic(exc: Exception) -> dict[str, Any]:
     return {"category": "internal", "code": type(exc).__name__, "retryable": False}
 
 
+def failure_outcome_counts(traces: list[dict[str, Any]]) -> dict[str, int]:
+    """Count timeout and cancellation outcomes from strategy or A2A traces."""
+    counts = {"timeouts": 0, "cancellations": 0}
+    timeout_labels = {"timeout", "timed_out", "transport_timeout", "request_timeout", "timeouterror"}
+    cancel_labels = {"cancel", "cancelled", "canceled", "client_cancelled", "task_cancelled", "task_canceled"}
+    for trace in traces:
+        if not isinstance(trace, dict):
+            continue
+        labels = {str(trace.get(key, "")).strip().lower() for key in ("category", "code", "state")}
+        labels.discard("")
+        if trace.get("method") == "tasks/cancel" or labels & cancel_labels:
+            counts["cancellations"] += 1
+        elif labels & timeout_labels:
+            counts["timeouts"] += 1
+    return counts
+
+
 def _usage_int(usage: dict[str, Any], field: str) -> int:
     return usage_token_count(usage.get(field, 0), field)
 
@@ -325,7 +342,8 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             "fallback_route": fallback_route, "evaluation_status": "failed" if errors else "complete",
             "prediction": prediction, "duration_ms": round((time.perf_counter() - started) * 1000, 2),
             "model_calls": tracker[strategy]["calls"], "provider_rate_estimate_usd": round(tracker[strategy]["cost"], 8),
-            "usage": usage, "failures": errors, "error_trace": error_trace}
+            "usage": usage, "failures": errors, "error_trace": error_trace,
+            "failure_outcomes": failure_outcome_counts(error_trace)}
     snapshot_sha = __import__("hashlib").sha256(json.dumps(source_results, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
     return {"case_id": case_id, "window": {"start": start, "end": end}, "snapshot_sha256": snapshot_sha,
         "source_status": live_report["source_status"], "source_counts": {source: len(rows) for source, rows in records_by_source.items()},
@@ -378,6 +396,9 @@ def summarize_cases(cases: list[dict[str, Any]], provider_rate_costs: dict[str, 
             "model_calls": sum(row["model_calls"] for row in rows), "provider_rate_estimate_usd": round(cost, 8),
             "cost_per_exact_success_usd": round(cost / successes, 8) if successes else None,
             "p95_latency_ms": latencies[p95_index] if latencies else None,
+            "failure_outcomes": {outcome: sum(row.get("failure_outcomes",
+                failure_outcome_counts(row.get("error_trace", []))).get(outcome, 0) for row in rows)
+                for outcome in ("timeouts", "cancellations")},
             "failures": [{"case_id": case["case_id"], "reasons": case["strategies"][strategy]["failures"]}
                 for case in cases if strategy in case.get("strategies", {}) and case["strategies"][strategy]["failures"]],
         }

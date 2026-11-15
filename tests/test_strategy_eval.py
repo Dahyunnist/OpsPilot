@@ -4,7 +4,8 @@ import json
 import threading
 import unittest
 
-from opspilot.strategy_eval import STRATEGIES, evaluate_snapshot, score_case, summarize_cases
+from opspilot.strategy_eval import (STRATEGIES, evaluate_snapshot, failure_outcome_counts,
+    score_case, summarize_cases)
 from opspilot.model_client import ModelError, redact
 from scripts.evaluate_agents import BudgetLimitExceeded
 from unittest.mock import patch
@@ -364,6 +365,50 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(summary["rules"]["completed_cases"], 1)
         self.assertEqual(summary["rules"]["failed_cases"], 1)
         self.assertEqual(summary["rules"]["failures"][0]["case_id"], "b")
+
+    def test_failure_outcome_counter_uses_same_trace_rule_for_every_strategy(self) -> None:
+        traces = [
+            {"category": "transport_timeout", "retryable": True},
+            {"event": "a2a_protocol", "method": "tasks/cancel", "state": "canceled"},
+        ]
+        counts = failure_outcome_counts(traces)
+        self.assertEqual({"timeouts": 1, "cancellations": 1}, counts)
+        cases = [{"case_id": "probe", "strategies": {
+            strategy: {"duration_ms": 0, "model_calls": 0, "provider_rate_estimate_usd": 0,
+                "failures": [], "error_trace": traces, "failure_outcomes": counts,
+                "metrics": {"exact_root_set": False, "top1": False, "top3_recall": 0.0,
+                    "false_positives": 0, "evidence_true_positive": 0,
+                    "evidence_predicted": 0, "evidence_gold": 0}}
+            for strategy in STRATEGIES}}]
+        summary = summarize_cases(cases)
+        self.assertEqual({"timeouts": 1, "cancellations": 1},
+            {strategy: summary[strategy]["failure_outcomes"] for strategy in STRATEGIES}["rules"])
+        for strategy in STRATEGIES:
+            self.assertEqual(counts, summary[strategy]["failure_outcomes"])
+
+    def test_fake_timeout_is_counted_without_provider_call(self) -> None:
+        model = FakeChatModel()
+
+        def timeout_gate(_operation, _instance, _system, _user, _budget):
+            raise ModelError("injected offline timeout", category="transport_timeout", retryable=True)
+
+        report = evaluate_snapshot("offline-timeout", START, END, self.snapshot(), model,
+            timeout_gate, ("single",))
+        outcome = report["strategies"]["single"]["failure_outcomes"]
+        self.assertEqual({"timeouts": 1, "cancellations": 0}, outcome)
+        self.assertEqual(0, len(model.calls))
+
+    def test_fake_cancellation_is_counted_without_provider_call(self) -> None:
+        model = FakeChatModel()
+
+        def cancel_gate(_operation, _instance, _system, _user, _budget):
+            raise ModelError("injected offline cancellation", category="client_cancelled")
+
+        report = evaluate_snapshot("offline-cancel", START, END, self.snapshot(), model,
+            cancel_gate, ("single",))
+        outcome = report["strategies"]["single"]["failure_outcomes"]
+        self.assertEqual({"timeouts": 0, "cancellations": 1}, outcome)
+        self.assertEqual(0, len(model.calls))
 
 
 if __name__ == "__main__":

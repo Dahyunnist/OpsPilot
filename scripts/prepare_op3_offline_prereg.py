@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from opspilot.run_manifest import build_op_run_manifest, validate_op_run_artifact  # noqa: E402
-from opspilot.strategy_eval import STRATEGIES  # noqa: E402
+from opspilot.model_client import ModelError  # noqa: E402
+from opspilot.strategy_eval import STRATEGIES, failure_outcome_counts  # noqa: E402
 from scripts.evaluate_agents import RunBudget  # noqa: E402
 from scripts.evaluate_op2_frozen import (FIXED_WORST_CASE_USD, _load_frozen_cases,
     _planned_requests)  # noqa: E402
@@ -52,6 +53,17 @@ def prepare_report() -> dict[str, Any]:
             "sources": sorted(sources),
             "independent_question_count": len(case["spec"]["independent_questions"]),
         })
+    fault_trace_fixture = [
+        ModelError("injected offline timeout", category="transport_timeout", retryable=True).diagnostic(),
+        {"event": "a2a_protocol", "method": "tasks/cancel", "state": "canceled"},
+    ]
+    fault_metric_fixture = {
+        "status": "metric_contract_test_fixture_not_experiment_result",
+        "per_strategy_counts": {strategy: failure_outcome_counts(fault_trace_fixture)
+            for strategy in STRATEGIES},
+        "injected_trace_kinds": ["transport_timeout", "a2a tasks/cancel"],
+        "model_calls": 0,
+    }
 
     now = datetime.now(timezone.utc).isoformat()
     core: dict[str, Any] = {
@@ -90,11 +102,9 @@ def prepare_report() -> dict[str, Any]:
             "provider_cost": "provider_rate_estimate_usd",
             "latency": "p95_latency_ms",
             "failures": "per-strategy failures and sanitized error_trace",
-            "cancellations": {
-                "status": "not_recorded_by_frozen_sync_runner",
-                "note": "A2A task cancellation is a separate protocol probe; Windows localhost tests are blocked.",
-            },
+            "timeouts_and_cancellations": "failure_outcomes counted from the same sanitized trace classifier",
         },
+        "offline_fault_metric_fixture": fault_metric_fixture,
         "results": None,
         "interpretation": "Input hashes, sources, strategy plan, and budget are checked offline. No model request or provider balance request was made. Gold labels are omitted from this report and must stay out of model payloads.",
         "created_at": now,
