@@ -12,6 +12,24 @@
     "diagnostic": "faulthandler stack stopped at asyncio Proactor event loop initialization: socket.accept -> socket._fallback_socketpair -> _make_self_pipe",
     "interpretation": "local loopback SDK test stalled during event-loop setup; full suite is not reported as passed"
   },
+  "a2a_diagnosis": {
+    "timeout_seconds": 10,
+    "outer_limit_seconds": 30,
+    "default_loop": {
+      "type": "WindowsProactorEventLoop",
+      "stack": "IsolatedAsyncioTestCase._callSetUp -> asyncio.new_event_loop -> ProactorEventLoop._make_self_pipe -> socket._fallback_socketpair -> socket.accept",
+      "result": "stalled"
+    },
+    "selector_comparison": {
+      "type": "WindowsSelectorEventLoop",
+      "stack": "IsolatedAsyncioTestCase._callSetUp -> asyncio.new_event_loop -> BaseSelectorEventLoop._make_self_pipe -> socket._fallback_socketpair -> socket.accept",
+      "result": "stalled"
+    },
+    "a2a_test_body_reached": false,
+    "round_trip_semantics_verified": false,
+    "fixture_added": false,
+    "conclusion": "socketpair fallback accept stalls under both Windows loop implementations in this environment; Proactor-specific incompatibility is not established"
+  },
   "focused_suite": {
     "command": ".venv/Scripts/python.exe -m pytest -q -x -p no:cacheprovider --basetemp <repo-local-temp> tests/test_strategy_eval.py tests/test_op3_frozen_eval.py",
     "passed": 43,

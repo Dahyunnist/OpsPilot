@@ -1,10 +1,10 @@
 {
   "report_path": "reports/op3-full-offline-suite-2026-11-15.json",
-  "report_sha256": "95d13acfc924045d26d46d6e9f77445e09008963d988d684f4e25db10735159d",
+  "report_sha256": "080dd17990f61cf3f923a8c22f9de5940dbf21ee80d1ac5827935fb99cf52562",
   "op_run_manifest": {
     "status": "full_suite_timed_out; focused_suite_passed",
     "split": "offline_verification",
-    "result_fingerprint_sha256": "95d13acfc924045d26d46d6e9f77445e09008963d988d684f4e25db10735159d",
+    "result_fingerprint_sha256": "080dd17990f61cf3f923a8c22f9de5940dbf21ee80d1ac5827935fb99cf52562",
     "cost_usd_estimate": 0,
     "parameters": {
       "full_suite_collected": 259,
@@ -13,7 +13,10 @@
       "model_calls": 0,
       "docker_started": false,
       "external_services_used": false,
-      "temporary_directory_removed": true
+      "temporary_directory_removed": true,
+      "a2a_proactor": "socketpair accept stalled",
+      "a2a_selector": "same socketpair accept stalled",
+      "a2a_semantics_verified": false
     },
     "model_id": "none",
     "run_id": "op3-full-offline-suite-2026-11-15",

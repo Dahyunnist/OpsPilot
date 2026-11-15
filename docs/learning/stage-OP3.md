@@ -137,3 +137,5 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 ## 2026-11-15 全离线测试集复核
 
 全套收集到 259 项，但首项本地 A2A SDK 集成测试超过 90 秒无进展，按要求中断；故不标记全套通过。单项 `faulthandler_timeout=10` 栈定位在 Windows asyncio Proactor `socket.py:accept` / `_fallback_socketpair` 初始化阶段。未连外部服务、未调用模型或 Docker。随后仅运行 OP-3 与 strategy 单元测试：43 项通过，0.29 秒。专用仓库临时目录已清理；`.tmp/` 和 replay 目录未触碰。详见 `reports/op3-full-offline-suite-2026-11-15.json`。
+
+追加 A2A 定点诊断：默认 Proactor 与 `WindowsSelectorEventLoopPolicy` 对照都在 `socket._fallback_socketpair → accept` 卡住，10 秒故障栈一致。Selector 未能进入测试主体，故未验证 A2A 往返语义；问题不是 Proactor 独有，不能据此加 Selector fixture。未跳过或把超时当通过。测试环境当前不支持该回环 socketpair 初始化。诊断使用的专用临时目录已删除，记录补入同一报告。
