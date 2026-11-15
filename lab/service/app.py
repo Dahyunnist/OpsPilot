@@ -233,16 +233,26 @@ class Handler(BaseHTTPRequestHandler):
                 span.set_attribute("http.route", urlsplit(self.path).path)
                 if payload.get("order_id"):
                     span.set_attribute("opspilot.order_id", str(payload["order_id"]))
-                if SERVICE == "gateway" and urlsplit(self.path).path == "/checkout":
-                    result = json_call(f"{ORDERS_URL}/orders", payload, timeout=ORDERS_REQUEST_TIMEOUT_SECONDS)
-                elif SERVICE == "orders" and urlsplit(self.path).path == "/orders":
-                    result = self.place_order(payload)
-                elif SERVICE == "inventory" and urlsplit(self.path).path == "/reserve":
-                    result = self.reserve_inventory(payload)
-                elif SERVICE == "payment" and urlsplit(self.path).path == "/charge":
-                    result = self.charge(payload)
-                else:
-                    status, result = 404, {"error": "not found"}
+                try:
+                    if SERVICE == "gateway" and urlsplit(self.path).path == "/checkout":
+                        result = json_call(f"{ORDERS_URL}/orders", payload, timeout=ORDERS_REQUEST_TIMEOUT_SECONDS)
+                    elif SERVICE == "orders" and urlsplit(self.path).path == "/orders":
+                        result = self.place_order(payload)
+                    elif SERVICE == "inventory" and urlsplit(self.path).path == "/reserve":
+                        result = self.reserve_inventory(payload)
+                    elif SERVICE == "payment" and urlsplit(self.path).path == "/charge":
+                        result = self.charge(payload)
+                    else:
+                        status, result = 404, {"error": "not found"}
+                except ResponseError as exc:
+                    span.set_attribute("http.response.status_code", exc.status)
+                    raise
+                except (TimeoutError, URLError) as exc:
+                    span.set_attribute("http.response.status_code", 504 if isinstance(exc, TimeoutError) else 502)
+                    raise
+                except Exception:
+                    span.set_attribute("http.response.status_code", 500)
+                    raise
                 span.set_attribute("http.response.status_code", status)
             self.send_json(status, result)
             emit("info", "request completed", path=urlsplit(self.path).path, status=status)

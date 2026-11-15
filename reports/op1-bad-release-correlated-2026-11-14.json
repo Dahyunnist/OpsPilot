@@ -1,0 +1,101 @@
+{
+  "evidence_schema_version": 1,
+  "scenario": "bad_release",
+  "execution_context": "local Windows Docker Compose synthetic lab",
+  "run_project": "opspilot-replay-aa155d06fa154b52b634e56e38d22822",
+  "window_utc": {
+    "start": "2026-11-14T14:51:29Z",
+    "end": "2026-11-14T14:55:00Z",
+    "interval": "[start,end)",
+    "shared_by_logs_deployments_and_trace": true
+  },
+  "checkout": {
+    "order_id": "op1-bad-release-d5034267e5df43008a3150c44433fc6b",
+    "host": "127.0.0.1:18080",
+    "path": "/checkout",
+    "http_status": 502
+  },
+  "root_cause": {
+    "kind": "injected_dependency_hostname_failure",
+    "orders_inventory_url_host": "inventory-v2",
+    "compose_inventory_service": "inventory",
+    "error_type": "URLError",
+    "error_reason": "[Errno -5] No address associated with hostname",
+    "conclusion": "Expected bad_release configuration caused the checkout failure; evidence does not indicate a timing or query-window failure."
+  },
+  "logs": {
+    "host": "127.0.0.1:18081",
+    "path": "/logs",
+    "matched_order_records": 2,
+    "primary_dependency_error": {
+      "timestamp": "2026-11-14T14:54:27.459Z",
+      "service": "orders",
+      "service_version": "v2",
+      "message": "inventory dependency failed",
+      "order_id": "op1-bad-release-d5034267e5df43008a3150c44433fc6b",
+      "trace_id": "8156b9110369c9f55c6848435ca6bc40",
+      "span_id": "a8d7d42233f8d8ce",
+      "dependency_host": "inventory-v2",
+      "error_type": "URLError",
+      "error_reason": "[Errno -5] No address associated with hostname"
+    },
+    "followup_error": {
+      "timestamp": "2026-11-14T14:54:27.467Z",
+      "service": "orders",
+      "service_version": "v2",
+      "message": "request failed",
+      "order_id": "op1-bad-release-d5034267e5df43008a3150c44433fc6b",
+      "trace_id": null,
+      "error_type": "RuntimeError"
+    }
+  },
+  "deployments": {
+    "host": "127.0.0.1:18080",
+    "path": "/deployments",
+    "record_count": 1,
+    "record_id": "873f0b1b-6124-4b3f-9593-a3224475c789",
+    "timestamp": "2026-11-14T14:51:30.2983644Z",
+    "service": "orders",
+    "version": "v2"
+  },
+  "trace": {
+    "trace_id": "8156b9110369c9f55c6848435ca6bc40",
+    "order_id": "op1-bad-release-d5034267e5df43008a3150c44433fc6b",
+    "spans": [
+      {
+        "service": "gateway",
+        "service_version": "v1",
+        "operation": "gateway/checkout",
+        "span_id": "feda95863dcae222",
+        "status_description": "HTTPError: HTTP Error 500: Internal Server Error",
+        "http_response_status_attribute_present": false
+      },
+      {
+        "service": "orders",
+        "service_version": "v2",
+        "operation": "orders/orders",
+        "span_id": "a8d7d42233f8d8ce",
+        "status_description": "RuntimeError: inventory dependency failed",
+        "http_response_status_attribute_present": false
+      }
+    ]
+  },
+  "cleanup": {
+    "dedicated_compose_project_stopped": true,
+    "project_containers_network_and_volumes_removed": true,
+    "user_tmp_preserved": true,
+    "replay_sidecar_preserved": true
+  },
+  "limitations": [
+    "Synthetic local Compose evidence only; not production evidence or Agent diagnosis accuracy.",
+    "The original terminal table showed only its first displayed record; this correlated query returned two orders records for the unique order ID.",
+    "A later full matrix rerun did not start because the Docker Desktop Engine pipe was unavailable."
+  ],
+  "execution_provenance": {
+    "worktree_dirty_at_run": true,
+    "dirty_state": "untracked local run artifacts only",
+    "tracked_source_changes_at_run": false,
+    "tracked_source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "git_sha_at_run": "1e52b5dec2e741c04b2d5d1924d0fedc92f27831"
+  }
+}

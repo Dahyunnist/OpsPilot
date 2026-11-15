@@ -52,22 +52,30 @@ class _SpanContext:
 
 
 class _Span:
+    def __init__(self):
+        self.attributes = {}
+
     def __enter__(self):
         return self
 
     def __exit__(self, *_args):
         return False
 
-    def set_attribute(self, *_args):
-        pass
+    def set_attribute(self, key, value):
+        self.attributes[key] = value
 
     def get_span_context(self):
         return _SpanContext()
 
 
 class _Tracer:
+    def __init__(self):
+        self.spans = []
+
     def start_as_current_span(self, *_args, **_kwargs):
-        return _Span()
+        span = _Span()
+        self.spans.append(span)
+        return span
 
 
 class LabCheckoutE2ETests(unittest.TestCase):
@@ -207,7 +215,7 @@ class LabCheckoutE2ETests(unittest.TestCase):
         self.assertTrue(baseline["inventory"])
         self.assertTrue(baseline["payment"])
 
-        start = datetime.now(timezone.utc) - timedelta(seconds=1)
+        start = datetime.now(timezone.utc) - timedelta(minutes=1)
         orders.FAULT = "bad_release"
         orders.VERSION = "v2"
         orders.INVENTORY_URL = "http://inventory-v2:8080"
@@ -228,6 +236,14 @@ class LabCheckoutE2ETests(unittest.TestCase):
         self.assertTrue(any(row.get("record_id") == "deploy-bad-release"
             and row.get("service") == "orders" and row.get("version") == "v2"
             for row in deployments["records"]))
+        gateway_span = next(span for span in gateway.TRACER.spans
+            if span.attributes.get("opspilot.order_id") == "bad-release-001")
+        orders_span = next(span for span in orders.TRACER.spans
+            if span.attributes.get("opspilot.order_id") == "bad-release-001")
+        self.assertEqual(502, gateway_span.attributes["http.response.status_code"])
+        self.assertEqual(500, orders_span.attributes["http.response.status_code"])
+        self.assertEqual("v1", gateway_span.attributes["service.version"])
+        self.assertEqual("v2", orders_span.attributes["service.version"])
 
     def test_compose_keeps_unknown_fault_hostname_out_of_dns_and_services_share_network(self) -> None:
         compose = (ROOT / "lab" / "compose.yaml").read_text(encoding="utf-8")

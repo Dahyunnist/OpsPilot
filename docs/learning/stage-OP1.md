@@ -101,3 +101,13 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 ## 2026-11-14 共享运行清单覆盖
 
 宿主矩阵 runner 现在为预检失败和完整矩阵结束结果都写同名 `.run-manifest.json` 侧车记录；完整结果包含通过或失败状态、报告/真值/评估器/评分器哈希及 Git revision。离线 PowerShell 合约测试验证了预检失败、矩阵失败和矩阵通过三种路径的报告绑定。现有五份矩阵报告的本地哈希与结果覆盖审计见 [矩阵清单覆盖](../../reports/op1-host-matrix-manifest-coverage-2026-11-14.json)。这些离线检查不启动 Docker，也不能替代用户宿主重新运行全矩阵；最近用户提供的 bad_release 仍只是一例冒烟。
+
+## 2026-11-15 bad_release 订单级复核与矩阵复跑
+
+独立 Compose 项目单案使用唯一 order ID `op1-bad-release-d5034267e5df43008a3150c44433fc6b`。UTC 半开窗口 `[2026-11-14T14:51:29Z, 2026-11-14T14:55:00Z)` 内，gateway 返回 HTTP 502；orders 日志两条均关联此订单，首条记录 `inventory-v2` 的 `URLError` 与 `[Errno -5] No address associated with hostname`，次条为 `RuntimeError`。同 trace ID 的 gateway/orders spans 也绑定该订单；部署记录 `873f0b1b-6124-4b3f-9593-a3224475c789` 为 orders/v2。Compose 只有 inventory 服务，没有 inventory-v2，因此根因为预期注入的错误依赖 hostname；不是时序或查询窗问题。终端表格只展示首条；完整同窗查询返回两条订单日志。订单级证据见[bad_release 关联复核](../../reports/op1-bad-release-correlated-2026-11-14.json)。
+
+单案最初发现失败 span 没有 `http.response.status_code`，gateway span 错误描述记录下游 HTTP 500，而外部响应为 502。已修复 handler：异常离开 span 前写入映射后的 HTTP 状态。定向 E2E 锁定 orders=500、gateway=502 及 v2/v1 服务版本；后续全矩阵 trace 实际观测到这两个状态。
+
+复跑现有宿主矩阵：正常对照通过，12 个既有故障 12/12 通过，包含 bad_release 与其余 11 场；`cleanup.empty=true`，未删除卷。报告和 manifest 分别见[矩阵结果](../../reports/op1-host-matrix-reproduction-2026-11-15.json)与[运行清单](../../reports/op1-host-matrix-reproduction-2026-11-15.run-manifest.json)。矩阵期间 worktree 有未提交修改，manifest 的 `git_sha` 是基线 `1e52b5dec2e741c04b2d5d1924d0fedc92f27831`；执行代码由 `implementation_diff_sha256=7f0b5633188aefee0632150d76b2c4742c38417961d170714026aba9bc529384` 绑定，作用文件是 `lab/service/app.py` 与 `tests/test_lab_checkout_e2e.py`。报告哈希已重算并同步至 manifest。模型调用为 0。
+
+验证：OP-1 定向测试 15 项通过；全套 `.venv` pytest 为 256 项及 69 子测试通过。该矩阵是本机 Docker Compose 合成环境验收，不是生产证据，也不证明 Agent 诊断准确率。

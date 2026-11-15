@@ -1,0 +1,54 @@
+{
+  "op_run_manifest": {
+    "schema_version": 1,
+    "project": "OpsPilot",
+    "run_id": "opspilot-matrix-0025cbc7",
+    "evaluation_id": "op1_host_matrix",
+    "dataset_id": "op1_lab_truth_v1",
+    "dataset_sha256": "9c08b4abbef988c76a0fdf9d77f81a515d439b06fbc712c0d66a882064cb9694",
+    "truth_sha256": "9c08b4abbef988c76a0fdf9d77f81a515d439b06fbc712c0d66a882064cb9694",
+    "split": "full_matrix",
+    "evaluator_sha256": "2112093cd70c4517d04267058d4a70d2e7d24e48fda19b7d40931904c98371d8",
+    "result_fingerprint_sha256": "05160bc69faecbf1308e2beb82aeda1c13f90673453b7a04249207b079313191",
+    "git_sha": "1e52b5dec2e741c04b2d5d1924d0fedc92f27831",
+    "model_id": "none",
+    "prompt_sha": null,
+    "tool_schema_sha": null,
+    "runtime_digest": null,
+    "max_steps": 13,
+    "max_tokens": null,
+    "scorer_sha": "fdedb52748ea3531d0cd7de3ffa2ddb884f2b5ba577078438bd7a6145339baf5",
+    "gold_source": "independent",
+    "cost_usd_estimate": 0.0,
+    "trace_id": "dd8ae23c8efc44508e5461ca121705a6",
+    "started_at": "2026-11-15T00:37:22.7514961Z",
+    "ended_at": "2026-11-15T00:41:09.9885529Z",
+    "parameters": {
+      "passed_count": 12,
+      "report_sha256": "05160bc69faecbf1308e2beb82aeda1c13f90673453b7a04249207b079313191",
+      "cleanup_empty": true,
+      "failed_count": 0,
+      "phase": "full_matrix",
+      "case_count": 12,
+      "volume_deletion": false,
+      "artifact_type": "op1_host_matrix",
+      "preflight_passed": true,
+      "report_path": ".\\reports\\op1-host-matrix-reproduction-2026-11-15.json",
+      "lab_started": true
+    },
+    "status": "completed",
+    "execution_provenance": {
+      "diff_command": "git diff --binary -- lab/service/app.py tests/test_lab_checkout_e2e.py",
+      "git_sha_at_run": "1e52b5dec2e741c04b2d5d1924d0fedc92f27831",
+      "implementation_diff_sha256": "7f0b5633188aefee0632150d76b2c4742c38417961d170714026aba9bc529384",
+      "worktree_dirty_at_run": true,
+      "diff_bytes": "UTF-8 encoding of git stdout",
+      "implementation_diff_files": [
+        "lab/service/app.py",
+        "tests/test_lab_checkout_e2e.py"
+      ]
+    }
+  },
+  "report_path": ".\\reports\\op1-host-matrix-reproduction-2026-11-15.json",
+  "report_sha256": "05160bc69faecbf1308e2beb82aeda1c13f90673453b7a04249207b079313191"
+}
