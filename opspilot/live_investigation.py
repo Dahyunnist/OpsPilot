@@ -27,6 +27,32 @@ def _ref(record: dict[str, Any]) -> dict[str, str]:
     return {"source": record["source"], "record_id": record["record_id"]}
 
 
+def _record_order_id(record: dict[str, Any]) -> str | None:
+    raw = record.get("raw", {})
+    attrs = raw.get("attributes", raw) if isinstance(raw, dict) else {}
+    value = raw.get("order_id") if isinstance(raw, dict) else None
+    value = value or (attrs.get("opspilot.order_id") if isinstance(attrs, dict) else None)
+    value = value or (attrs.get("order_id") if isinstance(attrs, dict) else None)
+    return value if isinstance(value, str) and value else None
+
+
+def _span_order_id(record: dict[str, Any]) -> str | None:
+    attrs = record.get("attributes", {})
+    raw = record.get("raw", {})
+    nested = attrs.get("attributes", {}) if isinstance(attrs, dict) else {}
+    raw_nested = raw.get("attributes", {}) if isinstance(raw, dict) else {}
+    if not isinstance(nested, dict):
+        nested = {}
+    if not isinstance(raw_nested, dict):
+        raw_nested = {}
+    values = [attrs.get("opspilot.order_id"), attrs.get("order_id"),
+        nested.get("opspilot.order_id"), nested.get("order_id")]
+    if isinstance(raw, dict):
+        values.extend((raw.get("opspilot.order_id"), raw.get("order_id"),
+            raw_nested.get("opspilot.order_id"), raw_nested.get("order_id")))
+    return next((value for value in values if isinstance(value, str) and value), None)
+
+
 def _metric_records(records: list[dict[str, Any]], name_fragment: str, service: str = "orders") -> list[dict[str, Any]]:
     return [record for record in records if record.get("source") == "metrics"
         and record.get("service") == service
@@ -48,6 +74,9 @@ def _counter_delta(records: list[dict[str, Any]]) -> float:
 def investigate_live(start: str, end: str, limit: int = 100,
                      telemetry: LabTelemetry | None = None) -> dict[str, Any]:
     adapter = telemetry or LabTelemetry()
+    incident_start, incident_end = _instant(start), _instant(end)
+    if incident_start >= incident_end:
+        raise ValueError("start must precede end")
     source_results: dict[str, dict[str, Any]] = {}
     failures: dict[str, str] = {}
     for source, query in (("metrics", adapter.metrics), ("logs", adapter.logs),
@@ -56,6 +85,28 @@ def investigate_live(start: str, end: str, limit: int = 100,
             source_results[source] = query(start, end, limit)
         except Exception as exc:
             failures[source] = type(exc).__name__
+
+    for result in source_results.values():
+        source_records = result.get("records", [])
+        if not isinstance(source_records, list):
+            result["records"] = []
+            result.setdefault("warnings", []).append("records_outside_requested_window_dropped")
+            continue
+        kept = []
+        dropped = False
+        for row in source_records:
+            try:
+                timestamp = _instant(row["timestamp"])
+                inside_window = incident_start <= timestamp < incident_end
+            except (KeyError, TypeError, ValueError):
+                inside_window = False
+            if inside_window:
+                kept.append(row)
+            else:
+                dropped = True
+        result["records"] = kept
+        if dropped:
+            result.setdefault("warnings", []).append("records_outside_requested_window_dropped")
 
     records = [record for result in source_results.values() for record in result.get("records", [])]
     records.sort(key=lambda record: (record.get("timestamp", ""), record.get("record_id", "")))
@@ -77,7 +128,7 @@ def investigate_live(start: str, end: str, limit: int = 100,
     source_status.update({source: "error" for source in failures})
 
     findings: dict[str, dict[str, Any]] = {cause: {"id": cause, "title": title, "support": [], "against": [],
-        "source_set": set(), "causal_links": []}
+        "source_set": set(), "causal_links": [], "evidence_links": [], "evidence_gaps": []}
         for cause, title in CAUSES}
 
     def support(cause: str, record: dict[str, Any], reason: str) -> None:
@@ -154,14 +205,54 @@ def investigate_live(start: str, end: str, limit: int = 100,
 
     order_errors = [row for row in records if row.get("source") == "logs" and row.get("service") == "orders"
         and row.get("raw", {}).get("severity") == "error"]
+    release_spans = [row for row in records if row.get("source") == "traces"
+        and row.get("service") == "orders"]
     for deployment in [row for row in records if row.get("source") == "deployments" and row.get("service") == "orders"]:
         matching_errors = [error for error in order_errors
             if error.get("raw", {}).get("service_version") == deployment.get("attributes", {}).get("version")
-            and error["timestamp"] >= deployment["timestamp"]
+            and _instant(error["timestamp"]) >= _instant(deployment["timestamp"])
             and deployment.get("attributes", {}).get("version") == "v2"]
         for error in matching_errors:
             support("invalid_release_configuration", error, "orders v2 emitted a request error after its recorded deployment")
-        later_errors = [error for error in order_errors if error["timestamp"] < deployment["timestamp"]
+            release = findings["invalid_release_configuration"]
+            deployment_error = {"type": "deployment_precedes_same_version_error",
+                "evidence": [_ref(deployment), _ref(error)]}
+            if deployment_error not in release["evidence_links"]:
+                release["evidence_links"].append(deployment_error)
+            log_order_id = _record_order_id(error)
+            log_trace_id = error.get("trace_id")
+            linked_spans = []
+            for span in release_spans:
+                attrs = span.get("attributes", {})
+                span_tags = attrs.get("attributes", {}) if isinstance(attrs, dict) else {}
+                if not isinstance(span_tags, dict):
+                    span_tags = {}
+                span_version = attrs.get("service.version", attrs.get("service_version"))
+                span_version = span_version or span_tags.get("service.version", span_tags.get("service_version"))
+                try:
+                    span_time = _instant(span["timestamp"])
+                    in_window = incident_start <= span_time < incident_end
+                    near_log = abs((span_time - _instant(error["timestamp"])).total_seconds()) <= 2.0
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if (log_trace_id and span.get("trace_id") == log_trace_id and log_order_id
+                        and _span_order_id(span) == log_order_id and span_version == "v2"
+                        and in_window and near_log):
+                    linked_spans.append(span)
+            if linked_spans:
+                for span in linked_spans:
+                    support("invalid_release_configuration", span,
+                        "orders v2 span matches the DNS error log by trace ID, order ID, and time")
+                    span_link = {"type": "same_request_orders_span", "trace_id": log_trace_id,
+                        "order_id": log_order_id, "evidence": [_ref(error), _ref(span)]}
+                    if span_link not in release["evidence_links"]:
+                        release["evidence_links"].append(span_link)
+            else:
+                gap = {"type": "unlinked_request_trace", "record": _ref(error),
+                    "reason": "no same-order orders/v2 span with matching trace ID within 2 seconds in the incident window"}
+                if gap not in release["evidence_gaps"]:
+                    release["evidence_gaps"].append(gap)
+        later_errors = [error for error in order_errors if _instant(error["timestamp"]) < _instant(deployment["timestamp"])
             and error.get("raw", {}).get("service_version") == deployment.get("attributes", {}).get("version")]
         if later_errors:
             for error in later_errors:
@@ -241,6 +332,13 @@ def investigate_live(start: str, end: str, limit: int = 100,
         score = min(1.0, 0.35 * len(item["source_set"]) + 0.08 * min(len(item["support"]), 4) - 0.25 * bool(item["against"]))
         causal_gate = cause != "payment_dependency_timeout" or bool(item["causal_links"])
         item["confidence"] = "high" if source_count >= 2 and len(item["support"]) >= 2 and not item["against"] and causal_gate else "medium" if item["support"] else "low"
+        if cause == "invalid_release_configuration":
+            if any(link["type"] == "same_request_orders_span" for link in item["evidence_links"]):
+                item["evidence_relationship"] = "deployment_version_log_trace_correlation"
+            elif any(link["type"] == "deployment_precedes_same_version_error" for link in item["evidence_links"]):
+                item["evidence_relationship"] = "deployment_version_log_time_correlation_trace_unlinked"
+            else:
+                item["evidence_relationship"] = "insufficient_release_linkage"
         if cause == "payment_dependency_timeout":
             if item["causal_links"]:
                 item["evidence_relationship"] = "causal_trace_link"
@@ -256,6 +354,9 @@ def investigate_live(start: str, end: str, limit: int = 100,
     sufficient = bool(claimed)
 
     warnings = []
+    if any("records_outside_requested_window_dropped" in result.get("warnings", [])
+           for result in source_results.values()):
+        warnings.append("records_outside_requested_window_dropped")
     if failures or partial_failures:
         warnings.append("one_or_more_sources_unavailable")
     if missing_trace_logs or (request_delta > 0 and not trace_ids):

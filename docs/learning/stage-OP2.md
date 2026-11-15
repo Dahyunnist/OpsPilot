@@ -34,3 +34,11 @@ MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 
 ## 2026-11-14 冻结证据只读复核
 
 新增 `tests/test_op2_frozen_snapshot_readonly.py`，直接用登记的 `missing_pool_evidence` 与 `contradictory_payment` 快照驱动只读调查；查询必须沿用快照共同时间窗与条数上限，所有 evidence reference 必须能解析回输入记录。两案规则调查均保持弃答；把来源记录清空后，要求无根因、无引用。已有 `test_live_telemetry.py` 与 `test_op2_source_status.py` 覆盖半开窗、筛窗后限条、stable source pointers、来源错误/空结果和矛盾发布引用。离线汇总见 [OP-2/OP-3 冻结输入审计](../../reports/op2-op3-offline-preflight-audit-2026-11-14.json)。不改变模型 Agent 报告或根因标签；这不是 live service 验收。
+
+## 2026-11-15 bad_release 跨信号关联回归
+
+用户宿主输出确认本次 checkout 返回 HTTP `502`，同一报告时间窗内 orders 日志有 `inventory-v2` DNS 失败，deployment 记录为 orders `v2`。这是用户回传的宿主事实；本机未重启或查询容器。此前另一轮 checkout 的 HTTP `504`，以及错误 API 端口/时间窗查询得到的 deployment `0`，都保持为旧记录，不并入本次结论；背景见[宿主取证记录](op-audit-2026-11-11.md)。
+
+`tests/test_live_telemetry.py` 新增固定合成 bad_release 证据：同一 UTC 窗口内先有 orders/v2 deployment，再有绑定唯一 order ID 的 inventory DNS 错误日志；日志与 orders/v2 span 共享 trace ID，orders span 由 gateway checkout span 调用。调查报告分别列出 deployment→同版本错误和日志→同请求 span 两条关联，并把 span 纳入证据引用。该 trace 关联是合成回归证据，不冒充用户宿主输出。
+
+反例覆盖 trace ID、order ID、service、版本不一致，以及 span 恰好位于窗口 end。此时不创建同请求 trace link，报告写入 `unlinked_request_trace` 缺口；deployment/log 时间关联与 trace 关联分开呈现。调查入口会再次执行 UTC 半开窗过滤，避免错误窗口记录参与推断；已有反例继续验证错误早于 deployment 时保留反证并弃答。定向回归 `tests.test_live_telemetry tests.test_op2_source_status tests.test_op2_telemetry_robustness tests.test_op2_frozen_snapshot_readonly tests.test_lab_checkout_e2e tests.test_strategy_eval`：63 项通过；未调用模型或外部 API，未启动 Docker。

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
 
@@ -88,11 +89,14 @@ class TelemetryRobustnessTests(unittest.TestCase):
         sources, window = self.load("dependency_timeout")
         sparse = copy.deepcopy(sources)
         sparse["traces"]["records"] = []
+        assessment_end = datetime.fromisoformat(window["assessment_window"]["end"].replace("Z", "+00:00"))
+        request_end = (assessment_end - timedelta(milliseconds=1)).astimezone(timezone.utc).isoformat().replace(
+            "+00:00", "Z")
         sparse["metrics"]["records"].extend([
             {"record_id": "metrics:request-start", "source": "metrics", "service": "orders",
              "timestamp": window["fault_window_start"], "attributes": {"name": "opspilot_http_requests_total", "value": 0, "version": "v1"}, "raw": {}},
             {"record_id": "metrics:request-end", "source": "metrics", "service": "orders",
-             "timestamp": window["fault_window_end"], "attributes": {"name": "opspilot_http_requests_total", "value": 10, "version": "v1"}, "raw": {}},
+             "timestamp": request_end, "attributes": {"name": "opspilot_http_requests_total", "value": 10, "version": "v1"}, "raw": {}},
         ])
         report = inspect(sparse, window)
         self.assertIn("possible_trace_sampling_bias", report["quality"]["warnings"])

@@ -31,6 +31,37 @@ def record(source: str, record_id: str, timestamp: str, *, service: str | None =
         "trace_id": trace_id, "attributes": attributes or {}, "raw": raw or {}}
 
 
+def bad_release_snapshot(*, span_overrides: dict | None = None,
+                         deployment_timestamp: str = "2026-10-23T10:04:00Z",
+                         log_timestamp: str = "2026-10-23T10:06:22Z") -> dict[str, dict]:
+    trace_id = "8156b9110369c9f55c6848435ca6bc40"
+    order_id = "synthetic-bad-release-001"
+    deployment = record("deployments", "deploy-orders-v2", deployment_timestamp,
+        service="orders", attributes={"version": "v2"})
+    error = record("logs", "orders-inventory-dns-error", log_timestamp,
+        service="orders", trace_id=trace_id,
+        raw={"severity": "error", "service_version": "v2", "order_id": order_id,
+            "trace_id": trace_id, "message": "inventory dependency failed", "attributes": {
+                "error_type": "URLError", "dependency_host": "inventory-v2",
+                "error_reason": "No address associated with hostname"}})
+    gateway_span = record("traces", "gateway-checkout-span", "2026-10-23T10:06:22Z",
+        service="gateway", trace_id=trace_id, attributes={"span_id": "gateway-span",
+            "parent_span_id": None, "operation": "gateway/checkout", "attributes": {
+                "service.version": "v1", "opspilot.order_id": order_id,
+                "http.response.status_code": 502}})
+    orders_span = record("traces", "orders-v2-error-span", "2026-10-23T10:06:22.200Z",
+        service="orders", trace_id=trace_id, attributes={"span_id": "orders-span",
+            "parent_span_id": "gateway-span", "operation": "orders/orders", "attributes": {
+                "service.version": "v2", "opspilot.order_id": order_id,
+                "http.response.status_code": 500}})
+    if span_overrides:
+        orders_span.update(span_overrides)
+    empty = {"records": []}
+    return {"metrics": empty, "logs": {"records": [error]},
+        "traces": {"records": [gateway_span, orders_span]},
+        "deployments": {"records": [deployment]}}
+
+
 class LiveTelemetryTests(unittest.TestCase):
     def test_rejects_non_loopback_endpoints_and_unbounded_windows(self) -> None:
         with self.assertRaisesRegex(ValueError, "loopback"):
@@ -356,18 +387,67 @@ class LiveTelemetryTests(unittest.TestCase):
         self.assertEqual(release["root_causes"], ["invalid_release_configuration"])
 
     def test_bad_release_live_evidence_links_deployment_version_and_dns_failure_log(self) -> None:
-        empty = {"records": []}
-        release = investigate_live(START, END, telemetry=FakeTelemetry({
-            "metrics": empty,
-            "logs": {"records": [record("logs", "dns-fail", "2026-11-11T14:06:22Z", service="orders",
-                attributes={"error_type": "URLError"}, raw={"service_version": "v2", "severity": "error",
-                "message": "inventory-v2: No address associated with hostname"})]},
-            "traces": empty,
-            "deployments": {"records": [record("deployments", "release-v2", "2026-11-11T13:47:23Z",
-                service="orders", attributes={"version": "v2"})]},
-        }))
+        release = investigate_live(START, END, telemetry=FakeTelemetry(bad_release_snapshot()))
         self.assertEqual(release["root_causes"], ["invalid_release_configuration"])
+        self.assertEqual({"start": START, "end": END}, release["window"])
+        self.assertTrue(all(details["window"] == {"start": START, "end": END}
+            for details in release["sources"].values()))
+        hypothesis = next(item for item in release["hypotheses"]
+            if item["id"] == "invalid_release_configuration")
+        self.assertEqual("deployment_version_log_trace_correlation", hypothesis["evidence_relationship"])
+        self.assertEqual({"deploy-orders-v2", "orders-inventory-dns-error", "orders-v2-error-span"},
+            {item["record_id"] for item in hypothesis["support"]})
+        self.assertEqual({"deployment_precedes_same_version_error", "same_request_orders_span"},
+            {item["type"] for item in hypothesis["evidence_links"]})
+        self.assertEqual([], hypothesis["evidence_gaps"])
+        self.assertIn({"caller": "gateway", "callee": "orders",
+            "evidence": [{"source": "traces", "record_id": "orders-v2-error-span"}]},
+            release["dependency_graph"])
 
+    def test_bad_release_trace_mismatches_are_reported_as_gaps_not_links(self) -> None:
+        empty = {"records": []}
+        cases = {
+            "different trace": {"trace_id": "different-trace"},
+            "different order": {"attributes": {"span_id": "orders-span", "parent_span_id": "gateway-span",
+                "operation": "orders/orders", "attributes": {"service.version": "v2",
+                "opspilot.order_id": "other-order", "http.response.status_code": 500}}},
+            "different service": {"service": "inventory"},
+            "different version": {"attributes": {"span_id": "orders-span", "parent_span_id": "gateway-span",
+                "operation": "orders/orders", "attributes": {"service.version": "v1",
+                "opspilot.order_id": "synthetic-bad-release-001", "http.response.status_code": 500}}},
+            "outside incident window": {"timestamp": END},
+        }
+        for label, overrides in cases.items():
+            with self.subTest(label=label):
+                report = investigate_live(START, END,
+                    telemetry=FakeTelemetry(bad_release_snapshot(span_overrides=overrides)))
+                hypothesis = next(item for item in report["hypotheses"]
+                    if item["id"] == "invalid_release_configuration")
+                self.assertEqual("deployment_version_log_time_correlation_trace_unlinked",
+                    hypothesis["evidence_relationship"])
+                self.assertFalse(any(link["type"] == "same_request_orders_span"
+                    for link in hypothesis["evidence_links"]))
+                self.assertEqual("unlinked_request_trace", hypothesis["evidence_gaps"][0]["type"])
+
+        no_trace_sources = bad_release_snapshot()
+        no_trace_sources["traces"] = {"records": []}
+        no_trace = investigate_live(START, END, telemetry=FakeTelemetry(no_trace_sources))
+        no_trace_release = next(item for item in no_trace["hypotheses"]
+            if item["id"] == "invalid_release_configuration")
+        self.assertEqual("deployment_version_log_time_correlation_trace_unlinked",
+            no_trace_release["evidence_relationship"])
+        self.assertEqual("unlinked_request_trace", no_trace_release["evidence_gaps"][0]["type"])
+
+        outside = investigate_live(START, END, telemetry=FakeTelemetry(bad_release_snapshot(
+            deployment_timestamp="2026-10-23T09:59:59Z")))
+        self.assertEqual("empty", outside["sources"]["deployments"]["status"])
+        self.assertIn("records_outside_requested_window_dropped", outside["quality"]["warnings"])
+        outside_release = next(item for item in outside["hypotheses"]
+            if item["id"] == "invalid_release_configuration")
+        self.assertEqual("insufficient_release_linkage", outside_release["evidence_relationship"])
+
+    def test_structured_dns_log_and_slow_query_claims_need_cross_source_evidence(self) -> None:
+        empty = {"records": []}
         structured = investigate_live(START, END, telemetry=FakeTelemetry({
             "metrics": empty,
             "logs": {"records": [record("logs", "dns-structured", "2026-10-23T10:06:22Z", service="orders",
