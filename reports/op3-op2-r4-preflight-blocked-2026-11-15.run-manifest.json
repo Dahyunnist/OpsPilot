@@ -1,10 +1,10 @@
 {
   "report_path": "reports/op3-op2-r4-preflight-blocked-2026-11-15.json",
-  "report_sha256": "ace9815e7718156bd73f2a6adef34e1c8a91bb185b162f28c88a9a4e8ca742e5",
+  "report_sha256": "1a886bd8217e5add562a5e4325a808ab7170bdbbd16ddce62ba65e03dfdc9293",
   "op_run_manifest": {
     "status": "blocked_before_inference",
     "split": "authorized_frozen_synthetic_subset",
-    "result_fingerprint_sha256": "ace9815e7718156bd73f2a6adef34e1c8a91bb185b162f28c88a9a4e8ca742e5",
+    "result_fingerprint_sha256": "1a886bd8217e5add562a5e4325a808ab7170bdbbd16ddce62ba65e03dfdc9293",
     "cost_usd_estimate": 0,
     "parameters": {
       "offline_failure_test_passed": true,

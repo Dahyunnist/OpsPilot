@@ -149,3 +149,5 @@ Linux 容器门禁复核：本机有项目服务镜像 `opspilot-lab-orders`，�
 `test_redacted_checkpoint_usage_fails_before_multi_adjudication` 离线测试 1 项通过；三份冻结快照 SHA 全匹配。账本峰值 `$0.52119297`，加获准最坏预留 `$0.02302260` 为 `$0.54421557/$0.60`。DeepSeek 余额 GET 遭本机网络权限错误 `WinError 10013`，余额未知，未到模型列表检查；立即停止，推理 0 次、费用 `$0`。真实评测不运行。A2A Proactor 与 Selector 对照均停在 Windows `socket._fallback_socketpair → accept`，未进入协议断言；未改弱协议检查，也未宣称跨平台阻塞已证实。记录见 `reports/op3-op2-r4-preflight-blocked-2026-11-15.json`。
 
 为补 Linux 实测，新增 `.github/workflows/a2a-sdk-interop.yml`：Ubuntu/Python 3.12 安装项目固定的 pytest 与 A2A SDK 版本，先强制导入 SDK 防止用例被 skip，再运行官方 SDK 的本地合成互通用例及五项本地 A2A 协议单测。设置 loopback 直连，未改协议断言；不调用模型或业务服务。Linux 结果待 CI，当前不得称通过。
+
+授权记录更正：对话中用户在看到完整 `contradictory_payment` SHA `de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813` 后明确回复“确认该文件”。此确认授权该冻结文件；先前短 SHA 已被更正，不作为当前授权值。数据范围未扩展。余额仍未知，因此不推理。

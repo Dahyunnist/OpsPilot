@@ -17,6 +17,14 @@
       "matches_registry": true
     }
   },
+  "authorization_evidence": {
+    "case_id": "contradictory_payment",
+    "sha256": "de76add2b1dc15e4da2207632d44e5cfa4c849abe9a82604a34cfc49423ba813",
+    "conversation_sequence": "完整 SHA 出示后，用户回复：确认该文件",
+    "authorization_status": "confirmed_for_this_frozen_file",
+    "superseded_short_hash": "de76add2b1dc15e4da2207632d44c39c39ba813",
+    "scope_expanded": false
+  },
   "offline_failure_case": {
     "test": "tests/test_strategy_eval.py::StrategyEvaluationTests::test_redacted_checkpoint_usage_fails_before_multi_adjudication",
     "passed": 1,
