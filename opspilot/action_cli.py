@@ -8,7 +8,8 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from .action_safety import ActionRejected, approval_binding, execute_dry_run, issue_approval, load_or_create_key
+from .action_safety import (ActionRejected, approval_binding, execute_dry_run, issue_approval,
+    load_or_create_key, revoke_approval)
 from .identity import LocalTestActorResolver, resolve_principal
 
 
@@ -37,11 +38,25 @@ def main(argv: list[str] | None = None) -> int:
     dry_run.add_argument("--dry-run", action="store_true", required=True)
     dry_run.add_argument("--identity-mode", choices=("local-test",))
     dry_run.add_argument("--actor-id")
+    revoke = commands.add_parser("revoke", help="revoke an unused signed approval")
+    revoke.add_argument("--approval-file", type=Path, required=True)
+    revoke.add_argument("--identity-mode", choices=("local-test",))
+    revoke.add_argument("--actor-id")
     args = parser.parse_args(argv)
     try:
         resolver = LocalTestActorResolver() if args.identity_mode == "local-test" else None
         principal = resolve_principal(resolver, args.actor_id)
         key = load_or_create_key(KEY_PATH)
+        if args.command == "revoke":
+            approval: Any = json.loads(args.approval_file.read_text(encoding="utf-8"))
+            if not isinstance(approval, dict):
+                raise ActionRejected("approval_payload_invalid")
+            confirmation = input(f"Type REVOKE {approval.get('approval_id', '')} to revoke this approval: ").strip()
+            if confirmation != f"REVOKE {approval.get('approval_id', '')}":
+                raise ActionRejected("human_revocation_confirmation_mismatch")
+            result = revoke_approval(approval, key=key, ledger_path=AUDIT_PATH, principal=principal)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
         if args.command == "approve":
             investigation_report = json.loads(args.investigation_report.read_text(encoding="utf-8"))
             binding = approval_binding(investigation_report, action=args.action,

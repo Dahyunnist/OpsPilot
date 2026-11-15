@@ -10,7 +10,8 @@ import tempfile
 import threading
 import unittest
 
-from opspilot.action_safety import ActionRejected, approval_binding, execute_dry_run, issue_approval, load_or_create_key
+from opspilot.action_safety import (ActionRejected, approval_binding, execute_dry_run, issue_approval,
+    load_or_create_key, revoke_approval)
 from opspilot.identity import Principal
 from opspilot.run_manifest import validate_op_run_artifact
 
@@ -57,9 +58,9 @@ class ActionSafetyTests(unittest.TestCase):
     def report(self):
         return {"incident_id": "lab-release-01", "run_id": "run-01",
             "evidence_refs": [{"source": "logs", "record_id": "log-01"}],
-            "query_trace": [{"source": "deployments", "status": "ok", "params": {"limit": 100},
-                "records": [{"record_id": "deploy-01"}]}],
-            "recommendation": {"action_id": "rollback_order_config", "risk": "high"}}
+            "query_trace": [{"source": "logs", "status": "ok", "params": {"limit": 100},
+                "records": [{"record_id": "log-01"}]}],
+            "recommendation": {"action_id": "rollback_order_config", "risk": "high", "requires_approval": True}}
 
     def principal(self):
         return Principal("human-operator", frozenset({"operator", "release_manager"}), "test", True)
@@ -93,6 +94,127 @@ class ActionSafetyTests(unittest.TestCase):
                 investigation_report=self.report(), principal=self.principal(), now=NOW + timedelta(seconds=120))
         self.assertEqual("approval_expired_or_invalid", self.events()[0]["reason"])
         self.assertEqual(0, self.events()[0]["external_system_calls"])
+
+    def test_approval_ttl_outside_policy_fails_before_issue(self) -> None:
+        for ttl in (29, 301):
+            with self.subTest(ttl=ttl), self.assertRaisesRegex(ActionRejected, "approval_ttl_out_of_range"):
+                self.approval(ttl_seconds=ttl)
+        self.assertFalse(self.ledger.exists())
+
+    def test_approval_issued_in_future_cannot_be_consumed(self) -> None:
+        approval = self.approval(now=NOW + timedelta(seconds=1))
+        with self.assertRaisesRegex(ActionRejected, "approval_expired_or_invalid"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=self.principal(), now=NOW)
+        self.assertEqual("approval_expired_or_invalid", self.events()[0]["reason"])
+        self.assertEqual(0, self.events()[0]["external_system_calls"])
+
+    def test_revoked_approval_cannot_reach_simulator(self) -> None:
+        approval = self.approval()
+        revoked = revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+            principal=self.principal(), now=NOW)
+        self.assertEqual("approval_revoked", revoked["status"])
+        with self.assertRaisesRegex(ActionRejected, "approval_revoked"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=self.principal(), now=NOW)
+        events = self.events()
+        self.assertEqual(["approval_revoked", "dry_run_rejected"],
+            [event["event_type"] for event in events])
+        self.assertEqual("approval_revoked", events[-1]["reason"])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+
+    def test_revocation_requires_original_authenticated_approver(self) -> None:
+        approval = self.approval()
+        impostor = Principal("other-human", frozenset({"release_manager"}), "test", True)
+        with self.assertRaisesRegex(ActionRejected, "actor_principal_mismatch"):
+            revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+                principal=impostor, now=NOW)
+        self.assertEqual("approval_revoke_rejected", self.events()[0]["event_type"])
+        self.assertEqual("actor_principal_mismatch", self.events()[0]["reason"])
+        self.assertEqual(0, self.events()[0]["external_system_calls"])
+        self.assertEqual(0, self.events()[0]["external_writes"])
+
+    def test_revocation_is_idempotent_and_cannot_claim_consumed_approval(self) -> None:
+        approval = self.approval()
+        first = revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+            principal=self.principal(), now=NOW)
+        second = revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+            principal=self.principal(), now=NOW)
+        self.assertEqual("approval_revoked", first["status"])
+        self.assertEqual("approval_already_revoked", second["status"])
+        self.assertEqual(1, sum(event["event_type"] == "approval_revoked" for event in self.events()))
+
+        self.ledger.unlink()
+        consumed_approval = self.approval()
+        execute_dry_run(consumed_approval, key=self.key, environment="test", ledger_path=self.ledger,
+            investigation_report=self.report(), principal=self.principal(), now=NOW)
+        with self.assertRaisesRegex(ActionRejected, "approval_already_consumed"):
+            revoke_approval(consumed_approval, key=self.key, ledger_path=self.ledger,
+                principal=self.principal(), now=NOW)
+        self.assertEqual("approval_revoke_rejected", self.events()[-1]["event_type"])
+        self.assertEqual("approval_already_consumed", self.events()[-1]["reason"])
+
+    def test_revoke_and_consume_race_has_one_terminal_winner(self) -> None:
+        approval = self.approval()
+        barrier = threading.Barrier(2)
+
+        def consume():
+            barrier.wait(timeout=3)
+            try:
+                return execute_dry_run(approval, key=self.key, environment="test",
+                    ledger_path=self.ledger, investigation_report=self.report(),
+                    principal=self.principal(), now=NOW)["status"]
+            except ActionRejected as exc:
+                return exc.code
+
+        def revoke():
+            barrier.wait(timeout=3)
+            try:
+                return revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+                    principal=self.principal(), now=NOW)["status"]
+            except ActionRejected as exc:
+                return exc.code
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            consumed = pool.submit(consume)
+            revoked = pool.submit(revoke)
+            consume_status, revoke_status = consumed.result(), revoked.result()
+
+        self.assertIn((consume_status, revoke_status), {
+            ("simulated_execution", "approval_already_consumed"),
+            ("approval_revoked", "approval_revoked"),
+        })
+        events = self.events()
+        self.assertLessEqual(sum(event["event_type"] == "dry_run_completed" for event in events), 1)
+        self.assertLessEqual(sum(event["event_type"] == "approval_revoked" for event in events), 1)
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+
+    def test_malformed_approval_payload_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ActionRejected, "approval_payload_invalid"):
+            execute_dry_run([], key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=self.principal(), now=NOW)
+        self.assertEqual("approval_payload_invalid", self.events()[0]["reason"])
+        self.assertEqual(0, self.events()[0]["external_system_calls"])
+
+    def test_investigation_without_approval_gate_cannot_issue_binding(self) -> None:
+        report = self.report()
+        report["recommendation"].pop("requires_approval")
+        with self.assertRaisesRegex(ActionRejected, "investigation_recommendation_not_approval_gated"):
+            approval_binding(report, action="rollback_release", target="orders", environment="test")
+
+    def test_malformed_evidence_reference_rejects_approval_binding(self) -> None:
+        report = self.report()
+        report["evidence_refs"].append({"source": "logs", "record_id": ""})
+        with self.assertRaisesRegex(ActionRejected, "investigation_evidence_invalid"):
+            approval_binding(report, action="rollback_release", target="orders", environment="test")
+
+    def test_unresolved_evidence_reference_rejects_approval_binding(self) -> None:
+        report = self.report()
+        report["evidence_refs"][0]["record_id"] = "not-in-query-results"
+        with self.assertRaisesRegex(ActionRejected, "investigation_evidence_unresolved"):
+            approval_binding(report, action="rollback_release", target="orders", environment="test")
 
     def test_replayed_approval_is_rejected_after_first_consumption(self) -> None:
         approval = self.approval()
@@ -222,11 +344,13 @@ class ActionSafetyTests(unittest.TestCase):
         changed_run = self.report()
         changed_run["run_id"] = "run-02"
         variants.append(changed_run)
-        for report in variants:
-            with self.subTest(report=report), self.assertRaisesRegex(ActionRejected, "approval_investigation_mismatch"):
+        expected_reasons = ["investigation_evidence_unresolved",
+            "approval_investigation_mismatch", "approval_investigation_mismatch"]
+        for report, reason in zip(variants, expected_reasons, strict=True):
+            with self.subTest(report=report), self.assertRaisesRegex(ActionRejected, reason):
                 execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
                     investigation_report=report, principal=self.principal(), now=NOW)
-        self.assertEqual(["approval_investigation_mismatch"] * 3,
+        self.assertEqual(expected_reasons,
             [event["reason"] for event in self.events()])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
         self.assertTrue(all(event.get("external_writes", 0) == 0 for event in self.events()))
@@ -265,6 +389,30 @@ class ActionSafetyTests(unittest.TestCase):
                 investigation_report=self.report(), principal=impostor, now=NOW)
         self.assertEqual("actor_principal_mismatch", self.events()[0]["reason"])
         self.assertEqual(0, self.events()[0]["external_system_calls"])
+
+    def test_same_subject_from_different_issuer_cannot_consume_or_revoke(self) -> None:
+        approval = self.approval()
+        foreign = Principal("human-operator", frozenset({"release_manager"}), "foreign-idp", True)
+        with self.assertRaisesRegex(ActionRejected, "actor_principal_mismatch"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=foreign, now=NOW)
+        with self.assertRaisesRegex(ActionRejected, "actor_principal_mismatch"):
+            revoke_approval(approval, key=self.key, ledger_path=self.ledger, principal=foreign, now=NOW)
+        self.assertEqual(["dry_run_rejected", "approval_revoke_rejected"],
+            [event["event_type"] for event in self.events()])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in self.events()))
+
+    def test_malformed_principal_fails_closed_for_consume_and_revoke(self) -> None:
+        approval = self.approval()
+        malformed = Principal("human-operator", None, "test", True)
+        with self.assertRaisesRegex(ActionRejected, "actor_principal_mismatch"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=malformed, now=NOW)
+        with self.assertRaisesRegex(ActionRejected, "actor_principal_mismatch"):
+            revoke_approval(approval, key=self.key, ledger_path=self.ledger,
+                principal=malformed, now=NOW)
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
 
     def test_key_creation_is_stable_and_exactly_32_bytes(self) -> None:
         key_path = self.root / "private" / "approval.key"

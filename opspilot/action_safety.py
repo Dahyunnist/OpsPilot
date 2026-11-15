@@ -27,6 +27,7 @@ ACTION_SCOPES = {
     "rollback_release": {"release_manager"},
 }
 SERVICE_TARGETS = {"gateway", "orders", "inventory", "payment"}
+EVIDENCE_SOURCES = {"metrics", "logs", "traces", "deployments"}
 _LEDGER_LOCK = threading.Lock()
 
 
@@ -34,6 +35,14 @@ class ActionRejected(ValueError):
     def __init__(self, code: str) -> None:
         super().__init__(code)
         self.code = code
+
+
+def _valid_principal(principal: Any) -> bool:
+    return (isinstance(principal, Principal) and principal.authenticated is True
+        and isinstance(principal.subject, str) and bool(principal.subject.strip())
+        and isinstance(principal.issuer, str) and bool(principal.issuer.strip())
+        and isinstance(principal.roles, (set, frozenset))
+        and all(isinstance(role, str) and role for role in principal.roles))
 
 
 @contextmanager
@@ -90,6 +99,8 @@ def _digest(value: Any) -> str:
 def approval_binding(report: dict[str, Any], *, action: str, target: str,
                      environment: str) -> dict[str, str]:
     """Summarize one unique investigation, its evidence pointers, and proposed action."""
+    if not isinstance(report, dict):
+        raise ActionRejected("investigation_report_invalid")
     case_id = report.get("incident_id")
     run_id = report.get("run_id")
     recommendation = report.get("recommendation")
@@ -99,24 +110,43 @@ def approval_binding(report: dict[str, Any], *, action: str, target: str,
         raise ActionRejected("investigation_run_id_missing")
     if not isinstance(recommendation, dict) or not recommendation:
         raise ActionRejected("investigation_recommendation_missing")
+    if recommendation.get("requires_approval") is not True:
+        raise ActionRejected("investigation_recommendation_not_approval_gated")
 
     references = []
-    for ref in report.get("evidence_refs", []):
-        if isinstance(ref, dict) and isinstance(ref.get("source"), str) and isinstance(ref.get("record_id"), str):
-            references.append({"source": ref["source"], "record_id": ref["record_id"]})
+    report_references = set()
+    evidence_refs = report.get("evidence_refs", [])
+    query_trace = report.get("query_trace", [])
+    if not isinstance(evidence_refs, list) or not isinstance(query_trace, list):
+        raise ActionRejected("investigation_evidence_invalid")
+    for ref in evidence_refs:
+        if (not isinstance(ref, dict) or not isinstance(ref.get("source"), str)
+                or ref["source"] not in EVIDENCE_SOURCES
+                or not isinstance(ref.get("record_id"), str) or not ref["record_id"].strip()):
+            raise ActionRejected("investigation_evidence_invalid")
+        report_references.add((ref["source"], ref["record_id"]))
+        references.append({"source": ref["source"], "record_id": ref["record_id"]})
     query_summary = []
-    for query in report.get("query_trace", []):
+    query_references = set()
+    for query in query_trace:
         if not isinstance(query, dict):
-            continue
+            raise ActionRejected("investigation_evidence_invalid")
         source = query.get("source")
         rows = query.get("records", [])
-        if not isinstance(source, str) or not isinstance(rows, list):
-            continue
-        ids = sorted(row["record_id"] for row in rows
-            if isinstance(row, dict) and isinstance(row.get("record_id"), str))
+        if not isinstance(source, str) or source not in EVIDENCE_SOURCES or not isinstance(rows, list):
+            raise ActionRejected("investigation_evidence_invalid")
+        if any(not isinstance(row, dict) or not isinstance(row.get("record_id"), str)
+                or not row["record_id"].strip() for row in rows):
+            raise ActionRejected("investigation_evidence_invalid")
+        ids = sorted(row["record_id"] for row in rows)
+        query_references.update((source, record_id) for record_id in ids)
         references.extend({"source": source, "record_id": record_id} for record_id in ids)
         query_summary.append({"source": source, "status": query.get("status"),
             "params": query.get("params"), "record_ids": ids})
+    if not report_references:
+        raise ActionRejected("investigation_evidence_missing")
+    if not report_references <= query_references:
+        raise ActionRejected("investigation_evidence_unresolved")
     references = sorted({(ref["source"], ref["record_id"]) for ref in references})
     if not references:
         raise ActionRejected("investigation_evidence_missing")
@@ -140,7 +170,7 @@ def load_or_create_key(path: Path) -> bytes:
                 stream.write(key)
         except FileExistsError:
             key = path.read_bytes()
-    if len(key) != 32:
+    if not isinstance(key, bytes) or len(key) != 32:
         raise ValueError("approval signing key must be exactly 32 bytes")
     return key
 
@@ -150,19 +180,22 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
                    evidence_sha256: str, recommendation_sha256: str,
                    key: bytes, ttl_seconds: int = 120,
                    now: datetime | None = None) -> dict[str, Any]:
-    if not case_id or len(case_id) > 100:
+    if not isinstance(case_id, str) or not case_id.strip() or len(case_id) > 100:
         raise ActionRejected("invalid_case_id")
     if environment != ALLOWED_ENVIRONMENT:
         raise ActionRejected("environment_not_allowed")
-    if action not in ACTION_SCOPES or target not in SERVICE_TARGETS:
+    if (not isinstance(action, str) or action not in ACTION_SCOPES
+            or not isinstance(target, str) or target not in SERVICE_TARGETS):
         raise ActionRejected("action_or_target_not_allowed")
-    if not isinstance(principal, Principal) or not principal.authenticated:
+    if not _valid_principal(principal):
         raise ActionRejected("actor_identity_unverified")
     allowed_roles = ACTION_SCOPES[action].intersection(principal.roles)
     if not allowed_roles:
         raise ActionRejected("role_scope_denied")
-    if not principal.subject or len(principal.subject) > 120:
+    if len(principal.subject) > 120:
         raise ActionRejected("approver_required")
+    if len(principal.issuer) > 120:
+        raise ActionRejected("approver_issuer_invalid")
     role = sorted(allowed_roles)[0]
     if not isinstance(investigation_run_id, str) or not investigation_run_id.strip():
         raise ActionRejected("investigation_run_id_missing")
@@ -178,6 +211,7 @@ def issue_approval(*, case_id: str, action: str, target: str, environment: str,
         "approval_id": str(uuid.uuid4()), "nonce": secrets.token_urlsafe(24),
         "case_id": case_id, "action": action, "target": target,
         "environment": environment, "role": role, "approved_by": principal.subject,
+        "approved_by_issuer": principal.issuer,
         "investigation_run_id": investigation_run_id, "evidence_sha256": evidence_sha256,
         "recommendation_sha256": recommendation_sha256,
         "target_environment": environment,
@@ -198,6 +232,18 @@ def _append_unlocked(ledger_path: Path, event: dict[str, Any]) -> None:
         stream.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def _read_ledger_unlocked(ledger_path: Path) -> list[dict[str, Any]]:
+    if not ledger_path.exists():
+        return []
+    try:
+        events = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ActionRejected("action_ledger_unreadable") from exc
+    if any(not isinstance(event, dict) or not isinstance(event.get("event_type"), str) for event in events):
+        raise ActionRejected("action_ledger_unreadable")
+    return events
+
+
 def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetime) -> None:
     _audit(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
         "timestamp": _iso(now), "approval_id": approval.get("approval_id"),
@@ -205,25 +251,91 @@ def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetim
     raise ActionRejected(code)
 
 
+def _reject_revoke(ledger_path: Path, approval: dict[str, Any], code: str, now: datetime) -> None:
+    _audit(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "approval_revoke_rejected",
+        "timestamp": _iso(now), "approval_id": approval.get("approval_id"),
+        "case_id": approval.get("case_id"), "reason": code,
+        "external_system_calls": 0, "external_writes": 0})
+    raise ActionRejected(code)
+
+
+def revoke_approval(approval: dict[str, Any], *, key: bytes, ledger_path: Path,
+                    principal: Principal, now: datetime | None = None) -> dict[str, Any]:
+    """Revoke a signed approval before use; serialize revocation against dry-run consumption."""
+    instant = _time(now)
+    if not isinstance(key, bytes) or len(key) != 32:
+        raise ValueError("approval signing key must be exactly 32 bytes")
+    if not isinstance(approval, dict):
+        _reject_revoke(ledger_path, {}, "approval_payload_invalid", instant)
+    action, target = approval.get("action"), approval.get("target")
+    role = approval.get("role")
+    if (approval.get("environment") != ALLOWED_ENVIRONMENT or approval.get("target_environment") != ALLOWED_ENVIRONMENT
+            or not isinstance(action, str) or action not in ACTION_SCOPES
+            or not isinstance(target, str) or target not in SERVICE_TARGETS):
+        _reject_revoke(ledger_path, approval, "action_or_target_not_allowed", instant)
+    if not isinstance(role, str) or role not in ACTION_SCOPES[action]:
+        _reject_revoke(ledger_path, approval, "role_scope_denied", instant)
+    if (not _valid_principal(principal)
+            or principal.subject != approval.get("approved_by")
+            or principal.issuer != approval.get("approved_by_issuer") or role not in principal.roles):
+        _reject_revoke(ledger_path, approval, "actor_principal_mismatch", instant)
+    signature = approval.get("signature")
+    try:
+        expected = hmac.new(key, _signed_payload(approval), hashlib.sha256).hexdigest()
+    except (TypeError, ValueError):
+        _reject_revoke(ledger_path, approval, "approval_signature_invalid", instant)
+    if not isinstance(signature, str) or not hmac.compare_digest(signature, expected):
+        _reject_revoke(ledger_path, approval, "approval_signature_invalid", instant)
+    approval_id, nonce = approval.get("approval_id"), approval.get("nonce")
+    if not isinstance(approval_id, str) or not approval_id or not isinstance(nonce, str) or not nonce:
+        _reject_revoke(ledger_path, approval, "approval_identity_missing", instant)
+
+    with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
+        events = _read_ledger_unlocked(ledger_path)
+        if any(event.get("event_type") == "approval_revoked" and event.get("nonce") == nonce for event in events):
+            return {"status": "approval_already_revoked", "approval_id": approval_id,
+                "external_system_calls": 0, "external_writes": 0}
+        if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == nonce for event in events):
+            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "approval_revoke_rejected",
+                "timestamp": _iso(instant), "approval_id": approval_id, "case_id": approval.get("case_id"),
+                "reason": "approval_already_consumed", "external_system_calls": 0, "external_writes": 0})
+            raise ActionRejected("approval_already_consumed")
+        event = {"event_id": str(uuid.uuid4()), "event_type": "approval_revoked",
+            "timestamp": _iso(instant), "approval_id": approval_id, "nonce": nonce,
+            "case_id": approval.get("case_id"), "revoked_by": principal.subject,
+            "external_system_calls": 0, "external_writes": 0}
+        _append_unlocked(ledger_path, event)
+    return {"status": "approval_revoked", "approval_id": approval_id,
+        "external_system_calls": 0, "external_writes": 0}
+
+
 def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
                     ledger_path: Path, investigation_report: dict[str, Any],
                     principal: Principal,
                     now: datetime | None = None) -> dict[str, Any]:
     instant = _time(now)
-    if len(key) != 32:
+    if not isinstance(approval, dict):
+        _reject(ledger_path, {}, "approval_payload_invalid", instant)
+    if not isinstance(key, bytes) or len(key) != 32:
         raise ValueError("approval signing key must be exactly 32 bytes")
     if environment != ALLOWED_ENVIRONMENT or approval.get("environment") != environment:
         _reject(ledger_path, approval, "environment_mismatch", instant)
-    if approval.get("action") not in ACTION_SCOPES or approval.get("target") not in SERVICE_TARGETS:
+    action, target = approval.get("action"), approval.get("target")
+    if (not isinstance(action, str) or action not in ACTION_SCOPES
+            or not isinstance(target, str) or target not in SERVICE_TARGETS):
         _reject(ledger_path, approval, "action_or_target_not_allowed", instant)
-    if approval.get("role") not in ACTION_SCOPES[approval["action"]]:
+    if not isinstance(approval.get("role"), str) or approval["role"] not in ACTION_SCOPES[action]:
         _reject(ledger_path, approval, "role_scope_denied", instant)
-    if (not isinstance(principal, Principal) or not principal.authenticated
+    if (not _valid_principal(principal)
             or principal.subject != approval.get("approved_by")
+            or principal.issuer != approval.get("approved_by_issuer")
             or approval.get("role") not in principal.roles):
         _reject(ledger_path, approval, "actor_principal_mismatch", instant)
     signature = approval.get("signature")
-    expected = hmac.new(key, _signed_payload(approval), hashlib.sha256).hexdigest()
+    try:
+        expected = hmac.new(key, _signed_payload(approval), hashlib.sha256).hexdigest()
+    except (TypeError, ValueError):
+        _reject(ledger_path, approval, "approval_signature_invalid", instant)
     if not isinstance(signature, str) or not hmac.compare_digest(signature, expected):
         _reject(ledger_path, approval, "approval_signature_invalid", instant)
     try:
@@ -283,18 +395,18 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
     if manifest_errors:
         raise ValueError("refusing to record unmanifested OP-4 dry run: " + "; ".join(manifest_errors))
     with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
-        if ledger_path.exists():
-            try:
-                events = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-            except (OSError, json.JSONDecodeError):
-                raise ActionRejected("action_ledger_unreadable")
-            if any(not isinstance(event, dict) or not isinstance(event.get("event_type"), str)
-                    for event in events):
-                raise ActionRejected("action_ledger_unreadable")
-            if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == approval["nonce"] for event in events):
-                _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
-                    "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
-                    "case_id": approval.get("case_id"), "reason": "approval_replayed", "external_system_calls": 0})
-                raise ActionRejected("approval_replayed")
+        events = _read_ledger_unlocked(ledger_path)
+        if any(event.get("event_type") == "approval_revoked"
+                and (event.get("nonce") == approval["nonce"] or event.get("approval_id") == approval["approval_id"])
+                for event in events):
+            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
+                "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
+                "case_id": approval.get("case_id"), "reason": "approval_revoked", "external_system_calls": 0})
+            raise ActionRejected("approval_revoked")
+        if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == approval["nonce"] for event in events):
+            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
+                "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
+                "case_id": approval.get("case_id"), "reason": "approval_replayed", "external_system_calls": 0})
+            raise ActionRejected("approval_replayed")
         _append_unlocked(ledger_path, result)
     return result

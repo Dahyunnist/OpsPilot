@@ -20,7 +20,10 @@ class ActionCliTests(unittest.TestCase):
         self.report_path = self.root / "investigation.json"
         self.report_path.write_text(json.dumps({"incident_id": "case-01", "run_id": "run-01",
             "evidence_refs": [{"source": "logs", "record_id": "log-01"}],
-            "recommendation": {"action_id": "rollback_order_config", "risk": "high"}}), encoding="utf-8")
+            "query_trace": [{"source": "logs", "status": "ok", "params": {"limit": 100},
+                "records": [{"record_id": "log-01"}]}],
+            "recommendation": {"action_id": "rollback_order_config", "risk": "high",
+                "requires_approval": True}}), encoding="utf-8")
         self.patches = [
             patch.object(action_cli, "KEY_PATH", self.root / "approval.key"),
             patch.object(action_cli, "APPROVAL_DIR", self.approvals),
@@ -93,6 +96,47 @@ class ActionCliTests(unittest.TestCase):
         self.assertEqual("dry_run_rejected", event["event_type"])
         self.assertEqual(0, event["external_system_calls"])
         self.assertEqual(0, event.get("external_writes", 0))
+
+    def test_human_can_revoke_ticket_and_dry_run_then_fails_closed(self) -> None:
+        approval_output = StringIO()
+        with patch("builtins.input", return_value="APPROVE case-01"), redirect_stdout(approval_output):
+            self.assertEqual(0, action_cli.main(self.approve_args()))
+        approval_file = next(self.approvals.glob("*.json"))
+        approval_id = json.loads(approval_file.read_text(encoding="utf-8"))["approval_id"]
+
+        revoke_output = StringIO()
+        with patch("builtins.input", return_value=f"REVOKE {approval_id}"), redirect_stdout(revoke_output):
+            result = action_cli.main(["revoke", "--approval-file", str(approval_file),
+                "--identity-mode", "local-test", "--actor-id", "local-release-manager"])
+        self.assertEqual(0, result)
+        self.assertEqual("approval_revoked", json.loads(revoke_output.getvalue())["status"])
+
+        error_output = StringIO()
+        with redirect_stderr(error_output):
+            result = action_cli.main(["dry-run", "--approval-file", str(approval_file),
+                "--investigation-report", str(self.report_path), "--environment", "test", "--dry-run",
+                "--identity-mode", "local-test", "--actor-id", "local-release-manager"])
+        self.assertEqual(2, result)
+        self.assertEqual("approval_revoked", json.loads(error_output.getvalue())["reason"])
+        events = [json.loads(line) for line in self.ledger.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(["approval_revoked", "dry_run_rejected"],
+            [event["event_type"] for event in events])
+        self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
+        self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+
+    def test_revoke_requires_exact_human_confirmation(self) -> None:
+        approval_output = StringIO()
+        with patch("builtins.input", return_value="APPROVE case-01"), redirect_stdout(approval_output):
+            self.assertEqual(0, action_cli.main(self.approve_args()))
+        approval_file = next(self.approvals.glob("*.json"))
+        error_output = StringIO()
+        with patch("builtins.input", return_value="REVOKE someone-else"), redirect_stderr(error_output):
+            result = action_cli.main(["revoke", "--approval-file", str(approval_file),
+                "--identity-mode", "local-test", "--actor-id", "local-release-manager"])
+        self.assertEqual(2, result)
+        self.assertEqual("human_revocation_confirmation_mismatch",
+            json.loads(error_output.getvalue())["reason"])
+        self.assertFalse(self.ledger.exists())
 
     def test_dry_run_requires_explicit_simulation_flag(self) -> None:
         with self.assertRaises(SystemExit) as raised:

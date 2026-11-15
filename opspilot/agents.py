@@ -20,7 +20,18 @@ SOURCE_AGENTS = {
     "traces": ("trace_deployment_expert", "traces"),
     "deployments": ("deployment_expert", "deployments"),
 }
-TOOLS = {"metrics": ["query_metrics"], "logs": ["query_logs"], "traces": ["query_traces"], "deployments": ["query_deployments"]}
+TOOLS = {"metrics": ("query_metrics",), "logs": ("query_logs",),
+    "traces": ("query_traces",), "deployments": ("query_deployments",)}
+
+
+def validate_agent_tool_scope(message: AgentMessage) -> None:
+    """Reject handoffs whose identity, evidence source, or tools exceed fixed source scope."""
+    source = next((source for source, (name, _kind) in SOURCE_AGENTS.items()
+        if name == message.sender), None)
+    if (source is None or message.recipient != "cross_examiner" or message.kind != "handoff"
+            or message.allowed_tools != TOOLS[source]
+            or any(ref.source != source for ref in message.evidence)):
+        raise ValueError("agent_tool_scope_invalid")
 
 
 def _cause_id(value: Any) -> str | None:
@@ -82,7 +93,8 @@ def _ground_adjudication(adjudication: dict[str, Any], report: dict[str, Any]) -
     adjudication["evidence_ids"] = ranked_evidence or (grounded if cause_id else [ref for ref in cited if ref in source_by_id])
     adjudication["citation_validation"] = {
         "all_references_exist": all(ref in source_by_id for ref in cited + ranked_evidence),
-        "all_references_support_hypothesis": bool(safe_ranked or (cause_id and grounded)),
+        "all_references_support_hypothesis": bool(safe_ranked or
+            (cause_id and len(grounded) >= 2 and source_count >= 2)),
         "valid_count": len(adjudication["evidence_ids"]),
         "independent_sources": source_count,
     }
@@ -138,6 +150,7 @@ def _call_expert(model: ChatModel, task_id: str, incident: dict[str, Any], query
     allowed = {row["record_id"] for row in rows}
     refs = tuple(EvidenceRef(source, rid) for finding in data.get("hypotheses", []) for rid in finding.get("evidence_ids", []) if rid in allowed)
     message = AgentMessage(task_id, str(uuid.uuid4()), name, "cross_examiner", "handoff", data, refs, tuple(TOOLS[source]), budget)
+    validate_agent_tool_scope(message)
     result["input_chars"] = chars
     return message, result
 
