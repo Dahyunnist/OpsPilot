@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.generate_complex_benchmark import generate
+from scripts.generate_complex_benchmark import TEMPLATES, generate
 from opspilot.cli import load_incidents
 
 
@@ -17,6 +17,8 @@ class ComplexBenchmarkTests(unittest.TestCase):
             manifest = generate(output)
             second = generate(Path(temp) / "second")
             self.assertEqual(manifest, second)
+            self.assertEqual(TEMPLATES, manifest["source_templates"])
+            self.assertIn("not mechanism-independent sampling", manifest["generation_policy"])
             self.assertEqual({"train": 32, "validation": 16, "test": 16},
                              {name: split["cases"] for name, split in manifest["splits"].items()})
             for split, meta in manifest["splits"].items():

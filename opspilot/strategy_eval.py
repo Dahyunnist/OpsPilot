@@ -99,6 +99,8 @@ def _rules_prediction(live_report: dict[str, Any]) -> dict[str, Any]:
 
 def _ground_prediction(data: dict[str, Any], live_report: dict[str, Any]) -> dict[str, Any]:
     support = _support_map(live_report)
+    supported_hypotheses = {item["id"]: item for item in live_report.get("hypotheses", [])
+        if item.get("confidence") == "high" and not item.get("against")}
     evidence_by_root = data.get("evidence_by_root", {})
     general_refs = data.get("evidence_ids", [])
     if not isinstance(evidence_by_root, dict):
@@ -112,6 +114,9 @@ def _ground_prediction(data: dict[str, Any], live_report: dict[str, Any]) -> dic
         proposed = evidence_by_root.get(cause, general_refs)
         if not isinstance(proposed, list):
             proposed = []
+        if cause not in live_report.get("root_causes", []) or cause not in supported_hypotheses:
+            withheld.append(cause)
+            continue
         allowed = support.get(cause, {})
         valid = list(dict.fromkeys(ref for ref in proposed if isinstance(ref, str) and ref in allowed))
         sources = {allowed[ref] for ref in valid}

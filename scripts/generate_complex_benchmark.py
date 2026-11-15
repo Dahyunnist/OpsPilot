@@ -174,7 +174,8 @@ def generate(output: Path = ROOT / "data" / "complex-benchmark") -> dict:
                 "challenge": "cross_source_conflict_async_handoff"})
     manifest = {"benchmark_id": "opspilot_complex_conflicts_v1", "seed": SEED,
         "synthetic": True, "total_cases": sum(len(v) for v in data.values()), "splits": {},
-        "generation_policy": "Freeze incidents and labels before any model run; labels stored outside incident inputs."}
+        "source_templates": TEMPLATES,
+        "generation_policy": "Cases perturb one fixed source incident per category; IDs, timestamps, linkage, conflict, and missing-evidence conditions vary. This is a cross-source robustness set, not mechanism-independent sampling. Freeze incidents and labels before any model run; labels stay outside incident inputs."}
     output.mkdir(parents=True, exist_ok=True)
     for split, rows in data.items():
         rows.sort(key=lambda row: row["incident_id"])

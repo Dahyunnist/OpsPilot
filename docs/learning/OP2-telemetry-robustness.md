@@ -8,6 +8,14 @@
 
 验证：102 passed, 22 subtests passed；compileall 与 git diff --check 通过。真实模型最坏费用未获可执行预留，本阶段未调用模型；新增 cap $0.60 下剩余额度 $0.12166998。
 
+## 2026-11-15 机制来源与拒答回归
+
+三份 OP-2 冻结快照来自三个不同 lab fault：slow SQL、连接池耗尽、payment dependency timeout。`missing_pool_evidence` 是连接池快照删掉指定支持记录；`contradictory_payment` 是 timeout 快照保留快慢 payment span。它们是同机制的证据扰动，不算额外故障机制。
+
+机制来源审计区分两套 synthetic data：`causal-benchmark` 的五类由显式 family builder 构造，不读取 incident 模板；随机 seed 只改变记录身份、同类依赖/服务选择、decoy 和顺序。各 family 内仍是重复机制案例，不能当作生产故障多样性。`complex-benchmark` 每类固定复用一个源 incident，再做 ID、时间、关联、矛盾与缺失证据扰动；它只测跨来源鲁棒性，不代表机制独立抽样。两套 manifest 现在记录此来源边界，并由测试锁定；causal manifest 变更只加来源说明，test/train/label 数据哈希不变，S15 冻结校验同步更新 manifest pin。
+
+`tests/test_strategy_eval.py` 新增无网络确定性 fake-client 夹具：rules、single、multi 对缺失支持和 payment 快慢 span 矛盾都必须弃答。此前模型 grounding 只数有效的两个独立来源，会忽略规则报告中的 counter-evidence；现在仅接受 live rules 已判高置信、无反证的 cause，其他主张进入 `withheld_claims`。这验证实现契约，不是模型能力或策略对照结果；没有真实模型调用或 performance 结论。
+
 ## 真实评测子集预登记
 
 `reports/op2-model-subset.json` 冻结三例：正常 slow SQL、移除连接池正例证据后的缺失样本、保留 payment 快慢 span 的矛盾样本。每例保存独立问题、遥测快照 SHA-256、注入前 oracle、移除记录 ID、策略及逐请求上限；快照本身无真值。

@@ -6,6 +6,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from opspilot.cli import load_incidents
 from scripts.generate_causal_benchmark import FAMILIES, SEED, SPLITS, generate
@@ -41,6 +42,18 @@ class CausalBenchmarkTests(unittest.TestCase):
             first_ids = {row["incident_id"] for row in load_incidents(first / "test.jsonl").values()}
             original_ids = {row["incident_id"] for row in load_incidents(original / "test.jsonl").values()}
             self.assertFalse(first_ids & original_ids)
+
+    def test_mechanism_families_are_authored_not_loaded_from_incident_templates(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch("scripts.generate_causal_benchmark.load_incidents", create=True,
+                       side_effect=AssertionError("causal mechanism generation must not clone incidents")):
+                manifest = generate(Path(temp) / "causal")
+        self.assertEqual(5, len(manifest["family_counts"]))
+        self.assertEqual({"pool_root", "configuration_root_with_downstream_symptoms",
+            "downstream_root_with_pool_pressure", "independent_dual_fault",
+            "insufficient_or_conflicted"}, set(manifest["family_counts"]))
+        self.assertIn("explicit family-specific builders", manifest["mechanism_policy"])
+        self.assertIn("not the mechanism family", manifest["mechanism_policy"])
 
     def test_neutral_ids_labels_isolated_and_references_valid(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 import unittest
+from pathlib import Path
 
 from opspilot.strategy_eval import (STRATEGIES, evaluate_snapshot, failure_outcome_counts,
     score_case, summarize_cases)
@@ -180,6 +181,71 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertTrue(scored["metrics"]["exact_root_set"])
         self.assertEqual(1.0, scored["metrics"]["evidence_precision"])
         self.assertEqual(1.0, scored["metrics"]["evidence_recall"])
+
+    def test_rules_single_and_multi_abstain_on_missing_and_conflicted_evidence_with_local_fake(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+
+        def frozen_snapshot(filename: str):
+            data = json.loads((root / "reports" / filename).read_text(encoding="utf-8-sig"))
+            source_results = {source: data[source] for source in ("metrics", "logs", "traces", "deployments")}
+            query = source_results["metrics"]["query"]
+            return source_results, query["start"], query["end"]
+
+        cases = []
+        missing, missing_start, missing_end = frozen_snapshot("op2-missing_pool_evidence-snapshot.json")
+        missing_report = evaluate_snapshot("offline-missing-evidence", missing_start, missing_end,
+            missing, strategies=("rules",))
+        missing_hypothesis = next(item for item in missing_report["rules_diagnostic"]["hypotheses"]
+            if item["id"] == "database_pool_exhaustion")
+        cases.append(("missing", missing, missing_start, missing_end, "database_pool_exhaustion",
+            [missing_hypothesis["support"][0]["record_id"], missing_hypothesis["against"][0]["record_id"]]))
+
+        conflict, conflict_start, conflict_end = frozen_snapshot("op2-contradictory_payment-snapshot.json")
+        conflict_report = evaluate_snapshot("offline-conflicting-evidence", conflict_start, conflict_end,
+            conflict, strategies=("rules",))
+        conflict_hypothesis = next(item for item in conflict_report["rules_diagnostic"]["hypotheses"]
+            if item["id"] == "payment_dependency_timeout")
+        cases.append(("conflict", conflict, conflict_start, conflict_end, "payment_dependency_timeout",
+            [item["record_id"] for item in conflict_hypothesis["support"]]))
+
+        class DeterministicAdversarialFake:
+            model = "deterministic-offline-fixture"
+            max_tokens = 512
+
+            def __init__(self, cause: str, refs: list[str]):
+                self.cause = cause
+                self.refs = refs
+                self.calls = 0
+
+            def complete(self, system: str, user: str, _budget: int) -> dict:
+                self.calls += 1
+                payload = json.loads(user)
+                if system.startswith("You are an independent "):
+                    response = {"hypotheses": [{"id": self.cause,
+                        "evidence_ids": [row["record_id"] for row in payload["records"]],
+                        "reason": "deliberately overclaims from this source"}], "missing_data": []}
+                else:
+                    response = {"root_causes": [self.cause],
+                        "evidence_by_root": {self.cause: self.refs}, "uncertainty": "fixture insists despite missing or conflicting evidence"}
+                return {"data": response, "usage": {"prompt_tokens": 1, "completion_tokens": 1,
+                    "total_tokens": 2, "prompt_tokens_details": {"cached_tokens": 0}}}
+
+        def no_network_gate(operation, instance, system, user, budget):
+            return operation(instance, system, user, budget)
+
+        for name, snapshot, start, end, cause, refs in cases:
+            with self.subTest(evidence=name):
+                model = DeterministicAdversarialFake(cause, refs)
+                report = evaluate_snapshot(f"offline-{name}", start, end, snapshot, model, no_network_gate,
+                    ("rules", "single", "multi"))
+                self.assertEqual([], report["strategies"]["rules"]["prediction"]["root_causes"])
+                self.assertEqual("insufficient_evidence", report["strategies"]["rules"]["prediction"]["status"])
+                for strategy in ("single", "multi"):
+                    prediction = report["strategies"][strategy]["prediction"]
+                    self.assertEqual([], prediction["root_causes"], (name, strategy))
+                    self.assertEqual("insufficient_evidence", prediction["status"], (name, strategy))
+                    self.assertEqual([cause], prediction["withheld_claims"], (name, strategy))
+                self.assertGreater(model.calls, 0)
 
     def test_multi_failure_falls_back_to_rules_and_is_not_scored_as_multi_success(self) -> None:
         class OneExpertFails(FakeChatModel):

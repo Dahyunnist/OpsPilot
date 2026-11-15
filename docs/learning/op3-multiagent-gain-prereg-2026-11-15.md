@@ -8,6 +8,8 @@
 
 离线预登记和关联安全回归共 39 项通过。未读取 `.env`，未请求 provider 余额/模型列表，未调用模型；真实评测尚未开始。Provider 余额门禁仍待证据。
 
+后续离线契约回归用固定 fake client，覆盖 rules、single、multi 在缺失支持和矛盾证据下的弃答。fake outputs 由本地测试直接返回，未经过 provider；结果只证明证据闸门行为，不是模型对照，也不产生准确率、成本或延迟结论。当前余额未知，真实模型调用暂停。
+
 预定指标含完整根因集命中、Top-1、证据 precision/recall、费用、p95、失败轨迹、超时和取消。统一计数器读取脱敏 trace：`transport_timeout` 计超时；`tasks/cancel` 或取消状态计取消。报告附相同输入 trace 的四策略离线指标夹具，结果标为测试夹具，不冒充实验结果。Fake timeout/cancel 回归不调用模型。
 
 性能对照仍未运行：根因、Top-1、证据 P/R、真实费用和 p95 均无结果。余额门禁未检查；不执行推理。A2A localhost 仍受 Windows `WinError 10013` 阻断，Linux 协议验证需在提交推送后运行。

@@ -37,7 +37,7 @@ SOURCE_FILES = {
     "incident_loader": ROOT / "opspilot" / "cli.py",
 }
 FROZEN_TEST_HASHES = {
-    "manifest_sha256": "4894e54ca0b9c2ea8b5d470d6e33af88e96bf874f4e94e5f28f6099f250ae1e6",
+    "manifest_sha256": "4544ae9a7d48b760db9323633a00d50b9bfb29f1d55918b84518a951f1afdc4f",
     "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
     "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1",
 }

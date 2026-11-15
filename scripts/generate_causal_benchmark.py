@@ -277,6 +277,7 @@ def generate(output: Path = ROOT / "data" / "causal-benchmark", seed: int = SEED
         "cases": sum(len(split_rows) for split_rows in rows.values()),
         "family_counts": {family: sum(item["scenario_family"] == family for split_labels in labels.values() for item in split_labels) for family in FAMILIES},
         "split_policy": "Every family has 10 train, 4 validation, and 6 test cases; labels remain outside incident inputs.",
+        "mechanism_policy": "Root causes come from explicit family-specific builders; the seed changes identifiers, equivalent dependency/service choices, decoys, and record ordering, not the mechanism family.",
         "provenance": "Synthetic records authored from the OpsPilot incident contract and OpenTelemetry semantic field conventions; no production or copied incident data.",
         "splits": {}}
     output.mkdir(parents=True, exist_ok=True)
