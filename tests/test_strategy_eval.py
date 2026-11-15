@@ -123,11 +123,11 @@ class StrategyEvaluationTests(unittest.TestCase):
             for system, _payload in model.calls))
 
     def test_redaction_preserves_numeric_provider_usage_only(self) -> None:
-        value = {"usage": {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15,
-            "prompt_tokens_details": {"cached_tokens": 4}}, "api_token": 123}
+        value = {"usage": {"prompt_tokens": "12", "completion_tokens": 3, "total_tokens": "15",
+            "prompt_tokens_details": {"cached_tokens": "4"}}, "api_token": 123}
         redacted = redact(value)
-        self.assertEqual(12, redacted["usage"]["prompt_tokens"])
-        self.assertEqual(4, redacted["usage"]["prompt_tokens_details"]["cached_tokens"])
+        self.assertEqual("12", redacted["usage"]["prompt_tokens"])
+        self.assertEqual("4", redacted["usage"]["prompt_tokens_details"]["cached_tokens"])
         self.assertEqual("[REDACTED]", redacted["api_token"])
 
     def test_redaction_preserves_frozen_record_ids_but_still_masks_phone_numbers(self) -> None:

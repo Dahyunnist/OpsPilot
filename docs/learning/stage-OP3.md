@@ -120,7 +120,7 @@ Run 15dbce7b-36d5-4c78-bfc3-13104c2c0143 保持 partial：rules 3/3、single 2/3
 
 ## 2026-11-14 R3 ValueError 离线根因定位
 
-离线合成复现确认：`redact()` 的通用 `token` 键规则把 provider `usage.prompt_tokens`、`completion_tokens`、`total_tokens`、`prompt_tokens_details.cached_tokens` 写成 `[REDACTED]`。恢复的专家响应先进入 `tracked_gate()`，usage 计数解析抛出 ValueError；`_multi()` 捕获专家错误并提前返回，因此协作裁决和 `score_case()` 均未执行。新增合成回归验证旧格式检查点在此边界失败、裁决器未调用。脱敏器现保留 usage 对象内的数值计数，仍脱敏 `api_token` 等凭据字段。旧 checkpoint 的已脱敏值不可恢复；R3 报告及 multi 0/3 原样保留，未调用模型。定向回归：`python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`。
+离线合成复现确认：`redact()` 的通用 `token` 键规则曾把 provider `usage.prompt_tokens`、`completion_tokens`、`total_tokens`、`prompt_tokens_details.cached_tokens` 写成 `[REDACTED]`。恢复的专家响应先进入 `tracked_gate()`，usage 计数解析抛出 ValueError；`_multi()` 捕获专家错误并提前返回，因此协作裁决和 `score_case()` 均未执行。合成回归验证旧格式检查点在此边界失败、裁决器未调用。脱敏器保留 usage 对象内非负整数计数及整数数字字符串，仍脱敏 `api_token` 等凭据字段。旧 checkpoint 的已脱敏值不可恢复；R3 报告及 multi 0/3 原样保留，未调用模型。定向回归：`python -m pytest -q -p no:cacheprovider tests/test_strategy_eval.py tests/test_op3_frozen_eval.py`。
 
 ## 2026-11-14 Multi 合成路径回归
 

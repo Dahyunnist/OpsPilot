@@ -28,10 +28,20 @@ def load_project_env(path: Path = Path(".env")) -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
+def _safe_usage_count(value: Any) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return False
+    try:
+        count = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return False
+    return count.is_finite() and count >= 0 and count == count.to_integral_value()
+
+
 def redact(value: Any, *, _usage: bool = False) -> Any:
     if isinstance(value, dict):
         return {key: (item if _usage and key in {"prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens"}
-            and isinstance(item, (int, float)) and not isinstance(item, bool) else
+            and _safe_usage_count(item) else
             redact(item, _usage=True) if _usage and key == "prompt_tokens_details" else
             "[REDACTED]" if re.search(r"(?i)(authorization|api.?key|password|secret|token|email|phone)", key) else
             item if key == "record_id" else redact(item, _usage=_usage or key == "usage")) for key, item in value.items()}
