@@ -1,4 +1,4 @@
-param([string]$OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/op1-host-matrix.json"))
+param([string]$OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) ".tmp/op1-host-matrix-host.json"))
 
 $ErrorActionPreference = "Continue"
 . (Join-Path $PSScriptRoot "op1-matrix-contract.ps1")

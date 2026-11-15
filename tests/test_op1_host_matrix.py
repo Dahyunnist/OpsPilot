@@ -14,6 +14,7 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     stop = (ROOT / "lab/stop.ps1").read_text(encoding="utf-8-sig")
     compose = (ROOT / "lab/compose.yaml").read_text(encoding="utf-8")
     truth = (ROOT / "lab/scenarios/truth.json").read_text(encoding="utf-8")
+    assert '.tmp/op1-host-matrix-host.json' in script.splitlines()[0]
     assert "foreach ($case in $truth.cases)" in script
     assert "opspilot-matrix-" in script and "Set-Content -Encoding utf8 $OutputFile" in script
     assert "docker info --format" in script and "docker image inspect $image" in script
