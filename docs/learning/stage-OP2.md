@@ -42,3 +42,9 @@ MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 
 `tests/test_live_telemetry.py` 新增固定合成 bad_release 证据：同一 UTC 窗口内先有 orders/v2 deployment，再有绑定唯一 order ID 的 inventory DNS 错误日志；日志与 orders/v2 span 共享 trace ID，orders span 由 gateway checkout span 调用。调查报告分别列出 deployment→同版本错误和日志→同请求 span 两条关联，并把 span 纳入证据引用。该 trace 关联是合成回归证据，不冒充用户宿主输出。
 
 反例覆盖 trace ID、order ID、service、版本不一致，以及 span 恰好位于窗口 end。此时不创建同请求 trace link，报告写入 `unlinked_request_trace` 缺口；deployment/log 时间关联与 trace 关联分开呈现。调查入口会再次执行 UTC 半开窗过滤，避免错误窗口记录参与推断；已有反例继续验证错误早于 deployment 时保留反证并弃答。定向回归 `tests.test_live_telemetry tests.test_op2_source_status tests.test_op2_telemetry_robustness tests.test_op2_frozen_snapshot_readonly tests.test_lab_checkout_e2e tests.test_strategy_eval`：63 项通过；未调用模型或外部 API，未启动 Docker。
+
+## 2026-11-15 宿主矩阵半开时间窗边界修复
+
+审计发现 PowerShell `Test-InEvidenceWindow` 和 Jaeger `Get-WindowSpans` 将 end 边界也纳入窗口，与 Python adapter 的 `[start,end)` 不一致。现在日志/deployment 时刻用 `instant < end`；Jaeger microsecond `startTime` 转为 .NET ticks 比较，避免先降到毫秒导致边界漂移。新增 PowerShell 回归检查 start 前、start、end 前和 end 精确值；只有 `[start,end)` 内信号保留。
+
+同轮离线复核现有 OP-2 adapter：请求限 24h 和 1–1000 条、先筛窗再全局限量、stable source pointer、source missing/partial/error、乱序 deployment、矛盾信号弃答都有既有测试。`tests/test_op1_host_matrix.py tests/test_live_telemetry.py tests/test_op2_telemetry_robustness.py tests/test_op2_source_status.py tests/test_op2_frozen_snapshot_readonly.py tests/test_lab_time_window.py`：59 项和 18 子测试通过；未启动 MCP/服务或模型。

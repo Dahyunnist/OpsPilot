@@ -13,17 +13,19 @@ function Get-SpanTag($Span, [string]$Key) {
 function Test-InEvidenceWindow($Timestamp, [string]$Start, [string]$End) {
     try {
         $instant = if ($Timestamp -is [DateTimeOffset]) { $Timestamp } elseif ($Timestamp -is [DateTime]) { [DateTimeOffset]$Timestamp.ToUniversalTime() } else { [DateTimeOffset]::Parse([string]$Timestamp) }
-        return $instant -ge [DateTimeOffset]::Parse($Start) -and $instant -le [DateTimeOffset]::Parse($End)
+        return $instant -ge [DateTimeOffset]::Parse($Start) -and $instant -lt [DateTimeOffset]::Parse($End)
     } catch { return $false }
 }
 
 function Get-WindowSpans($TraceData, [string]$Start, [string]$End, [string]$OrderId) {
-    $from = ([DateTimeOffset]::Parse($Start)).ToUnixTimeMilliseconds() * 1000
-    $to = ([DateTimeOffset]::Parse($End)).ToUnixTimeMilliseconds() * 1000
+    $epochTicks = [DateTimeOffset]::new(1970,1,1,0,0,0,[TimeSpan]::Zero).UtcDateTime.Ticks
+    $fromTicks = ([DateTimeOffset]::Parse($Start)).UtcDateTime.Ticks
+    $toTicks = ([DateTimeOffset]::Parse($End)).UtcDateTime.Ticks
     $spans = @()
     foreach ($trace in @($TraceData)) {
         foreach ($span in @($trace.spans)) {
-            if ($span.startTime -ge $from -and $span.startTime -le $to) {
+            $spanTicks = $epochTicks + ([long]$span.startTime * 10)
+            if ($spanTicks -ge $fromTicks -and $spanTicks -lt $toTicks) {
                 $spanOrderId = Get-SpanTag $span "opspilot.order_id"
                 if ($OrderId -and $spanOrderId -ne $OrderId) { continue }
                 $spans += [pscustomobject]@{

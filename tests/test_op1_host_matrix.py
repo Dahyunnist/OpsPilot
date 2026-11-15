@@ -169,6 +169,37 @@ def test_matrix_contract_rejects_missing_logs_or_trace_spans():
     assert outcome == {"complete": True, "missing_logs": False, "missing_traces": False}
 
 
+def test_matrix_log_and_jaeger_windows_are_start_inclusive_end_exclusive():
+    import json
+
+    powershell = shutil.which("pwsh") or shutil.which("powershell")
+    if not powershell:
+        pytest.skip("PowerShell is required to execute the host matrix contract")
+    contract_path = str(ROOT / "lab/op1-matrix-contract.ps1").replace("'", "''")
+    command = (
+        f". '{contract_path}'; "
+        "$start='2026-11-15T00:00:00.1230000Z'; $end='2026-11-15T00:00:00.2340000Z'; "
+        "$epoch=[DateTimeOffset]::new(1970,1,1,0,0,0,[TimeSpan]::Zero).UtcDateTime.Ticks; "
+        "$startUs=[long](([DateTimeOffset]::Parse($start).UtcDateTime.Ticks-$epoch)/10); "
+        "$endUs=[long](([DateTimeOffset]::Parse($end).UtcDateTime.Ticks-$epoch)/10); "
+        "$rows=@([pscustomobject]@{name='before';time='2026-11-15T00:00:00.1229999Z'},"
+        "[pscustomobject]@{name='start';time=$start},[pscustomobject]@{name='before-end';time='2026-11-15T00:00:00.2339999Z'},"
+        "[pscustomobject]@{name='end';time=$end}); "
+        "$logFlags=@($rows|ForEach-Object {[pscustomobject]@{name=$_.name;inside=(Test-InEvidenceWindow $_.time $start $end)}}); "
+        "$spans=@(foreach($item in @(@{id='before';us=$startUs-1},@{id='start';us=$startUs},@{id='before-end';us=$endUs-1},@{id='end';us=$endUs})) "
+        "{[pscustomobject]@{processID='p';spanID=$item.id;operationName='orders/request';startTime=[long]$item.us;tags=@([pscustomobject]@{key='opspilot.order_id';value='order-1'})}}); "
+        "$trace=[pscustomobject]@{traceID='trace';processes=[pscustomobject]@{p=[pscustomobject]@{serviceName='orders'}};spans=$spans}; "
+        "$spanIds=@(Get-WindowSpans @($trace) $start $end 'order-1'|ForEach-Object {$_.span_id}); "
+        "[pscustomobject]@{logs=$logFlags;span_ids=$spanIds}|ConvertTo-Json -Depth 5 -Compress"
+    )
+    result = subprocess.run([powershell, "-NoProfile", "-NonInteractive", "-Command", command],
+        capture_output=True, text=True, check=True, timeout=15)
+    outcome = json.loads(result.stdout.strip().splitlines()[-1])
+    assert {item["name"]: item["inside"] for item in outcome["logs"]} == {
+        "before": False, "start": True, "before-end": True, "end": False}
+    assert outcome["span_ids"] == ["start", "before-end"]
+
+
 def test_all_scenario_signals_match_order_scoped_log_and_trace_fixtures():
     import base64
     import datetime as dt
