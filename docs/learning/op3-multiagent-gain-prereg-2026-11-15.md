@@ -43,3 +43,9 @@ run `fff674b6-f292-46fb-afe5-beeb5c64b563` 完成 partial 评测。三份冻结�
 multi 三案均因 `ValueError` 降级到 rules，不能作为有效多 Agent 对照。错误分类：本次 provider response/JSON 错误 `0`；旧 checkpoint usage 解析错误 `11`；其余 runner 错误 `0`。根因不是新响应 JSON 解析失败：旧 checkpoint 的 14 份安全响应均把 `prompt_tokens`、`completion_tokens`、`total_tokens` 脱敏成 `[REDACTED]`；usage parser 要求非负整数，因此专家结果读取时报 `ValueError`。本轮唯一新响应成功解析为 JSON 对象，usage 数字有效。rules 无新模型调用；single 复用既有模型 checkpoint；auto 一案走 rules、两案走 single 且复用 checkpoint。因此不能声称本轮完成四策略新鲜对照或有多 Agent 增益。
 
 安全审计未发现响应中的邮箱、Bearer 字符串、电话或原始 prompt 字段；Gold 仅用于本地评分。未重跑已见题、未改 Gold。新增纯离线 checkpoint usage 回归，确保用量脱敏或畸形的历史响应不被复用；定向 4 项测试通过。机器可读审计列出文件哈希和计数，不含原始响应正文或 Gold。
+
+## 2026-11-15 provider CSV 用量对账补充
+
+仅在本地聚合用户提供的两份 CSV，未复制原文件，未读取或保存 `api_key`、`user_id` 原值。`api_key_name=OpsPilot` 的 amount 表有 18 行、1,305 次请求；缓存命中输入 114,556 tokens、¥0.00327408；缓存未命中输入 1,494,968 tokens、¥1.931891；输出 345,510 tokens、¥1.861372。按导出单价推算合计 ¥3.79653708。记录日期为 10/20、10/23、11/14，末端到 11/15 00:00。
+
+cost 表合计 ¥10.91277486 CNY，只有六个观察日窗，且为账号级成本，没有 `api_key_name` 可按项目拆分。缺失日期不视为已证明零消费。此金额与 OpsPilot 单价推算值、本地 USD 账本分开记录，不做无汇率依据的换算。细项见离线审计 `reports/op3-multiagent-run-audit-2026-11-15.json`。

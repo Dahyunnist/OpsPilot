@@ -66,7 +66,7 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             self.assertEqual(25, row["cached_input_tokens"])
             self.assertEqual("provider_usage", row["cost_basis"])
 
-    def test_malformed_usage_charged_at_peak_and_request_key_blocks_recovery_recharge(self):
+    def test_malformed_usage_charged_at_peak_and_checkpoint_refuses_reuse(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             ledger = root / "ledger.jsonl"
@@ -88,8 +88,10 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
                 encoding="utf-8")
             reused, uncertain = _load_request_checkpoints(checkpoint)
             key = ("case", "a" * 64, "b" * 64, 100)
-            self.assertEqual(response, reused[key])
-            self.assertNotIn(key, uncertain)
+            self.assertNotIn(key, reused)
+            self.assertIn(key, uncertain)
+            with self.assertRaises(PriorPaidResponseUnavailable):
+                _refuse_unavailable_paid_response(key, set(), uncertain)
             resumed = RunBudget(1.0, ledger, "deepseek-v4-flash")
             with self.assertRaises(DuplicateBudgetRequest):
                 resumed.call(lambda *_: self.fail("duplicate request reached provider"),

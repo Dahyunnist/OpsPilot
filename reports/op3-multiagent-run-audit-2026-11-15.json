@@ -236,5 +236,54 @@
     "duplicate_inference_blocked": true
   },
   "interpretation": "Only one provider inference was new; 14 prior checkpoint responses were reused. rules was deterministic, single reused historical model responses, and auto selected rules once and single twice. Strategy metrics are not a fresh four-way comparison and do not establish multi-agent gain.",
-  "execution_source_revision": "9ffc266"
+  "execution_source_revision": "9ffc266",
+  "provider_billing_csv_reconciliation": {
+    "source_files": [
+      "amount-2026-10-17_2026-11-15.csv",
+      "cost-2026-10-17_2026-11-15.csv"
+    ],
+    "amount_csv": {
+      "filter": "api_key_name=OpsPilot",
+      "row_count": 18,
+      "request_count": 1305,
+      "token_amounts": {
+        "input_cache_hit_tokens": 114556,
+        "input_cache_miss_tokens": 1494968,
+        "output_tokens": 345510
+      },
+      "derived_cost_cny_by_token_type": {
+        "input_cache_hit_tokens": 0.00327408,
+        "input_cache_miss_tokens": 1.931891,
+        "output_tokens": 1.861372
+      },
+      "derived_cost_cny_total": 3.79653708,
+      "observed_start_dates": [
+        "2026-10-20",
+        "2026-10-23",
+        "2026-11-14"
+      ],
+      "last_end_time": "2026-11-15T00:00:00+08:00"
+    },
+    "cost_csv": {
+      "currency": "CNY",
+      "observed_rows": 6,
+      "observed_cost_total": 10.91277486,
+      "observed_windows": [
+        "2026-10-19/2026-10-20",
+        "2026-10-20/2026-10-21",
+        "2026-10-23/2026-10-24",
+        "2026-10-24/2026-10-25",
+        "2026-11-11/2026-11-12",
+        "2026-11-14/2026-11-15"
+      ]
+    },
+    "reconciliation_limits": [
+      "amount_csv total is derived from per-key token amounts multiplied by exported prices.",
+      "cost_csv is account-level and cannot be assigned to OpsPilot because it has no api_key_name field.",
+      "cost_csv contains six observed daily windows only; missing windows are not treated as proven zero spend.",
+      "CNY provider amounts are kept separate from the local USD estimate; no exchange-rate conversion is asserted."
+    ],
+    "raw_csv_copied_to_repository": false,
+    "api_key_or_user_id_values_read_or_saved": false
+  }
 }
