@@ -26,6 +26,27 @@ def inspect(sources, window):
 
 
 class TelemetryRobustnessTests(unittest.TestCase):
+    def test_investigation_validates_utc_window_and_limit_before_querying(self):
+        class NoQueryTelemetry:
+            def __getattr__(self, _name):
+                raise AssertionError("invalid query reached telemetry")
+
+        telemetry = NoQueryTelemetry()
+        valid_start = "2026-10-23T10:00:00Z"
+        valid_end = "2026-10-23T10:10:00Z"
+        invalid_queries = [
+            ("2026-10-23T10:00:00", valid_end, 100, "timezone"),
+            (valid_start, valid_end.replace("Z", ""), 100, "timezone"),
+            (valid_start, "2026-10-24T10:00:01Z", 100, "24 hours"),
+            (valid_start, valid_end, 0, "limit"),
+            (valid_start, valid_end, 1001, "limit"),
+            (valid_start, valid_end, True, "limit"),
+        ]
+        for start, end, limit, message in invalid_queries:
+            with self.subTest(start=start, end=end, limit=limit):
+                with self.assertRaisesRegex(ValueError, message):
+                    investigate_live(start, end, limit=limit, telemetry=telemetry)
+
     def load(self, case):
         _, snapshot, window = CASES[case]
         sources = json.loads((ROOT / "reports" / snapshot).read_text(encoding="utf-8-sig"))

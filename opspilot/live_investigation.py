@@ -73,10 +73,8 @@ def _counter_delta(records: list[dict[str, Any]]) -> float:
 
 def investigate_live(start: str, end: str, limit: int = 100,
                      telemetry: LabTelemetry | None = None) -> dict[str, Any]:
+    incident_start, incident_end, limit = LabTelemetry._bounds(start, end, limit)
     adapter = telemetry or LabTelemetry()
-    incident_start, incident_end = _instant(start), _instant(end)
-    if incident_start >= incident_end:
-        raise ValueError("start must precede end")
     source_results: dict[str, dict[str, Any]] = {}
     failures: dict[str, str] = {}
     for source, query in (("metrics", adapter.metrics), ("logs", adapter.logs),

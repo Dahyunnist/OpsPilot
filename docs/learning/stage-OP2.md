@@ -26,6 +26,18 @@ trace adapter 要求 Jaeger span 同时带非空 `traceID` 与 `spanID`。缺任
 
 MCP 工具清单与标准客户端互操作有离线测试；本次未再启动 MCP 服务对真实 Docker 遥测执行工具调用。生产连接仍不支持。
 
+## 2026-11-16 调查入口时间窗与条数边界
+
+复核发现 adapter 会拒绝无时区时间、超过 24 小时的窗口及 limit 不在
+1–1000 的查询；investigate_live 自身却只检查 start/end 顺序。它可在自定义
+telemetry 实现下接受无时区时间，并由宿主时区解释；也会把非法 limit 传入查询。
+现在调查入口在创建/调用 adapter 前统一调用 LabTelemetry._bounds，复用同一
+UTC 时区、24 小时窗口与 limit 契约。回归以禁止任何查询的 fake 验证所有非法输入
+均先失败。定向测试：45 passed、19 subtests passed。未启动 Docker、未调用模型或外网。
+
+仍需用户宿主复测 Docker 合成服务、只读 MCP 工具和同窗调查流程；离线 fake 不证明
+现场容器与遥测链路可用。
+
 
 ## 2026-11-14 证据快照清单
 
