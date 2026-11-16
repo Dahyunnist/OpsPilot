@@ -190,3 +190,9 @@ Actions run `43673391511` 对提交 `2af48e9` 的结论为 `failure`，jobs API 
 授权计划和 payload review 标记仅合成冻结快照、未发送 gold、凭据或真实客户数据；本地扫描未发现密钥/凭证字段或个人数据模式。报告、[request checkpoint](../../reports/op3-multiagent-authorized-replay-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.requests.jsonl)、[summary audit](../../reports/op3-multiagent-authorized-replay-summary-audit-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json) 与[授权计划](../../reports/op3-multiagent-authorized-replay-plan-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json)的 run ID/摘要已离线核对；报告 SHA-256 `df44a763fb8ea44762b8f97cf766d64414937a92be7c982d470a2d50807317bb`。运行报告和检查点保留原样。费用账本保留本机现有修改，未纳入提交；`.tmp/` 未访问。
 
 新增 `tests/test_op3_partial_run_audit.py` 与脱敏 ledger 摘要夹具，验证报告/summary audit 哈希、14 个 checkpoint 终态与账本计费行、17 个预算槽位的计数差异、策略失败分母和合成数据边界。离线 OP-3 回归 12 项及 6 子测试通过；没有新 provider 调用。
+
+## 2026-11-16 历史 OP-3 manifest 阻塞审计
+
+按 OP-5 计划检查 `op3-full-offline-suite-2026-11-15.run-manifest.json`。原报告声明哈希经 Git canonical LF 规则核验通过；原始 manifest 仍因 15 个必填字段缺失、无适用 gold/artifact 声明及不支持状态 `full_suite_timed_out; focused_suite_passed` 而不能规范化。原件与原报告未改写；独立审计记录 `normalization_status=blocked`，未推断字段或将其改成通过。记录见[阻塞审计](../../reports/op3-full-offline-suite-2026-11-15.normalization-audit.json)，SHA-256：`ED5825D8BD3AE8216815E734C06DAEDF2C446ADA480A9221F04105C0C1049BAC`。
+
+新增 `tests/test_op3_blocked_manifest_audit.py` 验证源哈希、报告 canonical hash、原状态、schema 缺项和明确不补造字段；定向测试通过。此记录不解决真实策略评测 `partial`，也不规范化另一个损坏的 OP-3 manifest。未读取或修改费用账本、真值、checkpoint；未调用模型、Docker 或外部服务。

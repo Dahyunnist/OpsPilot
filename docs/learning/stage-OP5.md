@@ -51,3 +51,7 @@ OP-5 不重跑历史实验，也不把 `partial`、`blocked`、缺失来源或�
 ## 明确未验收边界
 
 真实企业 IdP、独立人工审批、业务系统真实回滚、生产遥测与 OTLP 导出、跨主机/网络文件系统锁语义、多 Agent 真实质量收益和付费模型成本均不属于 OP-5。它们需要单独的运行授权与证据，不能由本阶段离线测试替代。
+
+## 2026-11-16 历史 OP-3 manifest 来源审计
+
+按工作顺序第 2 项检查 `op3-full-offline-suite-2026-11-15.run-manifest.json`。源报告 SHA 经 Git canonical LF 规则核对；因 15 个必填字段缺失、gold/artifact 声明缺失且状态值不受 schema 支持，独立记录为 `blocked`，不生成有效 manifest。原件未改写。审计、哈希和回归见 [OP-3 阻塞记录](../../reports/op3-full-offline-suite-2026-11-15.normalization-audit.json)。`op3-multi-r3-gate` 仍需可解析的原始来源；OP-1/OP-2 现场 provenance 与事件 trace 仍需宿主证据。

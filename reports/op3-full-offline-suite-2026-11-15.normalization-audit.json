@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "audit_type": "historical_op_run_manifest_normalization",
+  "normalization_status": "blocked",
+  "source_manifest_path": "reports/op3-full-offline-suite-2026-11-15.run-manifest.json",
+  "source_manifest_sha256": "bb21e5659073d65fe2cf86371e4f259e80d2194fc1d2e2f87827d94041a4b3ba",
+  "source_report_path": "reports/op3-full-offline-suite-2026-11-15.json",
+  "source_report_sha256": "e4914746366e9ae80131331e69d9b34872bfbb91d8dc3c9491d7ed2dcd7dcea6",
+  "source_report_sha256_verified": true,
+  "source_git_sha": "8176cf620fac7a26b8afe2be9fae0ddf782bb4ea",
+  "source_run_id": "op3-full-offline-suite-2026-11-15",
+  "source_status": "full_suite_timed_out; focused_suite_passed",
+  "validation_errors": [
+    "missing required OP run fields: dataset_id, dataset_sha256, ended_at, evaluator_sha256, gold_source, max_steps, max_tokens, project, prompt_sha, runtime_digest, scorer_sha, started_at, tool_schema_sha, trace_id, truth_sha256",
+    "model_id none requires independent gold or an explicit non-evaluative artifact type",
+    "status is not supported"
+  ],
+  "missing_fields": [
+    "dataset_id",
+    "dataset_sha256",
+    "ended_at",
+    "evaluator_sha256",
+    "gold_source",
+    "max_steps",
+    "max_tokens",
+    "project",
+    "prompt_sha",
+    "runtime_digest",
+    "scorer_sha",
+    "started_at",
+    "tool_schema_sha",
+    "trace_id",
+    "truth_sha256"
+  ],
+  "inferred_fields": [],
+  "recorded_parameters": {
+    "full_suite_collected": 259,
+    "full_suite_completed": false,
+    "focused_tests_passed": 43,
+    "model_calls": 0,
+    "docker_started": false,
+    "external_services_used": false,
+    "a2a_semantics_verified": false
+  },
+  "decision": "Preserve source manifest. Do not create a valid normalized manifest because required provenance and supported status are absent."
+}
