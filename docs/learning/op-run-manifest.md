@@ -111,3 +111,12 @@ sidecar marks unknown times and trace explicitly. OP-4's old verification
 sidecar lacked the shared fields; its replacement binds the evidence-matrix
 report and recorded test run ID. Dataset hash, evaluator, scorer, budget,
 times, and trace were not recorded and remain null. No provider or Docker calls were made.
+
+## 2026-11-16 conformance consistency
+
+The public-manifest validator accepted `conformance_status=passed` while
+`blocked_fields` was non-empty. That allowed a contradictory shared record,
+even though the host normalizer emitted `blocked` for the same provenance gaps.
+Validation now rejects this state; regression test covers it. Focused tests
+and commit recorded with this change. No model, provider, or Docker call was
+needed.

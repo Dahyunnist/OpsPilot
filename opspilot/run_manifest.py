@@ -322,6 +322,8 @@ def validate_public_manifest(value: Any) -> list[str]:
         errors.append("blocked_fields must match blocked field_status entries")
     if value.get("conformance_status") not in {"passed", "blocked"}:
         errors.append("invalid conformance_status")
+    elif value.get("conformance_status") == "passed" and value.get("blocked_fields"):
+        errors.append("conformance_status cannot pass while blocked_fields are present")
     if value.get("status") not in {"passed", "failed", "blocked"}:
         errors.append("invalid public run status")
     for field in ("max_steps",):

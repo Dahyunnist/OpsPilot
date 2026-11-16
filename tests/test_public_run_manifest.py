@@ -81,6 +81,12 @@ class PublicRunManifestTests(unittest.TestCase):
         value["field_status"].pop("trace_id")
         self.assertIn("null trace_id requires explicit field_status", validate_public_manifest(value))
 
+    def test_conformance_cannot_pass_with_blocked_fields(self):
+        value = normalized_host_manifest()
+        value["conformance_status"] = "passed"
+        self.assertIn("conformance_status cannot pass while blocked_fields are present",
+                      validate_public_manifest(value))
+
     def test_committed_public_view_matches_reproducible_normalization(self):
         expected = normalized_host_manifest()
         actual_path = ROOT / "reports" / "op1-host-matrix-public-manifest.json"
