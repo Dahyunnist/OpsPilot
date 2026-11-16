@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "artifact_type": "offline_op4_verification",
+  "source_git_sha": "37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8",
+  "dataset_path": "reports/op4-approval-safety-evidence-matrix-2026-11-14.json",
+  "test_command": "E:\\job\\opspilot\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
+  "test_summary": {
+    "passed": 57,
+    "failed": 0,
+    "subtests": 11
+  },
+  "model_calls": 0,
+  "external_system_calls": 0,
+  "external_writes": 0,
+  "docker_started": false,
+  "project_fee_ledger_touched": false,
+  "truth_file_touched": false,
+  "runtime": {
+    "python": "3.14.5",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "evaluator_sources": [
+    "opspilot/action_safety.py",
+    "opspilot/action_cli.py",
+    "opspilot/identity.py"
+  ],
+  "assertion_sources": [
+    "tests/test_action_safety.py",
+    "tests/test_action_cli.py",
+    "tests/test_s3.py"
+  ],
+  "started_at": "2026-11-16T13:09:06.0054909Z",
+  "ended_at": "2026-11-16T13:09:15.2684143Z",
+  "op_run_manifest": {
+    "schema_version": 1,
+    "project": "OpsPilot",
+    "run_id": "op4-offline-c2852cff-ba90-427a-b3bf-f99c3da4c561",
+    "evaluation_id": "op4_approval_safety",
+    "dataset_id": "op4-approval-safety-matrix-2026-11-14",
+    "dataset_sha256": "da3297bec95fbcfbc68d515b7a865b4e7922d9355737e3db56bb24d62a7fa7fe",
+    "truth_sha256": null,
+    "split": "synthetic_local",
+    "evaluator_sha256": "7b1c7f2162b357919ad062454fc92571baabb8424e533f9f868e4878693c9b19",
+    "result_fingerprint_sha256": "cd0d97e86f61355b7758bc259baadb27b0c15da4978c0d90900e3c3960a1fcf7",
+    "git_sha": "37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8",
+    "model_id": "none",
+    "prompt_sha": null,
+    "tool_schema_sha": null,
+    "runtime_digest": null,
+    "max_steps": null,
+    "max_tokens": null,
+    "scorer_sha": "529536087bda47debc84f9a07ae81cfa2be334e5b692ce4fb48518a54d2e4b63",
+    "gold_source": "not_applicable",
+    "cost_usd_estimate": 0.0,
+    "trace_id": null,
+    "started_at": "2026-11-16T13:09:06.0054909Z",
+    "ended_at": "2026-11-16T13:09:15.2684143Z",
+    "parameters": {
+      "artifact_type": "verification_report",
+      "report_path": "reports/op4-offline-verification-2026-11-16.json",
+      "dataset_path": "reports/op4-approval-safety-evidence-matrix-2026-11-14.json",
+      "dataset_sha256": "da3297bec95fbcfbc68d515b7a865b4e7922d9355737e3db56bb24d62a7fa7fe",
+      "evaluator_sources": [
+        "opspilot/action_safety.py",
+        "opspilot/action_cli.py",
+        "opspilot/identity.py"
+      ],
+      "assertion_sources": [
+        "tests/test_action_safety.py",
+        "tests/test_action_cli.py",
+        "tests/test_s3.py"
+      ],
+      "test_command": "E:\\job\\opspilot\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
+      "targeted_test_count": 57,
+      "subtests": 11,
+      "model_calls": 0,
+      "external_system_calls": 0,
+      "external_writes": 0,
+      "docker_started": false,
+      "project_fee_ledger_touched": false,
+      "truth_file_touched": false,
+      "max_steps_not_recorded": true,
+      "trace_id_not_recorded": true,
+      "python": "3.14.5",
+      "platform": "Windows-11-10.0.26200-SP0"
+    },
+    "status": "completed"
+  }
+}

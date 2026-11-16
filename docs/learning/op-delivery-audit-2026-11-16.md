@@ -13,7 +13,7 @@ OP 共享 run manifest 最低字段由 `opspilot/run_manifest.py` 的 `OP_RUN_MA
 | OP-1 | 2026-11-15 矩阵复现 run manifest 通过共享字段校验，绑定 report SHA、truth SHA 与实现 diff；原矩阵记录 12/12、48 个 telemetry spans。Public manifest 的源运行 `status=passed`，但 `conformance_status=blocked`，缺 8 项来源/环境信息；trace ID 明确为未记录。 | 运行结果通过；公共 provenance 未完整验收。六类标准事件均为 `not_covered`。保留 0/12、4/12、6/12、11/12 等失败报告，不能只展示最终通过。 |
 | OP-2 | 三份冻结快照的 2026-11-15 manifest 审计均完成，哈希与共用时间窗核对通过；最新 MCP bad_release 宿主报告 `5ff7d94f-01ed-4453-94b2-4551e347d2da` 通过并记录合成订单、窗口、部署、日志、只读工具及 cleanup。 | 快照 provenance 通过。MCP 宿主报告没有共享 run manifest，也没有标准 trace/event 映射；宿主报告运行验收通过，标准事件验收未覆盖。 |
 | OP-3 | 2026-11-15 离线验证 manifest 通过共享字段校验；冻结真实策略报告维持 `partial`。 | 合成离线验证通过；真实策略质量对照未验收。`op3-full-offline-suite-2026-11-15.run-manifest.json` 缺多个必填字段且使用不支持状态，校验失败。`op3-multi-r3-gate-2026-11-15.run-manifest.json` 不能解析为单个 JSON 文档。保留原文件，缺失来源不可补猜。 |
-| OP-4 | 2026-11-14 安全证据矩阵 run manifest 通过共享字段校验；本地审批、拒绝和 dry-run 回归记录外部调用/写入为 0。 | 安全矩阵通过。`op4-verification-2026-11-15.run-manifest.json` 仅含精简字段，缺多个必填项且状态 `verified` 不属于 schema 枚举，校验失败。它不能证明已接真实身份提供者、独立审批人或真实修复执行。 |
+| OP-4 | 2026-11-14 安全证据矩阵 run manifest 通过共享字段校验；本地审批、拒绝和 dry-run 回归记录外部调用/写入为 0。2026-11-16 新离线验证报告的 manifest 通过 schema，绑定运行代码、测试断言与结果指纹。 | 新离线验收来源完整。历史 `op4-verification-2026-11-15.run-manifest.json` 保留原样且仍校验失败；任何记录均不能证明已接真实身份提供者、独立审批人或真实修复执行。 |
 
 ## Trace 与标准事件
 
@@ -31,7 +31,7 @@ OP-3 有 mock timeout/cancel 计数、查询预算耗尽结果，以及重试相
 
 1. OP-1 公共 manifest 缺失字段的来源证据；OP-2 MCP 宿主报告的共享 manifest 与标准事件链接。
 2. OP-3 两个异常 run manifest 的规范化记录；原始来源不足，不能覆盖或补造。
-3. OP-4 精简 verification manifest 的完整来源字段。
+3. OP-4 历史精简 verification manifest 的完整来源字段；原始时间与运行环境不可追补。新的离线验证记录已按当前 schema 完整记录。
 4. 六类事件已通过合成 schema 测试核对 `(run_id, trace_id, span_id)` 与 `telemetry_evidence` span 的关联；实际 OP-1–OP-4 运行时采集和跨阶段关联仍未验收。
 5. Windows 本机 MCP/回环用例此前未完成；2026-11-16 最新全套离线复核为 366 项通过、2 项费用账本测试排除、101 个子测试通过。此前卡住的用例本轮未复现；没有调用模型、启动 Docker 或读取账本。
 
