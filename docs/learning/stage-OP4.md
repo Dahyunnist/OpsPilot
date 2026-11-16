@@ -102,7 +102,7 @@ OP-4 复核确认过期/恰好到期、重复消费、错误环境、越权角�
 
 ## 2026-11-16 OP-4 离线验证清单
 
-旧的 `op4-verification-2026-11-15.run-manifest.json` 保留原样；其 `verified` 状态和缺字段不符合当前 schema。本次重新运行 `tests/test_action_safety.py`、`tests/test_action_cli.py`、`tests/test_s3.py`：57 项、11 子测试通过。新报告[OP-4 离线验证](../../reports/op4-offline-verification-2026-11-16.json)绑定 `37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8`、覆盖矩阵 SHA、实现与断言文件哈希及结果指纹；`validate_op_run_artifact` 通过，状态为 `completed`。报告 SHA-256：`50755121d2fb099fd5d9dcbc5c25bc801a18b97a309e28bf9a813ca86764c136`。本地测试未产生分布式 trace，故 `trace_id=null` 明确记录；模型调用、外部系统调用、外部写入和 Docker 均为 0。测试审批账本使用临时目录；项目费用账本与真值文件未读写。
+旧的 `op4-verification-2026-11-15.run-manifest.json` 保留原样；其 `verified` 状态和缺字段不符合当前 schema。本次重新运行 `tests/test_action_safety.py`、`tests/test_action_cli.py`、`tests/test_s3.py`：57 项、11 子测试通过。新报告[OP-4 离线验证](../../reports/op4-offline-verification-2026-11-16.json)绑定 `37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8`、覆盖矩阵 SHA、实现与断言文件哈希及结果指纹；`validate_op_run_artifact` 通过，状态为 `completed`。报告命令改为仓库相对路径并重算结果指纹。报告 SHA-256：`a62b4d613739d3e74ff0d72ca32f6c41ab2dbe82c1545c78e52f007051cf8ad4`。本地测试未产生分布式 trace，故 `trace_id=null` 明确记录；模型调用、外部系统调用、外部写入和 Docker 均为 0。测试审批账本使用临时目录；项目费用账本与真值文件未读写。
 
 新增 manifest 绑定回归与三组原有回归合跑 58 项、11 子测试通过。
 

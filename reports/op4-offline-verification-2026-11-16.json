@@ -3,7 +3,7 @@
   "artifact_type": "offline_op4_verification",
   "source_git_sha": "37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8",
   "dataset_path": "reports/op4-approval-safety-evidence-matrix-2026-11-14.json",
-  "test_command": "E:\\job\\opspilot\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
+  "test_command": ".\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
   "test_summary": {
     "passed": 57,
     "failed": 0,
@@ -41,7 +41,7 @@
     "truth_sha256": null,
     "split": "synthetic_local",
     "evaluator_sha256": "7b1c7f2162b357919ad062454fc92571baabb8424e533f9f868e4878693c9b19",
-    "result_fingerprint_sha256": "cd0d97e86f61355b7758bc259baadb27b0c15da4978c0d90900e3c3960a1fcf7",
+    "result_fingerprint_sha256": "6ea053c6c6436b4ef471845318771f774e4a29f4622cf2da833ba232c7816d57",
     "git_sha": "37d58cd87bb9c8cb0114ed2cd1cca199e29a35c8",
     "model_id": "none",
     "prompt_sha": null,
@@ -70,7 +70,7 @@
         "tests/test_action_cli.py",
         "tests/test_s3.py"
       ],
-      "test_command": "E:\\job\\opspilot\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
+      "test_command": ".\\.venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py",
       "targeted_test_count": 57,
       "subtests": 11,
       "model_calls": 0,
