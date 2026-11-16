@@ -1,15 +1,16 @@
 param(
     [string] $CaseFile = (Join-Path $PSScriptRoot "scenarios/vertical-slow-sql.json"),
-    [string] $OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/vertical-slow-sql-window.json")
+    [string] $OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/vertical-slow-sql-window.json"),
+    [string] $PythonExecutable = (Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe")
 )
 
 $ErrorActionPreference = "Stop"
 $composeFile = Join-Path $PSScriptRoot "compose.yaml"
 $composeFiles = @("-f", $composeFile)
 if ($env:OPSPILOT_COMPOSE_OVERRIDE) { $composeFiles += @("-f", $env:OPSPILOT_COMPOSE_OVERRIDE) }
-$python = Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe"
+$python = $PythonExecutable
 $evidenceVerifier = Join-Path $PSScriptRoot "slow_sql_evidence.py"
-if (-not (Test-Path -LiteralPath $python)) { throw "Repository Python environment is missing: $python" }
+if (-not (Test-Path -LiteralPath $python)) { throw "Python executable is missing: $python" }
 $case = Get-Content -LiteralPath $CaseFile -Raw | ConvertFrom-Json
 if ($case.injection.fault -ne "slow_sql" -or $case.injection.service -ne "orders") {
     throw "This vertical slice only permits the reviewed slow_sql injection on orders."

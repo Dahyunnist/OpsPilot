@@ -54,6 +54,7 @@ def verify_slow_sql_evidence(payload: dict[str, Any]) -> dict[str, Any]:
     trace_ids = sorted({str(row["trace_id"]).lower() for row in logs
                         if isinstance(row.get("trace_id"), str) and row["trace_id"]})
     spans = []
+    seen_spans = set()
     for trace in trace_rows:
         if not isinstance(trace, dict):
             continue
@@ -80,6 +81,14 @@ def verify_slow_sql_evidence(payload: dict[str, Any]) -> dict[str, Any]:
                           and tag.get("key") == "opspilot.order_id"]
             if not order_tags or str(order_tags[0].get("value", "")) != order_id:
                 continue
+            span_id = span.get("spanID")
+            span_key = (trace_id.lower(), str(span_id)) if span_id else (
+                trace_id.lower(), str(span.get("processID")), str(span.get("operationName")),
+                str(span.get("startTime")), str(span.get("duration")),
+            )
+            if span_key in seen_spans:
+                continue
+            seen_spans.add(span_key)
             spans.append({
                 "trace_id": trace_id.lower(),
                 "operation": span.get("operationName"),

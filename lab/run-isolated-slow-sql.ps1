@@ -1,5 +1,6 @@
 param(
-    [string] $OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/op1-slow-sql-isolated.json")
+    [string] $OutputFile = (Join-Path (Split-Path -Parent $PSScriptRoot) "reports/op1-slow-sql-isolated.json"),
+    [string] $PythonExecutable = (Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe")
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,7 +50,7 @@ try {
     $env:COMPOSE_PROJECT_NAME = $projectName
     $env:OPSPILOT_COMPOSE_OVERRIDE = $composeOverride
     $runAttempted = $true
-    & $runner -OutputFile $resolvedOutput
+    & $runner -OutputFile $resolvedOutput -PythonExecutable $PythonExecutable
     if ($LASTEXITCODE -ne 0) { throw "Isolated slow_sql run failed." }
 
     $result = Get-Content -LiteralPath $resolvedOutput -Raw | ConvertFrom-Json

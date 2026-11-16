@@ -50,6 +50,16 @@ def test_slow_sql_runner_correlates_windowed_order_logs_with_query_trace():
     assert "root_causes" not in runner
 
 
+def test_isolated_slow_sql_runner_forwards_explicit_python_interpreter():
+    isolated = (ROOT / "lab" / "run-isolated-slow-sql.ps1").read_text(encoding="utf-8-sig")
+    vertical = (ROOT / "lab" / "run-vertical-slice.ps1").read_text(encoding="utf-8-sig")
+
+    assert '[string] $PythonExecutable = (Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe")' in isolated
+    assert "& $runner -OutputFile $resolvedOutput -PythonExecutable $PythonExecutable" in isolated
+    assert '[string] $PythonExecutable = (Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe")' in vertical
+    assert "$python = $PythonExecutable" in vertical
+
+
 def test_slow_sql_export_flush_and_acceptance_keep_telemetry_failure_distinct():
     app = (ROOT / "lab" / "service" / "app.py").read_text(encoding="utf-8")
     runner = (ROOT / "lab" / "run-isolated-slow-sql.ps1").read_text(encoding="utf-8-sig")
@@ -209,6 +219,21 @@ def test_non_orders_log_cannot_correlate_slow_sql_with_orders_span():
     assert result["correlated"] is False
     assert result["failure_stage"] == "no_order_logs"
     assert result["logs"] == []
+
+
+def test_duplicate_jaeger_span_from_window_and_trace_queries_is_returned_once():
+    payload = json.loads((ROOT / "tests" / "fixtures" / "op1_slow_sql_api_payload.json").read_text(encoding="utf-8"))
+    trace = payload["traces"]["data"][0]
+    payload["traces"] = {
+        "window_query": {"data": [trace]},
+        "by_trace_id": [{"trace_id": trace["traceID"], "status": 200, "response": {"data": [trace]}}],
+    }
+
+    result = verify_slow_sql_evidence(payload)
+
+    assert result["correlated"] is True
+    assert len(result["traces"]) == 1
+    assert len([span for span in result["traces"] if span["operation"] == "postgres.query"]) == 1
 
 
 def test_trace_id_without_exported_span_is_distinct_from_missing_logs():

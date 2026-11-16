@@ -141,3 +141,11 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 离线回归发现两处验收缺口：日志只按订单与时间筛选，未限定 `orders` 服务；隔离 runner 在报告落盘后只拒绝清理失败和遥测缺失，慢请求/恢复失败可能仍以成功退出。现增加服务归属过滤，并在保存完整报告后对任何非 `passed` 状态返回非零。新增测试先复现两项失败，再验证修复。
 
 OP-1 定向测试 15 项通过；审批拒绝定向测试 5 项通过。离线全套测试 368 项通过、101 子测试通过；两项冻结账本审计测试按范围排除。未运行 Docker 或模型；未改动遥测、真值和账本。MCP 依赖与宿主 Docker 验收不由本轮覆盖。用户回传的失败报告只含时间线，缺少故障遥测明细，不能据此判定现场 trace 未关联的具体原因。
+
+## 2026-11-16 Python 路径参数与隔离 slow SQL 复验
+
+干净候选 worktree 无私有 `.venv`，导致垂直切片无法启动。两个 PowerShell runner 现支持 `-PythonExecutable`，默认仍指向仓库 `.venv/Scripts/python.exe`；隔离 runner 会将显式值传给垂直切片。使用 `E:\job\opspilot\.venv\Scripts\python.exe` 在候选代码完成本机 Docker 复验。
+
+故障 checkout 返回 HTTP 200/1616.4 ms，恢复 checkout 返回 HTTP 200/46.3 ms。订单 `17dd19ec-ea93-4022-9281-2f262ac41bcd` 的 `orders` 日志与 trace `d4384c733fcbb3c7804b186251acf714` 关联；报告含 5 个唯一 span，其中 1 个 `postgres.query` span 耗时 2.068 秒。`acceptance.status=passed`，清理后容器和网络均为 0；PostgreSQL/Redis 两个卷保留。完整报告见[隔离复验报告](../../reports/op1-slow-sql-python-override-final-6930776e2516485cb572a55b4cffc88d.json)，SHA-256：`8D875A8C36BDFED08FFDDB6CEB75B3FB57D07D8BEBAEF82D629E8D881779A879`。
+
+去重回归先失败，修复后 OP-1 定向测试 17 项通过。离线全套测试 370 项通过、101 子测试通过；两项冻结账本审计测试排除。未调用模型；未修改账本或真值。
