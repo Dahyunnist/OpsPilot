@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import unittest
 
-from opspilot.run_manifest import validate_run_manifest
+from opspilot.run_manifest import EVENT_TYPES, PUBLIC_EVENT_TYPES, validate_run_manifest
 from opspilot.hashing import verify_text_sha256
 
 
@@ -57,6 +57,12 @@ class RunManifestTests(unittest.TestCase):
         manifest = valid_manifest()
         manifest["events"] = [{"event_type": "retry", "run_id": manifest["run_id"],
                                "trace_id": manifest["trace_id"], "span_id": "s1"}]
+        manifest["telemetry_evidence"] = [{
+            "event_type": "span_observed", "run_id": manifest["run_id"],
+            "trace_id": manifest["trace_id"], "span_id": "s1", "service": "opspilot",
+            "operation": "retry", "order_id": "synthetic-run-1",
+            "start_unix_us": 1794553063608593, "duration_us": 1,
+        }]
         self.assertEqual([], validate_run_manifest(manifest))
         for field in ("run_id", "trace_id"):
             manifest["events"][0][field] = "unrelated-" + field
@@ -66,6 +72,43 @@ class RunManifestTests(unittest.TestCase):
         errors = validate_run_manifest(manifest)
         self.assertIn("event has unsupported event_type", errors)
         self.assertIn("event requires run_id, trace_id, and span_id", errors)
+
+    def test_all_standard_events_link_to_observed_run_trace_span(self):
+        self.assertEqual(EVENT_TYPES, set(PUBLIC_EVENT_TYPES))
+        manifest = valid_manifest()
+        manifest["events"] = []
+        manifest["telemetry_evidence"] = []
+        for index, event_type in enumerate(PUBLIC_EVENT_TYPES, start=1):
+            span_id = f"synthetic-span-{index}"
+            manifest["events"].append({
+                "event_type": event_type, "run_id": manifest["run_id"],
+                "trace_id": manifest["trace_id"], "span_id": span_id,
+            })
+            manifest["telemetry_evidence"].append({
+                "event_type": "span_observed", "run_id": manifest["run_id"],
+                "trace_id": manifest["trace_id"], "span_id": span_id,
+                "service": "opspilot", "operation": event_type,
+                "order_id": "synthetic-run-1", "start_unix_us": 1794553063608593 + index,
+                "duration_us": index,
+            })
+
+        self.assertEqual([], validate_run_manifest(manifest))
+        evidence_refs = {
+            (item["run_id"], item["trace_id"], item["span_id"])
+            for item in manifest["telemetry_evidence"]
+        }
+        self.assertEqual(6, len(manifest["events"]))
+        self.assertEqual(
+            evidence_refs,
+            {(item["run_id"], item["trace_id"], item["span_id"])
+             for item in manifest["events"]},
+        )
+
+        manifest["events"][0]["span_id"] = "unobserved-span"
+        self.assertIn(
+            "event run_id, trace_id, and span_id must match telemetry evidence",
+            validate_run_manifest(manifest),
+        )
 
     def test_telemetry_evidence_requires_real_trace_identity_and_timing(self):
         manifest = valid_manifest()

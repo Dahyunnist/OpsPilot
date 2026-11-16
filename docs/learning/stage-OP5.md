@@ -26,9 +26,15 @@ OP-5 不重跑历史实验，也不把 `partial`、`blocked`、缺失来源或�
 事件类型为 `timeout`、`retry`、`budget_exceeded`、`unsafe_action_blocked`、`cancel`、`checkpoint_resume`。
 
 - 每条事件都带与 manifest 一致的 `run_id`、`trace_id` 和非空 `span_id`。
-- 事件引用对应的本地操作或遥测 span；不能从汇总计数、日志文字或测试名称推断事件已发生。
+- 每条事件的 `(run_id, trace_id, span_id)` 必须命中 `telemetry_evidence` 中完整、有效的 `span_observed` 记录；不能从汇总计数、日志文字或测试名称推断事件已发生。
 - 离线测试可用临时目录和确定性替身触发边界；不得访问模型、费用账本或外部业务系统。
 - 没有实际观测到的事件继续标为 `count=0` / `not_covered`。
+
+### 2026-11-16 合成关联切片
+
+`validate_run_manifest` 现拒绝没有对应遥测 span 的标准事件。`tests/test_run_manifest.py::RunManifestTests.test_all_standard_events_link_to_observed_run_trace_span` 为六类事件分别构造内存 manifest 和 span 记录，并验证孤立 span 会失败。该测试证明 schema 关联规则，不证明 OP-1–OP-4 的运行时已实际发出这些事件。
+
+定向 manifest 测试为 11 项通过。全套离线测试为 366 项通过、2 项账本读取测试排除、101 个子测试通过；耗时 20.40 秒。测试使用仓库内的 pytest basetemp；事件用例本身不创建文件、不改数据或账本，也未调用模型、Docker、生产遥测或外部服务。
 
 ### 4. 形成阶段验收记录
 
@@ -38,7 +44,7 @@ OP-5 不重跑历史实验，也不把 `partial`、`blocked`、缺失来源或�
 
 1. 新生成的 OP-1/OP-2 manifest 通过共享 schema 校验，且每个字段都有来源或明确缺失状态。
 2. 历史 OP-3/OP-4 原件未覆盖；派生记录不会猜测未记录字段或改变原状态。
-3. 六类事件各有带 run/trace/span 关联的确定性离线回归；未发生事件仍明确为未覆盖。
+3. 六类事件的 schema 关联规则有确定性离线回归；实际 OP-1–OP-4 运行时事件采集和跨阶段 trace/span 仍需验收，未发生事件仍明确为未覆盖。
 4. 全套获准离线测试通过；账本读取用例保持排除，且无模型调用、Docker 操作或外部写入。
 5. 验收文档区分本地合成覆盖和真实宿主/生产覆盖。
 

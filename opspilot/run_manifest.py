@@ -109,6 +109,27 @@ def validate_run_manifest(value: Any) -> list[str]:
                     errors.append("telemetry evidence run_id must match manifest identity")
                 if isinstance(item, dict) and (not isinstance(item.get("start_unix_us"), int) or not isinstance(item.get("duration_us"), int) or item["duration_us"] < 0):
                     errors.append("telemetry evidence requires integer start_unix_us and non-negative duration_us")
+    else:
+        evidence = []
+    observed_spans = {
+        (item["run_id"], item["trace_id"], item["span_id"])
+        for item in evidence
+        if isinstance(item, dict)
+        and item.get("event_type") == "span_observed"
+        and all(isinstance(item.get(key), str) and item[key].strip()
+                for key in ("run_id", "trace_id", "span_id", "service", "operation", "order_id"))
+        and isinstance(item.get("start_unix_us"), int)
+        and isinstance(item.get("duration_us"), int)
+        and item["duration_us"] >= 0
+    } if isinstance(evidence, list) else set()
+    events = value.get("events")
+    if isinstance(events, list):
+        for event in events:
+            if (isinstance(event, dict)
+                    and all(isinstance(event.get(key), str) and event[key].strip()
+                            for key in ("run_id", "trace_id", "span_id"))
+                    and (event["run_id"], event["trace_id"], event["span_id"]) not in observed_spans):
+                errors.append("event run_id, trace_id, and span_id must match telemetry evidence")
     for field in ("max_steps", "max_tokens"):
         optional_model_tokens = field in value and field == "max_tokens" and value.get("model_id") == "none" and value[field] is None
         if field in value and not optional_model_tokens and (not isinstance(value[field], int) or isinstance(value[field], bool) or value[field] <= 0):
