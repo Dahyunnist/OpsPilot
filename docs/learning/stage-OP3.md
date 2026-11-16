@@ -1,5 +1,20 @@
 # OP-3：模型策略与费用对照
 
+## 2026-11-16 离线输入与 ValueError 路径
+
+离线复核只读取 runner、策略代码、已登记的三份合成快照及既有失败诊断，
+没有读取费用账本、replay、checkpoint 或临时目录。fake provider 逐例验证
+rules/single/multi/auto 使用同一冻结来源记录；single 与 multi 专家输入的
+record ID 按 source 一致，adjudicator 仅接收这些冻结 record ID。payload
+拒绝 truth/root causes/gold evidence 等标签。测试共 2 项、6 个子测试通过。
+
+既有失败诊断将 multi 的 ValueError 归为 provider usage 元数据格式问题，
+但明确未保存原始值。因此无法确认当时具体字段和值，不把离线样例冒充原始根因。
+新增 fake provider 以非 JSON 的 prompt_tokens_details 字符串复现此错误路径；
+评测将策略标记 failed、回退 rules，并记录脱敏的 provider_usage 字段码，
+不保存原始 usage 内容。三案真实评测状态及失败报告保持不变；无模型请求、
+无账本读写。
+
 ## 固定实验口径
 
 `scripts/evaluate_lab.py` 先一次读取同一时间窗的真实服务遥测，再把同一 snapshot SHA-256 输入四种策略：规则、单 Agent、全量多 Agent、自动路由。真值文件只在模型调用结束后用于评分，不进入模型输入。多 Agent 对四个来源分别并行分析，再用独立裁决调用汇总；来源专家不会看到其他来源原始记录。

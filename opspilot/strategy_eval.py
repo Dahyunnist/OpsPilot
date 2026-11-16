@@ -20,6 +20,14 @@ STRATEGIES = ("rules", "single", "multi", "auto")
 CAUSE_IDS = {cause for cause, _ in CAUSES}
 
 
+class InvalidProviderUsage(ValueError):
+    """Provider usage failed validation; retain only the safe field name."""
+
+    def __init__(self, field: str) -> None:
+        self.field = field
+        super().__init__("provider usage validation failed")
+
+
 class FrozenTelemetry:
     def __init__(self, source_results: dict[str, dict[str, Any]]) -> None:
         self.source_results = source_results
@@ -59,12 +67,16 @@ def _normalise_roots(data: dict[str, Any]) -> list[str]:
 def _failure_label(exc: Exception) -> str:
     if isinstance(exc, ModelError):
         return f"{exc.category}:{exc.code}" if exc.code is not None else exc.category
+    if isinstance(exc, InvalidProviderUsage):
+        return f"provider_usage:{exc.field}"
     return type(exc).__name__
 
 
 def _failure_diagnostic(exc: Exception) -> dict[str, Any]:
     if isinstance(exc, ModelError):
         return exc.diagnostic()
+    if isinstance(exc, InvalidProviderUsage):
+        return {"category": "provider_usage", "code": exc.field, "retryable": False}
     return {"category": "internal", "code": type(exc).__name__, "retryable": False}
 
 
@@ -285,24 +297,29 @@ def evaluate_snapshot(case_id: str, start: str, end: str,
             raise
         if called:
             usage = response.get("usage", {})
+            usage_field = "usage"
             try:
                 if not isinstance(usage, dict):
                     raise ValueError("invalid usage object")
+                usage_field = "prompt_tokens"
                 prompt_tokens = _usage_int(usage, "prompt_tokens")
+                usage_field = "completion_tokens"
                 output_tokens = _usage_int(usage, "completion_tokens")
+                usage_field = "prompt_tokens_details"
                 details = usage.get("prompt_tokens_details")
                 if isinstance(details, str):
                     details = json.loads(details)
                 if details is not None and not isinstance(details, dict):
                     raise ValueError("invalid usage field: prompt_tokens_details")
+                usage_field = "cached_tokens"
                 cached_tokens = _usage_int(details, "cached_tokens") if isinstance(details, dict) else 0
                 if cached_tokens > prompt_tokens:
                     raise ValueError("invalid usage field: cached_tokens")
-            except (ValueError, json.JSONDecodeError):
+            except (ValueError, json.JSONDecodeError) as exc:
                 with tracker_lock:
                     tracker[active_strategy]["calls"] += 1
                     tracker[active_strategy]["cost"] += reserve
-                raise
+                raise InvalidProviderUsage(usage_field) from exc
             price = (cached_tokens * 0.006 + max(0, prompt_tokens - cached_tokens) * 0.30 + output_tokens * 1.20) / 1_000_000
             with tracker_lock:
                 tracker[active_strategy]["calls"] += 1
