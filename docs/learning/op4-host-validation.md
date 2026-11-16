@@ -25,7 +25,7 @@ Windows PowerShell 5.1 对单条管道输出的 `.Count` 与 PowerShell 7 行为
 
 新增确定性 PowerShell 5.1 测试：把真实 endpoint 的 `{"records":[...]}` 响应 wrapper 经 `ConvertFrom-Json` 解析，再用脚本相同的 order 与 DNS 筛选表达式；夹具含两条同单订单日志和另一订单 DNS 日志，断言得到两条订单日志、恰好一条 DNS 证据。测试不启动服务、不调用模型。修复代码已在 `59b464d`；本次补齐真实 wrapper 回归。
 
-2026-11-15 又完成一次可访问 Docker 的 Windows PowerShell 宿主复核。报告 [cd8d4365 宿主验收](../../reports/op4-bad-release-host-cd8d4365-6be4-424c-845a-235dc148ceaf.json) 为 `passed`：合成数据、一次请求、HTTP 502；唯一订单对应 orders/v2 deployment，且同一订单日志记录 `inventory-v2` DNS 错误 `[Errno -5] No address associated with hostname`。脚本报告容器已清空、卷保留。受限执行环境遇到 Docker pipe `Access Denied` 的失败不代表项目故障；该轮未把失败环境报告当成验收结果。对应宿主脚本回归命令：`pytest tests/test_op4_host_validation_script.py`。本报告未记录脚本 hash；这里只记录报告中的实际验收字段，不推断运行时源码版本。OP-3 仍停在授权计划准备阶段，没有发送模型请求。
+2026-11-15 又完成一次可访问 Docker 的 Windows PowerShell 宿主复核。报告 [cd8d4365 宿主验收](../../reports/op4-bad-release-host-cd8d4365-6be4-424c-845a-235dc148ceaf.json) 为 `passed`：合成数据、一次请求、HTTP 502；唯一订单对应 orders/v2 deployment，且同一订单日志记录 `inventory-v2` DNS 错误 `[Errno -5] No address associated with hostname`。脚本报告容器已清空、卷保留。受限执行环境遇到 Docker pipe `Access Denied` 的失败不代表项目故障；该轮未把失败环境报告当成验收结果。对应宿主脚本回归命令：`pytest tests/test_op4_host_validation_script.py`。本报告未记录脚本 hash；这里只记录报告中的实际验收字段，不推断运行时源码版本。OP-3 后续完成 partial 对照；统计与结论见[脱敏汇总](op3-authorized-replay-result-2026-11-15.md)。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\lab\verify-bad-release.ps1
