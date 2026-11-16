@@ -386,15 +386,23 @@ def summarize_cases(cases: list[dict[str, Any]], provider_rate_costs: dict[str, 
         completed = [row for row in rows if not row.get("failures") and row.get("evaluation_status", "complete") == "complete"]
         metrics = [row["metrics"] for row in completed]
         successes = sum(bool(row["exact_root_set"]) for row in metrics)
+        top1_successes = sum(bool(row["top1"]) for row in metrics)
         latencies = sorted(row["duration_ms"] for row in completed)
         p95_index = max(0, math.ceil(0.95 * len(latencies)) - 1) if latencies else 0
         cost = float(provider_rate_costs.get(strategy,
             sum(case.get("strategies", {}).get(strategy, {}).get("provider_rate_estimate_usd", 0.0) for case in cases)))
         result[strategy] = {
             "cases": len(rows), "completed_cases": len(completed), "failed_cases": len(rows) - len(completed),
+            "evaluation_coverage_rate": len(completed) / len(rows) if rows else None,
+            "performance_metric_denominator": "all cases; failed cases score zero",
+            "quality_metric_denominator": "completed cases only",
             "exact_root_set_successes": successes,
-            "top1_rate": sum(bool(row["top1"]) for row in metrics) / len(metrics) if metrics else None,
-            "mean_top3_recall": statistics.mean([row["top3_recall"] for row in metrics if row["top3_recall"] is not None]) if metrics else None,
+            "exact_root_set_rate": successes / len(rows) if rows else None,
+            "top1_rate": top1_successes / len(rows) if rows else None,
+            "top1_rate_completed_only": top1_successes / len(metrics) if metrics else None,
+            "mean_top3_recall": sum(row["top3_recall"] or 0.0 for row in metrics) / len(rows) if rows else None,
+            "mean_top3_recall_completed_only": statistics.mean(
+                [row["top3_recall"] for row in metrics if row["top3_recall"] is not None]) if metrics else None,
             "false_positives": sum(int(row["false_positives"]) for row in metrics) if metrics else None,
             "evidence_precision": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_predicted"] for row in metrics)) if metrics else None,
             "evidence_recall": sum(row["evidence_true_positive"] for row in metrics) / max(1, sum(row["evidence_gold"] for row in metrics)) if metrics else None,

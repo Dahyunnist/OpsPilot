@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 import json
+import hashlib
 import threading
 from pathlib import Path
 from types import SimpleNamespace
@@ -304,6 +305,36 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
             for case in report["per_case"] for strategy in case["strategies"].values()
             for reason in strategy["failures"]))
         self.assertEqual(0, report["strategy_summary"]["multi"]["model_calls"])
+
+    def test_partial_run_public_summary_counts_failed_cases_and_hides_ledger_history(self):
+        root = Path(__file__).resolve().parents[1]
+        audit_path = root / "reports" / "op3-multiagent-authorized-replay-summary-audit-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json"
+        audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        self.assertEqual("partial", audit["evaluation_status"])
+        self.assertEqual("df44a763fb8ea44762b8f97cf766d64414937a92be7c982d470a2d50807317bb",
+            audit["source_report_sha256"])
+        self.assertEqual(hashlib.sha256((root / "opspilot" / "strategy_eval.py").read_bytes()).hexdigest(),
+            audit["scorer_sha256"])
+        self.assertEqual(3, audit["case_count"])
+        self.assertEqual(17, audit["provider_request_attempts"])
+        self.assertEqual(18, audit["max_provider_requests"])
+        self.assertEqual(0.01464531, audit["actual_run_cost_usd"])
+        self.assertEqual(0.6, audit["project_cap_usd"])
+        summary = audit["strategy_summary"]
+        self.assertEqual({"rules": 1.0, "single": 2 / 3, "multi": 1 / 3, "auto": 2 / 3},
+            {name: item["evaluation_coverage_rate"] for name, item in summary.items()})
+        self.assertEqual({name: 1 / 3 for name in summary},
+            {name: item["top1_rate"] for name, item in summary.items()})
+        self.assertEqual(1.0, summary["multi"]["top1_rate_completed_only"])
+        self.assertEqual([
+            ("normal_slow_sql", "rules"),
+            ("missing_pool_evidence", "single"),
+            ("contradictory_payment", "single"),
+        ], [(item["case_id"], item["selected_route"]) for item in audit["auto_routes"]])
+        serialized = json.dumps(audit)
+        for forbidden in ("cumulative_peak_usd", "prior_ledger_peak_usd", "prior_op3_subset_spend_usd",
+                "remaining_usd", "unusable_prior_paid_prompt_keys", "balance_infos"):
+            self.assertNotIn(forbidden, serialized)
 
     def test_frozen_response_audit_reuses_only_approved_hashes_at_zero_cost(self):
         root = Path(__file__).resolve().parents[1]

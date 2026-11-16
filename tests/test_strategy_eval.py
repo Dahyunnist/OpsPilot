@@ -406,7 +406,7 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(0, auto["model_calls"])
         self.assertEqual(0.0, auto["provider_rate_estimate_usd"])
 
-    def test_summary_excludes_failed_partial_predictions_from_performance(self) -> None:
+    def test_summary_counts_failed_cases_in_overall_rates(self) -> None:
         def row(*, failed: bool, exact: bool, duration: int) -> dict:
             return {"duration_ms": duration, "model_calls": 1, "provider_rate_estimate_usd": 0.1,
                 "failures": ["ModelError"] if failed else [], "evaluation_status": "failed" if failed else "complete",
@@ -421,6 +421,14 @@ class StrategyEvaluationTests(unittest.TestCase):
         self.assertEqual(summary["multi"]["completed_cases"], 1)
         self.assertEqual(summary["multi"]["failed_cases"], 1)
         self.assertEqual(summary["multi"]["exact_root_set_successes"], 1)
+        self.assertEqual(summary["multi"]["evaluation_coverage_rate"], 0.5)
+        self.assertEqual(summary["multi"]["exact_root_set_rate"], 0.5)
+        self.assertEqual(summary["multi"]["top1_rate"], 0.5)
+        self.assertEqual(summary["multi"]["top1_rate_completed_only"], 1.0)
+        self.assertEqual(summary["multi"]["mean_top3_recall"], 0.5)
+        self.assertEqual(summary["multi"]["mean_top3_recall_completed_only"], 1.0)
+        self.assertEqual(summary["multi"]["performance_metric_denominator"],
+            "all cases; failed cases score zero")
         self.assertEqual(summary["multi"]["p95_latency_ms"], 100)
         self.assertEqual(summary["multi"]["failures"][0]["case_id"], "partial")
 
@@ -428,7 +436,11 @@ class StrategyEvaluationTests(unittest.TestCase):
             {"case_id": "partial", "strategies": {"multi": row(failed=True, exact=True, duration=900)}}])
         self.assertEqual(failed_only["multi"]["completed_cases"], 0)
         self.assertEqual(failed_only["multi"]["exact_root_set_successes"], 0)
-        self.assertIsNone(failed_only["multi"]["top1_rate"])
+        self.assertEqual(failed_only["multi"]["evaluation_coverage_rate"], 0.0)
+        self.assertEqual(failed_only["multi"]["exact_root_set_rate"], 0.0)
+        self.assertEqual(failed_only["multi"]["top1_rate"], 0.0)
+        self.assertIsNone(failed_only["multi"]["top1_rate_completed_only"])
+        self.assertEqual(failed_only["multi"]["mean_top3_recall"], 0.0)
         self.assertIsNone(failed_only["multi"]["p95_latency_ms"])
 
     def test_summary_reports_cost_per_exact_success_and_p95(self) -> None:

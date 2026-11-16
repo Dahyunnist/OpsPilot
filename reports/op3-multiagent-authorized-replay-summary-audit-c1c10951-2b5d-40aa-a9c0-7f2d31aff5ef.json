@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "artifact_type": "op3_partial_run_summary_audit",
+  "source_report_sha256": "df44a763fb8ea44762b8f97cf766d64414937a92be7c982d470a2d50807317bb",
+  "run_id": "c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef",
+  "evaluation_status": "partial",
+  "case_count": 3,
+  "provider_request_attempts": 17,
+  "max_provider_requests": 18,
+  "strategy_summary": {
+    "rules": {
+      "cases": 3,
+      "completed_cases": 3,
+      "failed_cases": 0,
+      "evaluation_coverage_rate": 1.0,
+      "performance_metric_denominator": "all cases; failed cases score zero",
+      "quality_metric_denominator": "completed cases only",
+      "exact_root_set_successes": 1,
+      "exact_root_set_rate": 0.3333333333333333,
+      "top1_rate": 0.3333333333333333,
+      "top1_rate_completed_only": 0.3333333333333333,
+      "mean_top3_recall": 0.3333333333333333,
+      "mean_top3_recall_completed_only": 0.3333333333333333,
+      "false_positives": 0,
+      "evidence_precision": 0.02242152466367713,
+      "evidence_recall": 1.0,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "cost_per_exact_success_usd": 0.0,
+      "p95_latency_ms": 0.03,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      },
+      "failures": []
+    },
+    "single": {
+      "cases": 3,
+      "completed_cases": 2,
+      "failed_cases": 1,
+      "evaluation_coverage_rate": 0.6666666666666666,
+      "performance_metric_denominator": "all cases; failed cases score zero",
+      "quality_metric_denominator": "completed cases only",
+      "exact_root_set_successes": 1,
+      "exact_root_set_rate": 0.3333333333333333,
+      "top1_rate": 0.3333333333333333,
+      "top1_rate_completed_only": 0.5,
+      "mean_top3_recall": 0.3333333333333333,
+      "mean_top3_recall_completed_only": 0.5,
+      "false_positives": 0,
+      "evidence_precision": 1.0,
+      "evidence_recall": 0.6666666666666666,
+      "model_calls": 2,
+      "provider_rate_estimate_usd": 0.00090351,
+      "cost_per_exact_success_usd": 0.00090351,
+      "p95_latency_ms": 2393.59,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      },
+      "failures": [
+        {
+          "case_id": "contradictory_payment",
+          "reasons": [
+            "BudgetLimitExceeded"
+          ]
+        }
+      ]
+    },
+    "multi": {
+      "cases": 3,
+      "completed_cases": 1,
+      "failed_cases": 2,
+      "evaluation_coverage_rate": 0.3333333333333333,
+      "performance_metric_denominator": "all cases; failed cases score zero",
+      "quality_metric_denominator": "completed cases only",
+      "exact_root_set_successes": 1,
+      "exact_root_set_rate": 0.3333333333333333,
+      "top1_rate": 0.3333333333333333,
+      "top1_rate_completed_only": 1.0,
+      "mean_top3_recall": 0.3333333333333333,
+      "mean_top3_recall_completed_only": 1.0,
+      "false_positives": 0,
+      "evidence_precision": 1.0,
+      "evidence_recall": 1.0,
+      "model_calls": 12,
+      "provider_rate_estimate_usd": 0.01374179,
+      "cost_per_exact_success_usd": 0.01374179,
+      "p95_latency_ms": 4303.67,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      },
+      "failures": [
+        {
+          "case_id": "missing_pool_evidence",
+          "reasons": [
+            "response_schema:truncated_json",
+            "response_schema:truncated_json"
+          ]
+        },
+        {
+          "case_id": "contradictory_payment",
+          "reasons": [
+            "BudgetLimitExceeded"
+          ]
+        }
+      ]
+    },
+    "auto": {
+      "cases": 3,
+      "completed_cases": 2,
+      "failed_cases": 1,
+      "evaluation_coverage_rate": 0.6666666666666666,
+      "performance_metric_denominator": "all cases; failed cases score zero",
+      "quality_metric_denominator": "completed cases only",
+      "exact_root_set_successes": 1,
+      "exact_root_set_rate": 0.3333333333333333,
+      "top1_rate": 0.3333333333333333,
+      "top1_rate_completed_only": 0.5,
+      "mean_top3_recall": 0.3333333333333333,
+      "mean_top3_recall_completed_only": 0.5,
+      "false_positives": 0,
+      "evidence_precision": 0.02564102564102564,
+      "evidence_recall": 0.6666666666666666,
+      "model_calls": 0,
+      "provider_rate_estimate_usd": 0.0,
+      "cost_per_exact_success_usd": 0.0,
+      "p95_latency_ms": 70.56,
+      "failure_outcomes": {
+        "timeouts": 0,
+        "cancellations": 0
+      },
+      "failures": [
+        {
+          "case_id": "contradictory_payment",
+          "reasons": [
+            "BudgetLimitExceeded"
+          ]
+        }
+      ]
+    }
+  },
+  "auto_routes": [
+    {
+      "case_id": "normal_slow_sql",
+      "selected_route": "rules",
+      "fallback_route": null,
+      "evaluation_status": "complete",
+      "failures": []
+    },
+    {
+      "case_id": "missing_pool_evidence",
+      "selected_route": "single",
+      "fallback_route": null,
+      "evaluation_status": "complete",
+      "failures": []
+    },
+    {
+      "case_id": "contradictory_payment",
+      "selected_route": "single",
+      "fallback_route": "rules",
+      "evaluation_status": "failed",
+      "failures": [
+        "BudgetLimitExceeded"
+      ]
+    }
+  ],
+  "conclusion": "三案中 multi 仅完成 1 案；其 completed-only Top-1 为 1/1，但全案 Top-1 和 exact-root-set rate 均为 1/3，coverage 为 1/3。single coverage 为 2/3、全案 Top-1 和 exact-root-set rate 均为 1/3。该三案结果不能证明 multi 优于 single。",
+  "scope": "仅离线重算原始报告的 per-case 评分；未修改原报告、ledger 或 checkpoint，未发送 provider 请求。",
+  "actual_run_cost_usd": 0.01464531,
+  "run_reserve_usd": 0.0230226,
+  "project_cap_usd": 0.6,
+  "source_artifact_status": "original report retained locally; not published",
+  "scorer_sha256": "84b684ad822a6007173b1bcb8c7ceebe5677bf8337693e7d819a03fd56090dcb"
+}

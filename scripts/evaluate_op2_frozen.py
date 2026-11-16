@@ -426,6 +426,7 @@ def run(output: Path, case_ids: list[str] | None = None,
         for item in authorized_replay_plan.get("resume_policy", {}).get("unusable_prior_paid_prompt_keys", [])}
         if authorized_replay_plan is not None else set())
 
+    provider_preflight_observed_at = datetime.now(timezone.utc).isoformat()
     if historical_preflight is not None:
         model_ids = set(historical_preflight["provider_model_ids"])
         provider_preflight_details = {"balance_available": True,
@@ -451,9 +452,20 @@ def run(output: Path, case_ids: list[str] | None = None,
         raise ValueError("provider does not list the frozen Flash model family; no inference calls sent")
     if preflight_only:
         return {"status": "preflight_passed", "run_id": run_id, "provider_preflight": provider_preflight_details,
+            "started_at": provider_preflight_observed_at,
+            "model": {"configured_id": configured_model, "provider_model_ids": sorted(model_ids)},
+            "frozen_dataset": {"spec": str(SUBSET_PATH.relative_to(ROOT)),
+                "spec_sha256": frozen["spec_sha256"], "case_count": len(cases),
+                "strategies": list(strategies), "cases": [{"id": case["spec"]["id"],
+                    "snapshot_sha256": case["snapshot_sha256"]} for case in cases]},
             "provider_model_ids": sorted(model_ids), "strategies": list(strategies),
             "case_ids": [case["spec"]["id"] for case in cases],
             "case_sha256": {case["spec"]["id"]: case["snapshot_sha256"] for case in cases},
+            "budget": {"provider_request_attempts": 0, "actual_run_peak_usd": 0.0,
+                "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
+                "max_run_reserve_usd": float(reserved_case_cap),
+                "cumulative_worst_case_usd": round(budget.prior_spent_usd + float(reserved_case_cap), 8),
+                "project_cap_usd": CAP_USD},
             "prior_ledger_peak_usd": round(budget.prior_spent_usd, 8),
             "max_run_reserve_usd": float(reserved_case_cap),
             "cumulative_worst_case_usd": round(budget.prior_spent_usd + float(reserved_case_cap), 8),
