@@ -62,6 +62,16 @@ def test_slow_sql_export_flush_and_acceptance_keep_telemetry_failure_distinct():
     assert "Slow SQL request and recovery were recorded separately; telemetry evidence missing:" in runner
 
 
+def test_isolated_runner_persists_failed_cleanup_or_recovery_before_exiting_nonzero():
+    runner = (ROOT / "lab" / "run-isolated-slow-sql.ps1").read_text(encoding="utf-8-sig")
+    report_write = runner.index('Set-Content -LiteralPath $resolvedOutput')
+    cleanup_failure = runner.index('if (-not $cleanupVerified) { throw')
+    evidence_failure = runner.index('if (-not $evidencePassed) { throw')
+    acceptance_failure = runner.index('if ($result.acceptance.status -ne "passed") { throw')
+
+    assert report_write < cleanup_failure < evidence_failure < acceptance_failure
+
+
 def test_fault_trace_flush_uses_bounded_provider_flush():
     from lab.service.trace_flush import flush_fault_trace
 
@@ -188,6 +198,17 @@ def test_actual_shape_log_and_jaeger_payload_correlates_by_window_order_and_trac
     unlinked = next(row for row in result["traces"] if row["trace_id"].startswith("b"))
     assert unlinked["linked_to_log"] is False
     assert result["raw_jaeger_response"] == payload["traces"]
+
+
+def test_non_orders_log_cannot_correlate_slow_sql_with_orders_span():
+    payload = json.loads((ROOT / "tests" / "fixtures" / "op1_slow_sql_api_payload.json").read_text(encoding="utf-8"))
+    payload["logs"]["records"][0]["service"] = "gateway"
+
+    result = verify_slow_sql_evidence(payload)
+
+    assert result["correlated"] is False
+    assert result["failure_stage"] == "no_order_logs"
+    assert result["logs"] == []
 
 
 def test_trace_id_without_exported_span_is_distinct_from_missing_logs():

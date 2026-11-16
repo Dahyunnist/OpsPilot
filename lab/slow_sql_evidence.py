@@ -42,7 +42,8 @@ def verify_slow_sql_evidence(payload: dict[str, Any]) -> dict[str, Any]:
 
     logs = []
     for row in log_rows:
-        if not isinstance(row, dict) or row.get("order_id") != order_id:
+        if (not isinstance(row, dict) or row.get("service") != "orders"
+                or row.get("order_id") != order_id):
             continue
         if not in_window(row.get("timestamp", ""), start, end):
             continue

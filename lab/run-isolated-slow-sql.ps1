@@ -120,3 +120,4 @@ Write-Host "Isolated slow_sql evidence recorded: $resolvedOutput"
 Write-Host "Acceptance status=$($result.acceptance.status); slow_request=$($result.acceptance.slow_request_succeeded); recovery=$($result.acceptance.recovery_succeeded); telemetry=$($result.acceptance.telemetry_evidence_complete)"
 if (-not $cleanupVerified) { throw "Isolated Compose cleanup was not verified; volumes were not deleted." }
 if (-not $evidencePassed) { throw "Slow SQL request and recovery were recorded separately; telemetry evidence missing: $evidenceError" }
+if ($result.acceptance.status -ne "passed") { throw "Isolated slow_sql acceptance failed: $($result.acceptance.status)" }

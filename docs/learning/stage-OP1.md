@@ -135,3 +135,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 用户宿主复验报告 [slow SQL trace 复验](../../reports/op1-slow-sql-recheck-2b82dfd9d35349e7b4c33d76bd0c741a.json) 显示故障 checkout HTTP 200/1586.8 ms、恢复 HTTP 200/43.7 ms，trace 证据关联成功，`acceptance.status=passed`。隔离项目容器清理为空，卷保留。此为本机合成 Docker 验收，不是生产证据。
 
 只读报告检查未发现密钥字段、凭证模式、邮箱/SSN 模式或非 UUID 的订单 ID；遥测服务标记为 `orders`。报告 SHA-256：`0FFA058F3D9D4CDD18585D58607988D8170439A896CB31B41B211A48D4361383`。未修改报告内容、账本或 `.tmp/`；未调用模型。
+
+## 2026-11-16 slow SQL 失败报告与日志归属修复
+
+离线回归发现两处验收缺口：日志只按订单与时间筛选，未限定 `orders` 服务；隔离 runner 在报告落盘后只拒绝清理失败和遥测缺失，慢请求/恢复失败可能仍以成功退出。现增加服务归属过滤，并在保存完整报告后对任何非 `passed` 状态返回非零。新增测试先复现两项失败，再验证修复。
+
+OP-1 定向测试 15 项通过；审批拒绝定向测试 5 项通过。离线全套测试 368 项通过、101 子测试通过；两项冻结账本审计测试按范围排除。未运行 Docker 或模型；未改动遥测、真值和账本。MCP 依赖与宿主 Docker 验收不由本轮覆盖。用户回传的失败报告只含时间线，缺少故障遥测明细，不能据此判定现场 trace 未关联的具体原因。
