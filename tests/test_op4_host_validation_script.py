@@ -38,6 +38,7 @@ def test_dns_evidence_scalar_is_counted_in_windows_powershell_51():
         pytest.skip("Windows PowerShell 5.1 is unavailable")
     source = (ROOT / "lab" / "verify-bad-release.ps1").read_text(encoding="utf-8")
     assert "$dnsEvidence = @($matchingLogs | Where-Object {" in source
+    assert "Test-InventoryDnsEvidence -Record $_" in source
     assert "$dnsEvidence.Count -eq 0" in source
     powershell = r"""
 $ErrorActionPreference = 'Stop'
@@ -61,7 +62,8 @@ if ($dnsEvidence.Count -ne 2 -or $reasonOnlyEvidence.Count -ne 1) {
 }
 Write-Output "Windows PowerShell 5.1 DNS evidence count: $($dnsEvidence.Count); reason-only: $($reasonOnlyEvidence.Count)"
 """
-    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-Command", powershell],
+    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+        "-Command", powershell],
         capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr or result.stdout
     assert "Windows PowerShell 5.1 DNS evidence count: 2; reason-only: 1" in result.stdout
@@ -78,6 +80,8 @@ if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -n
     throw "Expected Windows PowerShell 5.1, got $($PSVersionTable.PSVersion)."
 }
 $orderId = 'bad-release-8a23a2cd-779d-4d65-9027-bb12cc9e673b'
+$module = Join-Path (Get-Location) 'lab\telemetry-evidence.psm1'
+Import-Module $module -Force
 $json = @'
 {"records":[
  {"order_id":"bad-release-8a23a2cd-779d-4d65-9027-bb12cc9e673b","dependency_host":"inventory-v2","error_reason":"[Errno -5] No address associated with hostname"},
@@ -88,21 +92,25 @@ $json = @'
 # Invoke-RestMethod returns this PSCustomObject wrapper with records collection.
 $logResponse = ConvertFrom-Json -InputObject $json
 $matchingLogs = @($logResponse.records | Where-Object { $_.order_id -eq $orderId })
-$dnsEvidence = @($matchingLogs | Where-Object {
-    $dependencyHost = [string]$_.dependency_host
-    $errorReason = [string]$_.error_reason
-    $dependencyHost -eq 'inventory-v2' -or
-    $errorReason -match 'inventory-v2|Name or service not known|No address associated with hostname'
-})
+$dnsEvidence = @($matchingLogs | Where-Object { Test-InventoryDnsEvidence -Record $_ })
 if ($matchingLogs.Count -ne 2 -or $dnsEvidence.Count -ne 1) {
     throw "Expected two order logs and one DNS row, got $($matchingLogs.Count) and $($dnsEvidence.Count)."
 }
 Write-Output "Invoke-RestMethod wrapper matched 2 order logs and 1 DNS row."
+$nested = [pscustomobject]@{ order_id = $orderId; attributes = @{ dependency_host = ' inventory-v2 '; error_reason = "[Errno -5] No address" + [char]10 + "associated with hostname" } }
+if (-not (Test-InventoryDnsEvidence -Record $nested)) { throw 'Nested attributes DNS evidence was not detected.' }
+Write-Output "Nested PowerShell attributes matched the inventory-v2 DNS evidence."
+$raw = @{ order_id = $orderId; raw = @{ dependency_host = 'inventory-v2' } }
+if (-not (Test-InventoryDnsEvidence -Record $raw)) { throw 'Dictionary raw DNS evidence was not detected.' }
+Write-Output "Dictionary raw fields matched the inventory-v2 DNS evidence."
 '''
-    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-Command", powershell],
+    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+        "-Command", powershell],
         capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr or result.stdout
     assert "Invoke-RestMethod wrapper matched 2 order logs and 1 DNS row." in result.stdout
+    assert "Nested PowerShell attributes matched the inventory-v2 DNS evidence." in result.stdout
+    assert "Dictionary raw fields matched the inventory-v2 DNS evidence." in result.stdout
 
 
 def test_host_validation_guide_lists_each_blocked_socket_test_separately():

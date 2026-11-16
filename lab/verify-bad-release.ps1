@@ -6,6 +6,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$telemetryEvidenceModule = Join-Path $PSScriptRoot "telemetry-evidence.psm1"
+Import-Module $telemetryEvidenceModule -Force
 $composeFile = Join-Path $PSScriptRoot "compose.yaml"
 $reportDirectory = Join-Path $root "reports"
 $runId = [guid]::NewGuid().ToString()
@@ -129,12 +131,7 @@ try {
     if ($deployments.Count -ne 1 -or $result.deployment.version -ne "v2") {
         throw "Expected exactly one orders/v2 deployment record for run $runId in the reported UTC window."
     }
-    $dnsEvidence = @($matchingLogs | Where-Object {
-        $dependencyHost = [string]$_.dependency_host
-        $errorReason = [string]$_.error_reason
-        $dependencyHost -eq "inventory-v2" -or
-        $errorReason -match "inventory-v2|Name or service not known|No address associated with hostname"
-    })
+    $dnsEvidence = @($matchingLogs | Where-Object { Test-InventoryDnsEvidence -Record $_ })
     if ($dnsEvidence.Count -eq 0) {
         throw "Logs did not prove the inventory-v2 DNS failure for order $orderId."
     }

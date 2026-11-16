@@ -33,6 +33,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\lab\verify-bad-release
 
 本机单元回归只运行 Windows PowerShell 5.1 断言片段，不启动 Docker；它不替代上面的宿主重跑。
 
+## 2026-11-16 用户宿主 DNS 断言复核
+
+用户报告 PowerShell 5.1 已匹配唯一订单的两条日志，且首条含
+dependency_host=inventory-v2 与 [Errno -5] No address associated with hostname，
+但脚本仍报告 DNS evidence 为 0。该输入按旧的顶层字段表达式可通过本机
+PowerShell 5.1 fixture，因此现有证据无法定位用户宿主的具体对象差异。
+不改写或覆盖用户失败报告，也未启动 Docker。
+
+为收窄对象差异，DNS 判定提取为 lab/telemetry-evidence.psm1 纯函数，
+支持 PSCustomObject、IDictionary，以及 attributes/raw 嵌套字段；
+主机名会去首尾空白，错误文本会折叠换行和连续空白。PowerShell 5.1
+离线回归覆盖真实 records wrapper、用户给出的错误文本、
+嵌套属性及字典 raw 字段。定向测试 5 项通过。
+
+全量非模型测试未完成。首次运行停在 test_op2_mcp_host_validation 的
+Windows asyncio socketpair 初始化；按用户要求中断后，没有重试 socket/MCP
+用例。未调用模型、未启动 Docker，账本和既有临时/未跟踪报告保持原样。
+用户端复测命令：Set-Location E:\job\opspilot; .\lab\verify-bad-release.ps1
+
 ## A2A/MCP socket 用例逐项复测
 
 先确认依赖已装：A2A 用例需要仓库固定的 `requirements-a2a-interop.txt`；MCP 用例需要开发依赖。逐条运行，不要把挂起误报为通过；某项超时或权限拒绝后，保留完整错误，再运行下一条。
