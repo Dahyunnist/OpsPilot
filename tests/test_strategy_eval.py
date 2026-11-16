@@ -99,7 +99,8 @@ class StrategyEvaluationTests(unittest.TestCase):
             lambda operation, instance, system, user, budget: operation(instance, system, user, budget),
             ("multi",))
         self.assertEqual("failed", report["strategies"]["multi"]["evaluation_status"])
-        self.assertTrue(any("ValueError" in failure for failure in report["strategies"]["multi"]["failures"]))
+        self.assertEqual(["provider_usage:prompt_tokens", "provider_usage:prompt_tokens"],
+            report["strategies"]["multi"]["failures"])
         self.assertEqual(len(model.calls), report["strategies"]["multi"]["model_calls"])
         self.assertGreaterEqual(report["strategies"]["multi"]["model_calls"], 1)
         self.assertGreater(report["strategies"]["multi"]["provider_rate_estimate_usd"], 0)
@@ -117,7 +118,8 @@ class StrategyEvaluationTests(unittest.TestCase):
             lambda operation, instance, system, user, budget: operation(instance, system, user, budget), ("multi",))
         multi = report["strategies"]["multi"]
         self.assertEqual("failed", multi["evaluation_status"])
-        self.assertEqual(["ValueError", "ValueError"], sorted(multi["failures"]))
+        self.assertEqual(["provider_usage:prompt_tokens", "provider_usage:prompt_tokens"],
+            sorted(multi["failures"]))
         self.assertEqual(2, len(model.calls))
         self.assertFalse(any(system.startswith("You are an adversarial incident adjudicator")
             for system, _payload in model.calls))
