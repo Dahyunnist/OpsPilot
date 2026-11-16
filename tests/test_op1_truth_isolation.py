@@ -55,6 +55,18 @@ def test_lab_services_and_agent_checkout_do_not_receive_truth_case_id_or_gold():
     assert "root_causes" not in app and "must_observe" not in app
 
 
+def test_host_matrix_uses_opaque_checkout_ids_and_local_images():
+    matrix = (ROOT / "lab/run-host-matrix.ps1").read_text(encoding="utf-8-sig")
+    runner = (ROOT / "lab/run-scenario.ps1").read_text(encoding="utf-8-sig")
+
+    assert '$id = [guid]::NewGuid().ToString("N")' in matrix
+    assert '$id = "matrix-$($case.fault)' not in matrix
+    assert matrix.count("-NoBuild") == 3
+    assert "[switch] $NoBuild" in runner
+    assert '$NoBuild -or $Scenario -eq "bad_release"' in runner
+    assert '$baselineBuildFlag = if ($NoBuild) { "--no-build" } else { "--build" }' in runner
+
+
 def test_live_truth_is_given_to_scorer_after_investigation_not_as_source_input(tmp_path):
     events = []
 

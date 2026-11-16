@@ -51,6 +51,25 @@ class PublicRunManifestTests(unittest.TestCase):
         self.assertTrue(all(item["span_id"] and item["trace_id"] for item in source["telemetry_evidence"]))
         self.assertNotIn(source["trace_id"], {item["trace_id"] for item in source["telemetry_evidence"]})
 
+    def test_historical_host_missing_provenance_stays_null_and_blocked(self):
+        value = normalized_host_manifest()
+        expected = {
+            "budget.cap_usd", "environment", "evaluation_id",
+            "runtime.digest_sha256", "runtime.docker_engine_version",
+            "runtime.lock_sha256", "runtime.platform", "scorer_sha256",
+        }
+        self.assertEqual(expected, set(value["blocked_fields"]))
+        self.assertTrue(all(value[field] is None for field in (
+            "environment", "evaluation_id", "scorer_sha256")))
+        self.assertIsNone(value["budget"]["cap_usd"])
+        self.assertTrue(all(value["runtime"][field] is None for field in (
+            "digest_sha256", "docker_engine_version", "lock_sha256", "platform")))
+        source = json.loads((ROOT / "reports" / "op1-host-matrix-run-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual("unknown", source["scorer_sha"])
+        self.assertEqual("unknown", source["docker_engine_server"])
+        self.assertNotIn("environment", source)
+        self.assertNotIn("evaluation_id", source)
+
     def test_rejects_unknown_and_missing_identity(self):
         value = normalized_host_manifest()
         value["runtime"]["python"] = "unknown"

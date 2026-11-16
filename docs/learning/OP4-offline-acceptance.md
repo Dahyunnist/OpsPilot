@@ -15,6 +15,24 @@
 
 A2A TaskStore 只允许 working task 进入 canceled；完成任务保持 completed。取消不会中断同步模型请求；A2A 服务仍仅可用于 loopback 原型。
 
+## 2026-11-16 安全门禁复核
+
+重跑 tests/test_action_safety.py、tests/test_action_cli.py、
+tests/test_s3.py：51 passed、11 subtests passed。已有用例覆盖审批过期与到期边界、
+重复消费/跨进程重放、相同审批事件幂等、错误环境、角色越权、
+精确人工确认、显式 dry-run、撤销后拒绝执行，以及 rollback 的
+simulated_pass 检查。拒绝和成功审计都断言 external_system_calls=0、
+external_writes=0；执行器 AST 测试拒绝网络、子进程和 Docker 依赖。
+
+默认只读 MCP 由用户宿主报告
+[op2-mcp-bad-release-host-5ff7d94f](../../reports/op2-mcp-bad-release-host-5ff7d94f-01ed-4453-94b2-4551e347d2da.json)
+确认：tools/list 只有 metrics、logs、traces、deployments 查询和只读调查，
+未暴露动作工具；对应四个只读调用已通过。
+
+独立人工复核状态和真实业务回滚仍未实现。rollback_verification 的
+simulated_pass 只代表本地模拟检查通过，不构成业务系统复核证据。
+本轮未连接外部系统、未调用模型或 Docker；不改审批实现。
+
 ## 验证
 
 `.venv/Scripts/python.exe -m unittest tests.test_action_safety tests.test_action_cli tests.test_agents.AgentTests.test_message_is_typed_and_serializable tests.test_agents.AgentTests.test_agent_tool_scope_rejects_escalation_and_wrong_source_reference tests.test_agents.AgentTests.test_prompt_injection_log_stays_data_and_cannot_expand_tool_scope tests.test_agents.AgentTests.test_grounding_rejects_forged_evidence_reference tests.test_agents.AgentTests.test_cross_exam_context_preserves_trace_joins_without_log_body tests.test_agents.AgentTests.test_a2a_task_cancel_is_terminal tests.test_agents.AgentTests.test_a2a_cancel_cannot_change_completed_task -v`：47 项通过。Fake/本地状态测试未访问模型或 loopback socket。

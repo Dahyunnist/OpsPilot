@@ -9,6 +9,7 @@ from opspilot.run_manifest import (
     validate_op_run_artifact,
     validate_op_run_manifest,
 )
+from opspilot.verification_manifest import build_verification_run_manifest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -217,6 +218,34 @@ class OpRunManifestTests(unittest.TestCase):
         source = (ROOT / "scripts" / "evaluate_s15_mock_ablation.py").read_text(encoding="utf-8")
         self.assertIn("build_op_run_manifest(", source)
         self.assertIn("validate_op_run_artifact(report, is_new_run=True)", source)
+
+    def test_offline_normalizer_uses_shared_status_adapter_and_refuses_overwrite(self):
+        source = (ROOT / "scripts" / "normalize_existing_run_manifests.py").read_text(encoding="utf-8")
+        self.assertIn("build_verification_run_manifest(", source)
+        self.assertIn("refusing to overwrite existing manifest", source)
+
+    def test_verification_manifest_maps_semantic_status_without_losing_it(self):
+        for source_status, expected in (
+                ("verified", "completed"), ("partial", "failed"),
+                ("blocked_before_inference", "failed"),
+                ("full_suite_timed_out; focused_suite_passed", "failed")):
+            with self.subTest(source_status=source_status):
+                manifest = build_verification_run_manifest(
+                    run_id="verification-run", evaluation_id="offline_verification",
+                    dataset_id="offline_test_suite", dataset_sha256=None,
+                    result_fingerprint_sha256="a" * 64, git_sha="b" * 40,
+                    split="offline", source_status=source_status, evaluator_sha256=None,
+                    scorer_sha=None, started_at=None, ended_at=None, trace_id=None,
+                    parameters={"model_calls": 0},
+                )
+                self.assertEqual([], validate_op_run_artifact(
+                    {"op_run_manifest": manifest}, is_new_run=True))
+                self.assertEqual(expected, manifest["status"])
+                self.assertEqual(source_status, manifest["parameters"]["source_status"])
+                self.assertIsNone(manifest["dataset_sha256"])
+                self.assertTrue(manifest["parameters"]["dataset_sha256_not_recorded"])
+                self.assertIsNone(manifest["trace_id"])
+                self.assertTrue(manifest["parameters"]["trace_id_not_recorded"])
 
 
 if __name__ == "__main__":

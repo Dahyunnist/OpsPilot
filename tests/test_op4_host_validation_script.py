@@ -1,6 +1,11 @@
+import argparse
 from pathlib import Path
 import shutil
 import subprocess
+
+import pytest
+
+from lab.verify_bad_release_mcp import _live_lab_environment, _timeout_seconds
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +21,47 @@ def test_bad_release_host_script_is_single_request_and_scoped_to_its_own_project
     assert 'Invoke-Compose @("down")' in source
     assert "down -v" not in source
     assert '$result.cleanup.volumes_deleted = $false' in source
+
+
+def test_mcp_host_entry_bounds_timeouts_and_cleans_only_its_isolated_project():
+    source = (ROOT / "lab" / "verify-bad-release.ps1").read_text(encoding="utf-8")
+    client = (ROOT / "lab" / "verify_bad_release_mcp.py").read_text(encoding="utf-8")
+    assert "[ValidateRange(10, 180)]" in source
+    assert "[ValidateRange(1, 60)]" in source
+    assert "[ValidateRange(10, 120)]" in source
+    assert "--timeout-seconds $McpTimeoutSeconds" in source
+    assert "asyncio.wait_for(run(args), timeout=args.timeout_seconds)" in client
+    assert "timeout must be between 10 and 120 seconds" in client
+    cleanup = source[source.index("} finally {"):]
+    assert 'Invoke-Compose @("down")' in cleanup
+    assert 'docker compose --project-name $projectName -f $composeFile ps --all --quiet' in cleanup
+    assert "down -v" not in source
+    for endpoint in (
+        '"OPSPILOT_PROMETHEUS_URL": "http://127.0.0.1:19090"',
+        '"OPSPILOT_JAEGER_URL": "http://127.0.0.1:16686"',
+        '"OPSPILOT_LAB_GATEWAY_URL": "http://127.0.0.1:18080"',
+        '"OPSPILOT_LAB_ORDERS_URL": "http://127.0.0.1:18081"',
+        '"OPSPILOT_LAB_INVENTORY_URL": "http://127.0.0.1:18082"',
+        '"OPSPILOT_LAB_PAYMENT_URL": "http://127.0.0.1:18083"',
+    ):
+        assert endpoint in client
+
+
+def test_mcp_host_timeout_and_source_overrides_are_bounded_and_local():
+    assert _timeout_seconds("45") == 45.0
+    with pytest.raises(argparse.ArgumentTypeError):
+        _timeout_seconds("5")
+    with pytest.raises(argparse.ArgumentTypeError):
+        _timeout_seconds("121")
+    environment = _live_lab_environment({
+        "OPSPILOT_PROMETHEUS_URL": "http://production.example:9090",
+        "OPSPILOT_LAB_GATEWAY_URL": "http://production.example",
+    })
+    assert environment["OPSPILOT_PROMETHEUS_URL"] == "http://127.0.0.1:19090"
+    assert environment["OPSPILOT_LAB_GATEWAY_URL"] == "http://127.0.0.1:18080"
+    assert environment["OPSPILOT_LAB_ORDERS_URL"] == "http://127.0.0.1:18081"
+    assert environment["OPSPILOT_LAB_INVENTORY_URL"] == "http://127.0.0.1:18082"
+    assert environment["OPSPILOT_LAB_PAYMENT_URL"] == "http://127.0.0.1:18083"
 
 
 def test_bad_release_host_script_uses_same_encoded_utc_window_and_proves_run_identity():

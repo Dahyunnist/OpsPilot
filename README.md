@@ -2,6 +2,26 @@
 
 核心是规则驱动的只读证据采集与故障调查。`rules` 不调用模型。`auto` 在多个根因各有跨源强证据时调用多 Agent；单个强候选仍被规则弃答时调用单 Agent；其余保留规则结果。新合成复测中，这种选择性升级保住多根因召回，调用次数与费用明显低于全量多 Agent。默认仍是 `rules`；`multi-agent` 可显式调用。模式都不连接生产系统，也不执行修复操作。
 
+## 五分钟离线演示
+
+需要已安装项目依赖的 Windows PowerShell。演示只读取仓库内合成事故，不调用模型、Docker 或外部服务；`--no-state --no-audit` 不写检查点或审计文件。
+
+```powershell
+$python = '.\.venv\Scripts\python.exe'
+$base = & $python -m opspilot investigate downstream-01 --no-state --no-audit --format json | ConvertFrom-Json
+$timeout = & $python -m opspilot investigate downstream-01 --inject timeout:logs --no-state --no-audit --format json | ConvertFrom-Json
+$budget = & $python -m opspilot investigate downstream-01 --query-budget 1 --no-state --no-audit --format json | ConvertFrom-Json
+[pscustomobject]@{
+    Baseline = $base.status
+    CitationsValid = $base.citation_validation.all_references_exist
+    InjectedLogStatus = ($timeout.query_trace | Where-Object { $_.source -eq 'logs' } | Select-Object -ExpandProperty status)
+    OneQueryBudgetExhausted = $budget.query_budget_exhausted
+    BudgetLimitedConclusion = $budget.status
+} | Format-List
+```
+
+预期可见：基线为 `determined` 且引用有效；注入后 logs 明确为 `timeout`；查询预算为 1 时报告预算耗尽并弃答。演示及 OP-1–OP-4 交付缺口见[横向验收记录](docs/learning/op-delivery-audit-2026-11-16.md)。
+
 ## 生成数据
 
 S0 数据生成器需要 Python 3.10 或更新版本。MCP SDK 需要 Python 3.11 或更新版本。
@@ -152,6 +172,7 @@ python -m venv .venv
 - `docs/learning/stage-OP4.md`：一次性人工批准、环境/权限拒绝和模拟回滚边界。
 - `docs/threat-model.md`：本地原型威胁模型与安全不变量。
 - `docs/architecture.md`：系统架构图。
+- `docs/learning/op-delivery-audit-2026-11-16.md`：OP-1–OP-4 manifest、trace/event、复现与验收缺口。
 - `docs/resume-bullets.md`：带样本量限制的简历 bullet 草稿。
 - `reports/evaluation.json`、`reports/evaluation.md`：固定集两轮运行的逐例原始结果和指标摘要。
 - `scripts/setup.ps1`、`scripts/run_investigation.ps1`、`scripts/run_mcp.ps1`：Windows 本地安装与运行入口。

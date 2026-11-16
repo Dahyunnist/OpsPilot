@@ -32,7 +32,11 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert script.index("$env:COMPOSE_PROJECT_NAME = $runId") < cleanup_call < project_restore
     assert "docker compose -p $env:COMPOSE_PROJECT_NAME @composeFiles ps --all --format json" in script
     assert "docker compose @composeFiles down" in stop and "docker compose -p" not in stop
-    assert scenario_runner.count("docker compose @composeFiles up --build") == 1
+    assert "[switch] $NoBuild" in scenario_runner
+    assert "$NoBuild -or $Scenario -eq \"bad_release\"" in scenario_runner
+    assert '$baselineBuildFlag = if ($NoBuild) { "--no-build" } else { "--build" }' in scenario_runner
+    assert script.count("-NoBuild") == 3
+    assert '$id = [guid]::NewGuid().ToString("N")' in script
     assert "function Wait-LabReady([int]$TimeoutSeconds = 60)" in scenario_runner
     assert scenario_runner.count("\nWait-LabReady\n") == 1
     assert scenario_runner.index("\nWait-LabReady\n") < scenario_runner.index('Write-Host "Scenario ready:')
@@ -51,7 +55,7 @@ def test_host_matrix_is_isolated_continues_cases_and_never_deletes_volumes():
     assert truth.count('"case_id"') == 12
     stage_doc = (ROOT / "docs/learning/stage-OP1.md").read_text(encoding="utf-8")
     assert "当前列出十二个" in stage_doc
-    assert "run-host-matrix.ps1" in stage_doc and "docker compose up --build" in stage_doc
+    assert "run-host-matrix.ps1" in stage_doc and "docker compose up --no-build" in stage_doc
     assert r".\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json" in stage_doc
     assert ".tmp/op1-host-matrix-host.json" in (ROOT / ".gitignore").read_text(encoding="utf-8")
     assert "本执行环境无法连接 Docker Desktop Linux Engine" in stage_doc

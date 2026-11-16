@@ -33,6 +33,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\lab\verify-bad-release
 
 本机单元回归只运行 Windows PowerShell 5.1 断言片段，不启动 Docker；它不替代上面的宿主重跑。
 
+## 2026-11-16 MCP live 工具链入口
+
+已有 .\lab\verify-bad-release.ps1 -VerifyMcp 是安全复现入口，不另建脚本：
+使用随机 Compose project、单个合成 bad_release checkout、同一 UTC 窗口，
+经 stdio MCP client 检查 initialize/tools/list 和五个只读工具，再核对 logs、
+deployment、trace 与调查引用。finally 只停止本次 project，不删卷。
+
+加固入口超时范围：启动 10–180 秒、证据轮询 1–60 秒、MCP 全流程 10–120 秒，
+默认 MCP 45 秒。MCP 子进程强制指向本次实验映射的六个 loopback 端口，覆盖继承的
+telemetry URL，避免误读其他配置的数据源。新增静态边界与参数单测；本轮未启动
+Docker、未调用模型，也未连接遥测端点。
+
+用户宿主复测：Set-Location (git rev-parse --show-toplevel); .\lab\verify-bad-release.ps1 -VerifyMcp -McpTimeoutSeconds 45
+
 ## 2026-11-16 用户宿主 DNS 断言复核
 
 用户报告 PowerShell 5.1 已匹配唯一订单的两条日志，且首条含
@@ -50,7 +64,20 @@ PowerShell 5.1 fixture，因此现有证据无法定位用户宿主的具体对�
 全量非模型测试未完成。首次运行停在 test_op2_mcp_host_validation 的
 Windows asyncio socketpair 初始化；按用户要求中断后，没有重试 socket/MCP
 用例。未调用模型、未启动 Docker，账本和既有临时/未跟踪报告保持原样。
-用户端复测命令：Set-Location E:\job\opspilot; .\lab\verify-bad-release.ps1
+用户端复测命令：Set-Location (git rev-parse --show-toplevel); .\lab\verify-bad-release.ps1
+
+## 2026-11-16 用户宿主 MCP live 验收
+
+用户运行 .\lab\verify-bad-release.ps1 -VerifyMcp -McpTimeoutSeconds 45 并提供
+[结构化报告](../../reports/op2-mcp-bad-release-host-5ff7d94f-01ed-4453-94b2-4551e347d2da.json)。
+报告为 passed、synthetic_only=true：唯一一次 checkout 返回 HTTP 502；
+同一订单关联 orders/v2 deployment、inventory-v2 DNS 错误日志及 trace。
+MCP initialize、tools/list 与 logs、deployments、traces、incident investigation
+四个只读调用通过；调查证据引用了对应日志、部署和 trace。
+
+cleanup 确认本次 Compose project 容器已清空，数据卷保留。报告仅含合成订单、
+trace 和 source reference；未发现凭据或本机用户路径。原历史失败报告保持不变。
+本次复核 tests/test_op4_host_validation_script.py：7 passed；没有重跑 Docker 或模型。
 
 ## A2A/MCP socket 用例逐项复测
 

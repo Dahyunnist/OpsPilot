@@ -5,6 +5,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 $composeFile = Join-Path $PSScriptRoot "compose.yaml"
+$composeFiles = @("-f", $composeFile)
+if ($env:OPSPILOT_COMPOSE_OVERRIDE) { $composeFiles += @("-f", $env:OPSPILOT_COMPOSE_OVERRIDE) }
+$python = Join-Path (Split-Path -Parent $PSScriptRoot) ".venv/Scripts/python.exe"
+$evidenceVerifier = Join-Path $PSScriptRoot "slow_sql_evidence.py"
+if (-not (Test-Path -LiteralPath $python)) { throw "Repository Python environment is missing: $python" }
 $case = Get-Content -LiteralPath $CaseFile -Raw | ConvertFrom-Json
 if ($case.injection.fault -ne "slow_sql" -or $case.injection.service -ne "orders") {
     throw "This vertical slice only permits the reviewed slow_sql injection on orders."
@@ -22,9 +27,9 @@ foreach ($image in $requiredImages) {
 $env:LAB_FAULT = "none"
 $env:LAB_ORDERS_VERSION = "v1"
 $env:LAB_INVENTORY_URL = "http://inventory:8080"
-docker compose -f $composeFile config --quiet
+docker compose @composeFiles config --quiet
 if ($LASTEXITCODE -ne 0) { throw "Compose configuration is invalid." }
-docker compose -f $composeFile up --no-build --force-recreate -d
+docker compose @composeFiles up --no-build --force-recreate -d
 if ($LASTEXITCODE -ne 0) { throw "Local images could not start the fault lab." }
 
 $ready = $false
@@ -39,7 +44,7 @@ for ($attempt = 0; $attempt -lt 60; $attempt++) {
 }
 if (-not $ready) { throw "Service dependencies did not become ready." }
 
-docker compose -f $composeFile exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
+docker compose @composeFiles exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
 if ($LASTEXITCODE -ne 0) { throw "Local lab database reset failed." }
 
 $trialId = [guid]::NewGuid().ToString()
@@ -65,7 +70,7 @@ Start-Sleep -Seconds 4
 
 # Inject only after a healthy baseline has been measured and scraped.
 $env:LAB_FAULT = "slow_sql"
-docker compose -f $composeFile up --no-build --force-recreate -d orders payment
+docker compose @composeFiles up --no-build --force-recreate -d orders payment
 if ($LASTEXITCODE -ne 0) { throw "Could not start the reviewed slow_sql injection." }
 $ready = $false
 for ($attempt = 0; $attempt -lt 30; $attempt++) {
@@ -100,9 +105,93 @@ $faultRequestCompleted = [DateTime]::UtcNow.ToString("o")
 Start-Sleep -Seconds 4
 $windowEnd = [DateTime]::UtcNow.ToString("o")
 
+# Query volatile orders logs before recovery recreates the process and clears its in-memory log buffer.
+$faultLogs = @()
+$faultTraceSpans = @()
+$faultTraceIds = @()
+$faultFailureStage = $null
+$rawJaegerResponse = $null
+$jaegerQuery = $null
+$faultTelemetryError = $null
+$faultTelemetryCorrelated = $false
+$from = [uri]::EscapeDataString($windowStart)
+$to = [uri]::EscapeDataString($windowEnd)
+$jaegerStart = [long]([DateTimeOffset]::Parse($windowStart).ToUnixTimeMilliseconds() * 1000)
+$jaegerEnd = [long]([DateTimeOffset]::Parse($windowEnd).ToUnixTimeMilliseconds() * 1000)
+for ($attempt = 0; $attempt -le 10; $attempt++) {
+    try {
+        $logResponse = Invoke-RestMethod "http://127.0.0.1:18081/logs?start=$from&end=$to&limit=1000"
+        $traceSearchResponse = Invoke-RestMethod "http://127.0.0.1:16686/api/traces?service=orders&start=$jaegerStart&end=$jaegerEnd&limit=1000"
+        $faultTraceIds = @($logResponse.records | Where-Object { $_.order_id -eq $faultOrder -and $_.trace_id } | ForEach-Object { $_.trace_id } | Sort-Object -Unique)
+        $traceIdResponses = @(
+            foreach ($traceId in $faultTraceIds) {
+                try {
+                    @{ trace_id = $traceId; status = 200; response = (Invoke-RestMethod "http://127.0.0.1:16686/api/traces/$traceId") }
+                } catch {
+                    $httpStatus = $null
+                    if ($_.Exception.Response) { $httpStatus = [int]$_.Exception.Response.StatusCode }
+                    @{ trace_id = $traceId; status = $httpStatus; error_type = $_.Exception.GetType().Name }
+                }
+            }
+        )
+        $traceResponse = @{ window_query = $traceSearchResponse; by_trace_id = $traceIdResponses }
+        $jaegerQuery = @{ service = "orders"; start = $jaegerStart; end = $jaegerEnd; limit = 1000 }
+        $evidenceInput = @{
+            order_id = $faultOrder
+            window_start = $windowStart
+            window_end = $windowEnd
+            logs = $logResponse
+            traces = $traceResponse
+            jaeger_query = $jaegerQuery
+        } | ConvertTo-Json -Depth 20 -Compress
+        $evidenceOutput = $evidenceInput | & $python $evidenceVerifier
+        if ($LASTEXITCODE -ne 0) { throw "Offline slow_sql evidence verifier failed." }
+        $faultTelemetry = ($evidenceOutput -join [Environment]::NewLine) | ConvertFrom-Json
+        $faultLogs = @($faultTelemetry.logs)
+        $faultTraceIds = @($faultTelemetry.trace_ids)
+        $faultTraceSpans = @($faultTelemetry.traces)
+        $faultTelemetryCorrelated = [bool]$faultTelemetry.correlated
+        $faultFailureStage = $faultTelemetry.failure_stage
+        $faultTelemetryError = $faultTelemetry.error
+        $rawJaegerResponse = $faultTelemetry.raw_jaeger_response
+        if ($faultTelemetryCorrelated -or $attempt -eq 10) { break }
+    } catch {
+        $faultTelemetryError = $_.Exception.GetType().Name
+        if ($attempt -eq 10) { break }
+    }
+    Start-Sleep -Seconds 1
+}
+$collectorPsOutput = @(docker compose @composeFiles ps --format json otel-collector 2>&1)
+$collectorPsExit = $LASTEXITCODE
+$collectorLogOutput = @(docker compose @composeFiles logs --no-color --tail 100 --since 2m otel-collector 2>&1)
+$collectorLogExit = $LASTEXITCODE
+$jaegerLogOutput = @(docker compose @composeFiles logs --no-color --tail 100 --since 2m jaeger 2>&1)
+$jaegerLogExit = $LASTEXITCODE
+$collectorStatus = @{
+    ps_exit = $collectorPsExit
+    ps_output = $collectorPsOutput -join [Environment]::NewLine
+    collector_logs_exit = $collectorLogExit
+    collector_logs = $collectorLogOutput -join [Environment]::NewLine
+    jaeger_logs_exit = $jaegerLogExit
+    jaeger_logs = $jaegerLogOutput -join [Environment]::NewLine
+}
+$faultTelemetry = @{
+    query_window = @{ start = $windowStart; end = $windowEnd }
+    order_id = $faultOrder
+    logs = @($faultLogs | Select-Object timestamp, service, message, order_id, trace_id, span_id)
+    trace_ids = $faultTraceIds
+    traces = $faultTraceSpans
+    correlated = $faultTelemetryCorrelated
+    failure_stage = $faultFailureStage
+    error = $faultTelemetryError
+    jaeger_query = $jaegerQuery
+    raw_jaeger_response = $rawJaegerResponse
+    collector_status = $collectorStatus
+}
+
 # Recovery: recreate only fault-bearing services with the injection disabled, then replay a fresh order.
 $env:LAB_FAULT = "none"
-docker compose -f $composeFile up --no-build --force-recreate -d orders payment
+docker compose @composeFiles up --no-build --force-recreate -d orders payment
 if ($LASTEXITCODE -ne 0) { throw "Could not recreate services without the injected fault." }
 $ready = $false
 for ($attempt = 0; $attempt -lt 30; $attempt++) {
@@ -157,8 +246,9 @@ $result = @{
         recovery_request_duration_ms = [math]::Round($recoveryWatch.Elapsed.TotalMilliseconds, 1)
         recovery_request_completed = $recoveryRequestCompleted
     }
+    fault_telemetry = $faultTelemetry
 }
-$result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputFile -Encoding utf8
+$result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $OutputFile -Encoding utf8
 Write-Host "Fault window and recovery recorded: $OutputFile"
 Write-Host "Fault status=$faultStatus duration_ms=$([math]::Round($faultWatch.Elapsed.TotalMilliseconds, 1)); recovery status=$recoveryStatus duration_ms=$([math]::Round($recoveryWatch.Elapsed.TotalMilliseconds, 1))"
 if ($faultStatus -ne 200 -or $faultWatch.Elapsed.TotalMilliseconds -lt 1200) {

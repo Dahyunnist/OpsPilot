@@ -23,6 +23,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from time_window import in_window, parse_utc
+from trace_flush import flush_fault_trace
 
 SERVICE = os.environ.get("SERVICE_NAME", "unknown")
 VERSION = os.environ.get("SERVICE_VERSION", "v1")
@@ -47,12 +48,13 @@ POOL_PRESSURE_READY = threading.Event()
 PAYMENT_ATTEMPTS = 0
 PAYMENT_FAILURES_REMAINING = 3
 
+TRACE_PROVIDER: TracerProvider | None = None
 if OTLP:
-    provider = TracerProvider(resource=Resource.create({"service.name": SERVICE, "service.version": VERSION}))
-    provider.add_span_processor(BatchSpanProcessor(
+    TRACE_PROVIDER = TracerProvider(resource=Resource.create({"service.name": SERVICE, "service.version": VERSION}))
+    TRACE_PROVIDER.add_span_processor(BatchSpanProcessor(
         OTLPSpanExporter(endpoint=f"{OTLP.rstrip('/')}/v1/traces"), schedule_delay_millis=500,
     ))
-    trace.set_tracer_provider(provider)
+    trace.set_tracer_provider(TRACE_PROVIDER)
 TRACER = trace.get_tracer("opspilot.lab")
 
 
@@ -222,11 +224,15 @@ class Handler(BaseHTTPRequestHandler):
         started = time.perf_counter()
         status = 200
         payload: dict[str, Any] = {}
+        request_trace_id = None
         try:
             payload = self.body_json()
             from opentelemetry.propagate import extract
             parent = extract({key.lower(): value for key, value in self.headers.items()})
             with TRACER.start_as_current_span(f"{SERVICE}{urlsplit(self.path).path}", context=parent) as span:
+                span_context = span.get_span_context()
+                if span_context.is_valid:
+                    request_trace_id = format(span_context.trace_id, "032x")
                 span.set_attribute("service.name", SERVICE)
                 span.set_attribute("service.version", VERSION)
                 span.set_attribute("http.request.method", "POST")
@@ -254,25 +260,32 @@ class Handler(BaseHTTPRequestHandler):
                     span.set_attribute("http.response.status_code", 500)
                     raise
                 span.set_attribute("http.response.status_code", status)
+            if SERVICE == "orders" and FAULT in {"slow_sql", "double_root"} and TRACE_PROVIDER:
+                if not flush_fault_trace(TRACE_PROVIDER):
+                    emit("error", "trace export flush failed", order_id=payload.get("order_id"))
             self.send_json(status, result)
-            emit("info", "request completed", path=urlsplit(self.path).path, status=status)
+            emit("info", "request completed", path=urlsplit(self.path).path, status=status,
+                 order_id=payload.get("order_id"), trace_id=request_trace_id)
         except ResponseError as exc:
             status = exc.status
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("warning", "request returned an error response", path=urlsplit(self.path).path, status=status, order_id=payload.get("order_id"))
+            emit("warning", "request returned an error response", path=urlsplit(self.path).path,
+                 status=status, order_id=payload.get("order_id"), trace_id=request_trace_id)
             self.send_json(status, {"error": str(exc)})
         except (TimeoutError, URLError) as exc:
             status = 504 if isinstance(exc, TimeoutError) else 502
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("error", "request dependency failed", path=urlsplit(self.path).path, error_type=type(exc).__name__, order_id=payload.get("order_id"))
+            emit("error", "request dependency failed", path=urlsplit(self.path).path,
+                 error_type=type(exc).__name__, order_id=payload.get("order_id"), trace_id=request_trace_id)
             self.send_json(status, {"error": "dependency unavailable", "error_type": type(exc).__name__})
         except Exception as exc:
             status = 500
             with LOCK:
                 COUNTS["errors"] += 1
-            emit("error", "request failed", path=urlsplit(self.path).path, error_type=type(exc).__name__, order_id=payload.get("order_id"))
+            emit("error", "request failed", path=urlsplit(self.path).path,
+                 error_type=type(exc).__name__, order_id=payload.get("order_id"), trace_id=request_trace_id)
             self.send_json(status, {"error": "request failed", "error_type": type(exc).__name__})
         finally:
             elapsed = int((time.perf_counter() - started) * 1000)

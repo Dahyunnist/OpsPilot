@@ -1,0 +1,20 @@
+{
+  "scenario": "slow_sql",
+  "timeline": {
+    "fault_response_status": 200,
+    "fault_request_duration_ms": 1521.3,
+    "recovery_response_status": 200,
+    "recovery_request_duration_ms": 59.9
+  },
+  "evidence": {
+    "logs": [],
+    "trace_ids_queried": [],
+    "traces": [],
+    "correlated": false,
+    "error": "No slow postgres.query span correlated; logs=0, spans=0."
+  },
+  "cleanup": {
+    "containers_empty": true,
+    "volumes_deleted": false
+  }
+}

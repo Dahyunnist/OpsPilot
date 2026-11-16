@@ -1,0 +1,16 @@
+{
+  "run_id": "c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef",
+  "ledger_sha256_after_run": "f3d91602262c3ea0b5151fec817e929e263913a95ac05e69f27742a0c723076f",
+  "ledger_sha256_at_authorized_plan": "74cbe4af35b74ffab5ccafce7bcd57b1d564d168ba9e670c8ae589b695740cc4",
+  "project_cap_usd": 0.6,
+  "prior_peak_usd": 0.52152799,
+  "run_peak_usd": 0.01464531,
+  "cumulative_peak_usd": 0.5361733,
+  "remaining_usd": 0.0638267,
+  "request_slots_attempted": 17,
+  "max_request_slots": 18,
+  "budget_rejections_before_provider": 3,
+  "provider_requests": 14,
+  "completed_request_rows": 12,
+  "failed_request_worst_case_rows": 2
+}

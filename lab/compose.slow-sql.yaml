@@ -1,0 +1,3 @@
+services:
+  orders:
+    image: opspilot-lab-orders-slow-sql:latest

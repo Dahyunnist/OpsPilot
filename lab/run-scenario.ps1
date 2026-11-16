@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("none", "db_pool_exhaustion", "dependency_timeout", "bad_release", "slow_sql", "retry_storm", "double_root", "inventory_latency", "payment_reject", "stale_inventory", "duplicate_delivery", "redis_unavailable", "inventory_depleted")]
-    [string] $Scenario
+    [string] $Scenario,
+    [switch] $NoBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,7 +42,8 @@ if ($Scenario -eq "bad_release") {
     $env:LAB_FAULT = "none"
     $env:LAB_ORDERS_VERSION = "v1"
     $env:LAB_INVENTORY_URL = "http://inventory:8080"
-    docker compose @composeFiles up --build --force-recreate -d
+    $baselineBuildFlag = if ($NoBuild) { "--no-build" } else { "--build" }
+    docker compose @composeFiles up $baselineBuildFlag --force-recreate -d
     if ($LASTEXITCODE -ne 0) { throw "Compose failed to start the healthy baseline." }
     Wait-LabReady
     docker compose @composeFiles exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"
@@ -59,7 +61,7 @@ if ($Scenario -eq "bad_release") {
 $env:LAB_FAULT = $Scenario
 $env:LAB_ORDERS_VERSION = if ($Scenario -eq "bad_release") { "v2" } else { "v1" }
 $env:LAB_INVENTORY_URL = if ($Scenario -eq "bad_release") { "http://inventory-v2:8080" } else { "http://inventory:8080" }
-$scenarioBuildFlag = if ($Scenario -eq "bad_release") { "--no-build" } else { "--build" }
+$scenarioBuildFlag = if ($NoBuild -or $Scenario -eq "bad_release") { "--no-build" } else { "--build" }
 docker compose @composeFiles up $scenarioBuildFlag --force-recreate -d
 if ($LASTEXITCODE -ne 0) { throw "Compose failed to start the injected scenario." }
 docker compose @composeFiles exec -T postgres psql -U opspilot -d opspilot -c "UPDATE inventory SET available=20 WHERE sku='demo-1'; DELETE FROM orders;"

@@ -232,6 +232,92 @@ def _append_unlocked(ledger_path: Path, event: dict[str, Any]) -> None:
         stream.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def _event_identity() -> dict[str, str]:
+    """Return local run and span correlation IDs for one redacted audit event."""
+    return {
+        "event_id": str(uuid.uuid4()),
+        "run_id": str(uuid.uuid4()),
+        "trace_id": uuid.uuid4().hex,
+        "span_id": uuid.uuid4().hex[:16],
+    }
+
+
+def _nonce_sha256(nonce: str) -> str:
+    return hashlib.sha256(nonce.encode("utf-8")).hexdigest()
+
+
+def _event_matches_nonce(event: dict[str, Any], nonce: str) -> bool:
+    # Read legacy local ledgers that stored raw nonces; all new events store hashes.
+    return event.get("nonce_sha256") == _nonce_sha256(nonce) or event.get("nonce") == nonce
+
+
+def record_approval_issued(approval: dict[str, Any], *, ledger_path: Path,
+                           now: datetime | None = None) -> dict[str, Any]:
+    """Persist a redacted local event after the signed test-only ticket is stored."""
+    instant = _time(now)
+    event = {**_event_identity(), "event_type": "approval_issued", "timestamp": _iso(instant),
+        "approval_id": approval["approval_id"], "case_id": approval["case_id"],
+        "action": approval["action"], "target": approval["target"],
+        "environment": approval["environment"],
+        "investigation_run_id": approval["investigation_run_id"],
+        "expires_at": approval["expires_at"], "external_system_calls": 0, "external_writes": 0}
+    _audit(ledger_path, event)
+    return event
+
+
+def record_approval_issue_rejected(*, ledger_path: Path, case_id: str, action: str,
+                                   target: str, environment: str,
+                                   reason: str = "human_confirmation_mismatch",
+                                   now: datetime | None = None) -> dict[str, Any]:
+    """Record a fixed approval rejection code; never persist identity or confirmation input."""
+    allowed_reasons = {"human_confirmation_mismatch", "actor_resolver_unconfigured",
+        "actor_identity_required", "actor_identity_unverified", "role_scope_denied",
+        "investigation_report_unreadable", "investigation_report_invalid",
+        "investigation_case_id_missing", "investigation_run_id_missing",
+        "investigation_recommendation_missing", "investigation_recommendation_not_approval_gated",
+        "investigation_evidence_invalid", "investigation_evidence_missing",
+        "investigation_evidence_unresolved", "investigation_case_mismatch"}
+    if reason not in allowed_reasons:
+        raise ValueError("unsupported_approval_issue_rejection")
+    instant = _time(now)
+    event = {**_event_identity(), "event_type": "approval_issue_rejected", "timestamp": _iso(instant),
+        "case_id": case_id, "action": action, "target": target, "environment": environment,
+        "reason": reason,
+        "external_system_calls": 0, "external_writes": 0}
+    _audit(ledger_path, event)
+    return event
+
+
+def record_approval_revoke_rejected(approval: dict[str, Any] | None, *, ledger_path: Path,
+                                    reason: str = "human_revocation_confirmation_mismatch",
+                                    now: datetime | None = None) -> dict[str, Any]:
+    """Record a failed revoke confirmation without retaining its supplied text."""
+    if reason not in {"human_revocation_confirmation_mismatch", "approval_file_unreadable"}:
+        raise ValueError("unsupported_approval_revoke_rejection")
+    instant = _time(now)
+    event = {**_event_identity(), "event_type": "approval_revoke_rejected",
+        "timestamp": _iso(instant),
+        "approval_id": approval.get("approval_id") if isinstance(approval, dict) else None,
+        "case_id": approval.get("case_id") if isinstance(approval, dict) else None,
+        "reason": reason,
+        "external_system_calls": 0, "external_writes": 0}
+    _audit(ledger_path, event)
+    return event
+
+
+def record_cli_arguments_rejected(command: str, *, ledger_path: Path,
+                                  now: datetime | None = None) -> dict[str, Any]:
+    """Record malformed arguments without retaining raw arguments or parser text."""
+    if command not in {"approve", "dry-run", "revoke"}:
+        raise ValueError("unsupported_cli_rejection_command")
+    instant = _time(now)
+    event = {**_event_identity(), "event_type": "cli_arguments_rejected",
+        "timestamp": _iso(instant), "command": command,
+        "reason": "cli_arguments_invalid", "external_system_calls": 0, "external_writes": 0}
+    _audit(ledger_path, event)
+    return event
+
+
 def _read_ledger_unlocked(ledger_path: Path) -> list[dict[str, Any]]:
     if not ledger_path.exists():
         return []
@@ -245,7 +331,7 @@ def _read_ledger_unlocked(ledger_path: Path) -> list[dict[str, Any]]:
 
 
 def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetime) -> None:
-    _audit(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
+    _audit(ledger_path, {**_event_identity(), "event_type": "dry_run_rejected",
         "timestamp": _iso(now), "approval_id": approval.get("approval_id"),
         "case_id": approval.get("case_id"), "reason": code,
         "external_system_calls": 0, "external_writes": 0})
@@ -253,7 +339,7 @@ def _reject(ledger_path: Path, approval: dict[str, Any], code: str, now: datetim
 
 
 def _reject_revoke(ledger_path: Path, approval: dict[str, Any], code: str, now: datetime) -> None:
-    _audit(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "approval_revoke_rejected",
+    _audit(ledger_path, {**_event_identity(), "event_type": "approval_revoke_rejected",
         "timestamp": _iso(now), "approval_id": approval.get("approval_id"),
         "case_id": approval.get("case_id"), "reason": code,
         "external_system_calls": 0, "external_writes": 0})
@@ -293,17 +379,18 @@ def revoke_approval(approval: dict[str, Any], *, key: bytes, ledger_path: Path,
 
     with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
         events = _read_ledger_unlocked(ledger_path)
-        if any(event.get("event_type") == "approval_revoked" and event.get("nonce") == nonce for event in events):
+        if any(event.get("event_type") == "approval_revoked" and _event_matches_nonce(event, nonce) for event in events):
             return {"status": "approval_already_revoked", "approval_id": approval_id,
                 "external_system_calls": 0, "external_writes": 0}
-        if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == nonce for event in events):
-            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "approval_revoke_rejected",
+        if any(event.get("event_type") == "dry_run_completed" and _event_matches_nonce(event, nonce) for event in events):
+            _append_unlocked(ledger_path, {**_event_identity(), "event_type": "approval_revoke_rejected",
                 "timestamp": _iso(instant), "approval_id": approval_id, "case_id": approval.get("case_id"),
                 "reason": "approval_already_consumed", "external_system_calls": 0, "external_writes": 0})
             raise ActionRejected("approval_already_consumed")
-        event = {"event_id": str(uuid.uuid4()), "event_type": "approval_revoked",
-            "timestamp": _iso(instant), "approval_id": approval_id, "nonce": nonce,
-            "case_id": approval.get("case_id"), "revoked_by": principal.subject,
+        event = {**_event_identity(), "event_type": "approval_revoked",
+            "timestamp": _iso(instant), "approval_id": approval_id, "nonce_sha256": _nonce_sha256(nonce),
+            "case_id": approval.get("case_id"),
+            "revoker_ref": hashlib.sha256((principal.issuer + "\0" + principal.subject).encode("utf-8")).hexdigest(),
             "external_system_calls": 0, "external_writes": 0}
         _append_unlocked(ledger_path, event)
     return {"status": "approval_revoked", "approval_id": approval_id,
@@ -369,11 +456,12 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
         simulated = {"before_state": "running", "after_state": "running", "restart": "simulated"}
         checks = ["target_service_matches", "service_state_simulated"]
     result = {
-        "event_id": str(uuid.uuid4()), "event_type": "dry_run_completed",
+        **_event_identity(), "event_type": "dry_run_completed",
         "status": "simulated_execution", "case_id": approval["case_id"],
         "action": approval["action"], "target": approval["target"], "environment": environment,
-        "approval_id": approval["approval_id"], "nonce": approval["nonce"],
-        "approved_by": approval["approved_by"], "timestamp": _iso(instant),
+        "approval_id": approval["approval_id"], "nonce_sha256": _nonce_sha256(approval["nonce"]),
+        "approver_ref": hashlib.sha256((principal.issuer + "\0" + principal.subject).encode("utf-8")).hexdigest(),
+        "investigation_run_id": approval["investigation_run_id"], "timestamp": _iso(instant),
         "external_system_calls": 0, "external_writes": 0,
         "simulation": simulated,
         "rollback_verification": {"status": "simulated_pass", "checks": checks,
@@ -381,32 +469,33 @@ def execute_dry_run(approval: dict[str, Any], *, key: bytes, environment: str,
     }
     source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     result["op_run_manifest"] = build_op_run_manifest(
-        project="OpsPilot", run_id=result["event_id"], evaluation_id="op4_remediation_dry_run",
+        project="OpsPilot", run_id=result["run_id"], evaluation_id="op4_remediation_dry_run",
         dataset_id="op4_investigation_report", dataset_sha256=_digest(investigation_report),
         truth_sha256=None, split="test_dry_run", evaluator_sha256=source_sha,
         result_fingerprint_sha256=_digest(result), git_sha=current_git_sha(ROOT), model_id="none",
         prompt_sha=None, tool_schema_sha=None, runtime_digest=None, max_steps=1, max_tokens=None,
         scorer_sha=source_sha, gold_source="not_applicable", cost_usd_estimate=0.0,
-        trace_id=result["event_id"], started_at=_iso(instant), ended_at=_iso(instant),
+        trace_id=result["trace_id"], started_at=_iso(instant), ended_at=_iso(instant),
         parameters={"artifact_type": "action_dry_run", "case_id": approval["case_id"],
             "action": approval["action"], "target": approval["target"], "environment": environment,
             "approval_id": approval["approval_id"], "external_system_calls": 0, "external_writes": 0,
-            "real_environment_verified": False}, status="completed")
+            "real_environment_verified": False, "span_id": result["span_id"]}, status="completed")
     manifest_errors = validate_op_run_artifact(result, is_new_run=True)
     if manifest_errors:
         raise ValueError("refusing to record unmanifested OP-4 dry run: " + "; ".join(manifest_errors))
     with _LEDGER_LOCK, _ledger_file_lock(ledger_path):
         events = _read_ledger_unlocked(ledger_path)
         if any(event.get("event_type") == "approval_revoked"
-                and (event.get("nonce") == approval["nonce"] or event.get("approval_id") == approval["approval_id"])
+                and (_event_matches_nonce(event, approval["nonce"])
+                     or event.get("approval_id") == approval["approval_id"])
                 for event in events):
-            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
+            _append_unlocked(ledger_path, {**_event_identity(), "event_type": "dry_run_rejected",
                 "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
                 "case_id": approval.get("case_id"), "reason": "approval_revoked",
                 "external_system_calls": 0, "external_writes": 0})
             raise ActionRejected("approval_revoked")
-        if any(event.get("event_type") == "dry_run_completed" and event.get("nonce") == approval["nonce"] for event in events):
-            _append_unlocked(ledger_path, {"event_id": str(uuid.uuid4()), "event_type": "dry_run_rejected",
+        if any(event.get("event_type") == "dry_run_completed" and _event_matches_nonce(event, approval["nonce"]) for event in events):
+            _append_unlocked(ledger_path, {**_event_identity(), "event_type": "dry_run_rejected",
                 "timestamp": _iso(instant), "approval_id": approval.get("approval_id"),
                 "case_id": approval.get("case_id"), "reason": "approval_replayed",
                 "external_system_calls": 0, "external_writes": 0})

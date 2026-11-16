@@ -112,7 +112,7 @@ class Op2SourceStatusTests(unittest.TestCase):
         self.assertEqual([], report["root_causes"])
         self.assertEqual("abstain", report["confidence"])
 
-    def test_conflicting_release_signals_keep_refs_and_force_abstention(self):
+    def test_missing_trace_and_conflicting_release_signals_force_abstention(self):
         logs = {"orders": [{"timestamp": "2026-10-23T10:02:00Z", "severity": "error",
             "message": "inventory dependency failed", "service": "orders", "service_version": "v2",
             "order_id": "order-1", "error_type": "URLError", "dependency_host": "inventory-v2"}]}
@@ -129,6 +129,9 @@ class Op2SourceStatusTests(unittest.TestCase):
         self.assertIn(("deployments", "deploy-v2"), cited)
         self.assertTrue(any(source == "logs" for source, _record_id in cited))
         self.assertEqual("ok", report["sources"]["logs"]["status"])
+        self.assertEqual("empty", report["source_status"]["traces"])
+        self.assertEqual(0, report["sources"]["traces"]["record_count"])
+        self.assertIn("missing_trace_context", report["quality"]["warnings"])
         self.assertEqual({"start": START, "end": END}, report["sources"]["deployments"]["window"])
 
     def test_contradictory_deployment_order_is_cited_but_cannot_certify_release_cause(self):

@@ -1,0 +1,92 @@
+{
+  "order_id": "synthetic-slow-sql-42",
+  "window_start": "2026-11-16T05:23:34Z",
+  "window_end": "2026-11-16T05:23:40Z",
+  "logs": {
+    "records": [
+      {
+        "timestamp": "2026-11-16T05:23:34.200Z",
+        "service": "orders",
+        "message": "request completed",
+        "order_id": "synthetic-slow-sql-42",
+        "trace_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "span_id": "0000000000000001"
+      },
+      {
+        "timestamp": "2026-11-16T05:23:33.999Z",
+        "service": "orders",
+        "message": "outside window",
+        "order_id": "synthetic-slow-sql-42",
+        "trace_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "timestamp": "2026-11-16T05:23:40Z",
+        "service": "orders",
+        "message": "end is exclusive",
+        "order_id": "synthetic-slow-sql-42",
+        "trace_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "timestamp": "2026-11-16T05:23:35Z",
+        "service": "orders",
+        "message": "other order",
+        "order_id": "synthetic-other-order",
+        "trace_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  "traces": {
+    "data": [
+      {
+        "traceID": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "processes": {
+          "orders-process": {"serviceName": "orders"}
+        },
+        "spans": [
+          {
+            "spanID": "0000000000000002",
+            "processID": "orders-process",
+            "operationName": "postgres.query",
+            "startTime": 1794806615000000,
+            "duration": 1500000,
+            "tags": [
+              {"key": "db.system", "type": "string", "value": "postgresql"},
+              {"key": "opspilot.order_id", "type": "string", "value": "synthetic-slow-sql-42"}
+            ],
+            "references": []
+          },
+          {
+            "spanID": "0000000000000003",
+            "processID": "orders-process",
+            "operationName": "postgres.query",
+            "startTime": 1794806620000000,
+            "duration": 1500000,
+            "tags": [
+              {"key": "opspilot.order_id", "type": "string", "value": "synthetic-slow-sql-42"}
+            ],
+            "references": []
+          }
+        ]
+      },
+      {
+        "traceID": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "processes": {
+          "orders-process": {"serviceName": "orders"}
+        },
+        "spans": [
+          {
+            "spanID": "0000000000000004",
+            "processID": "orders-process",
+            "operationName": "postgres.query",
+            "startTime": 1794806615000000,
+            "duration": 1500000,
+            "tags": [
+              {"key": "opspilot.order_id", "type": "string", "value": "synthetic-slow-sql-42"}
+            ],
+            "references": []
+          }
+        ]
+      }
+    ]
+  }
+}

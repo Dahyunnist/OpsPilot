@@ -71,7 +71,7 @@ try {
     $controlStatus = $null; $controlError = $null; $controlDeploymentRecords = @()
     $controlLogs=@{records=@();count=0}; $controlEnd=$controlStart
     try {
-        & $runScript -Scenario none
+        & $runScript -Scenario none -NoBuild
         if ($LASTEXITCODE -ne 0) { throw "normal control startup failed ($LASTEXITCODE)" }
         try { Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18080/checkout" -ContentType "application/json" -Body (@{order_id="matrix-normal-$([guid]::NewGuid())"}|ConvertTo-Json) -TimeoutSec 15 | Out-Null; $controlStatus=200 }
         catch { $controlError=$_.Exception.Message; if ($_.Exception.Response) { $controlStatus=[int]$_.Exception.Response.StatusCode } }
@@ -86,11 +86,11 @@ try {
     $normalControl=[pscustomobject]@{run_id=$runId;scenario="none";start=$controlStart;end=$controlEnd;http_status=$controlStatus;error=$controlError;log_count=$controlLogs.count;deployment_count=$controlDeploymentRecords.Count;deployment_records=$controlDeploymentRecords;expected_deployment_version="v1";expected_deployment_observed=$controlVersionObserved;passed=($controlStatus -eq 200 -and $controlLogs.count -gt 0 -and $controlVersionObserved)}
     if ($normalControl.passed) {
       foreach ($case in $truth.cases) {
-        $id = "matrix-$($case.fault)-$([guid]::NewGuid())"
+        $id = [guid]::NewGuid().ToString("N")
         $start = [DateTime]::UtcNow.ToString("o")
         $status = $null; $message = $null; $logs = @(); $ordersLogs = @{records=@();count=0}; $deploymentRecords = @(); $traceData = @(); $dnsObserved = $false; $end = $start
         try {
-            & $runScript -Scenario $case.fault
+            & $runScript -Scenario $case.fault -NoBuild
             if ($LASTEXITCODE -ne 0) { throw "scenario startup failed ($LASTEXITCODE)" }
             try { $response = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18080/checkout" -ContentType "application/json" -Body (@{order_id=$id}|ConvertTo-Json) -TimeoutSec 15; $status=200 }
             catch { $message=$_.Exception.Message; if ($_.Exception.Response) { $status=[int]$_.Exception.Response.StatusCode } }
@@ -150,7 +150,7 @@ try {
         $recoveryStart = [DateTime]::UtcNow.ToString("o")
         $recovery = [ordered]@{run_id=$runId;order_id=$recoveryOrderId;start=$recoveryStart;end=$null;http_status=$null;duration_ms=$null;log_count=0;logs_observed=$false;deployment_version_observed=$false;error=$null;passed=$false}
         try {
-            & $runScript -Scenario none
+            & $runScript -Scenario none -NoBuild
             if ($LASTEXITCODE -ne 0) { throw "healthy recovery startup failed ($LASTEXITCODE)" }
             $recoveryWatch = [Diagnostics.Stopwatch]::StartNew()
             try {

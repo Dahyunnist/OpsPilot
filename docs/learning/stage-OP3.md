@@ -178,3 +178,15 @@ Actions run `43673391511` 对提交 `2af48e9` 的结论为 `failure`，jobs API 
 ## 2026-11-15 OP-3 审计事件幂等加固
 
 审计 JSONL 写入增加进程内线程锁和跨进程文件锁；调查事件使用稳定 `event_id`，重复报告不会重复追加。相同审批事件和决策返回 `duplicate_ignored`；同 ID 携带不同决策或审计负载时 fail closed，返回冲突且不执行、不外写。新增重复调查、负载冲突、审批冲突和并发重放回归。`tests.test_s3`、`tests.test_action_safety`、`tests.test_action_cli` 共 37 项通过。MCP 标准 SDK 互通测试在 Windows 本机挂起，未跳过或记为通过；A2A localhost 测试受 `WinError 10013` 阻断。Linux 环境复核命令：`python -m unittest tests.test_s3 tests.test_action_safety tests.test_action_cli tests.test_agents tests.test_mcp -v`。本轮未调用模型/API、未读取凭据、未执行外部写入。`.tmp/` 和 `op1-replay-aa155d06fa154b52b634e56e38d22822/` 保留未动。
+
+## 2026-11-16 OP-3 三快照对照结果审计
+
+用户提供的 DeepSeek 余额预检为 available CNY 29.06、required CNY 1.4025、passed；这是供应商账户余额，不替代项目预算。三份冻结快照及题集 SHA-256 均与授权计划匹配，范围为 `normal_slow_sql`、`missing_pool_evidence`、`contradictory_payment` 四策略，最多 18 个计费请求槽位；计划记录运行前账本峰值 `$0.52152799`，加完整预留 `$0.02302260` 为 `$0.54455059/$0.60`。
+
+原始运行报告 `reports/op3-multiagent-authorized-replay-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json` 状态为 `partial`。计数器报 17/18 个请求槽位；代码在 `RunBudget.call` 之前递增，因此其中 3 个 `BudgetLimitExceeded` 在预留门禁被拒，没有进入 provider operation。checkpoint 与费用账本对应 14 个已派发请求：12 条完成、2 条 provider `truncated_json` 失败。报告与账本 summary 的运行峰值均为 `$0.01464531`，累计峰值 `$0.53617330/$0.60`，剩余 `$0.06382670`。不把 17 个门禁槽位写成 17 次外部请求。
+
+失败及分母保留：rules `3/3` 完成；single `2/3`，`contradictory_payment` 因预算门禁失败；multi `1/3`，`missing_pool_evidence` 两次 `truncated_json`，`contradictory_payment` 因预算门禁失败；auto `2/3`，`contradictory_payment` 因预算门禁失败。所有策略性能分母均为三案，失败按零计；质量指标只用已完成案例。此 `partial` 结果不是完整 OP-3 验收，也不能据此宣称策略优劣。禁止重试或继续发送。
+
+授权计划和 payload review 标记仅合成冻结快照、未发送 gold、凭据或真实客户数据；本地扫描未发现密钥/凭证字段或个人数据模式。报告、[request checkpoint](../../reports/op3-multiagent-authorized-replay-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.requests.jsonl)、[summary audit](../../reports/op3-multiagent-authorized-replay-summary-audit-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json) 与[授权计划](../../reports/op3-multiagent-authorized-replay-plan-c1c10951-2b5d-40aa-a9c0-7f2d31aff5ef.json)的 run ID/摘要已离线核对；报告 SHA-256 `df44a763fb8ea44762b8f97cf766d64414937a92be7c982d470a2d50807317bb`。运行报告和检查点保留原样。费用账本保留本机现有修改，未纳入提交；`.tmp/` 未访问。
+
+新增 `tests/test_op3_partial_run_audit.py` 与脱敏 ledger 摘要夹具，验证报告/summary audit 哈希、14 个 checkpoint 终态与账本计费行、17 个预算槽位的计数差异、策略失败分母和合成数据边界。离线 OP-3 回归 12 项及 6 子测试通过；没有新 provider 调用。

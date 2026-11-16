@@ -46,13 +46,14 @@ class _Redis:
 
 
 class _SpanContext:
-    is_valid = False
-    trace_id = 0
-    span_id = 0
+    is_valid = True
+    trace_id = 0x1234567890ABCDEF1234567890ABCDEF
+    span_id = 0x1234567890ABCDEF
 
 
 class _Span:
-    def __init__(self):
+    def __init__(self, name="current"):
+        self.name = name
         self.attributes = {}
 
     def __enter__(self):
@@ -73,7 +74,7 @@ class _Tracer:
         self.spans = []
 
     def start_as_current_span(self, *_args, **_kwargs):
-        span = _Span()
+        span = _Span(_args[0])
         self.spans.append(span)
         return span
 
@@ -253,6 +254,25 @@ class LabCheckoutE2ETests(unittest.TestCase):
         self.assertIn("${LAB_INVENTORY_URL:-http://inventory:8080}", compose)
         self.assertIn('if ($Scenario -eq "bad_release") { "http://inventory-v2:8080" } else { "http://inventory:8080" }', runner)
         self.assertIn("condition: service_started", compose)
+
+    def test_success_logs_and_slow_sql_trace_share_synthetic_order_and_trace_ids(self) -> None:
+        gateway = self.modules["gateway"]
+        orders = self.modules["orders"]
+        orders.FAULT = "slow_sql"
+        order_id = "slow-sql-evidence-001"
+        with redirect_stdout(StringIO()) as output:
+            status, response = self._dispatch(gateway, "POST", "/checkout", {"order_id": order_id})
+
+        self.assertEqual(200, status)
+        self.assertEqual(order_id, response["order_id"])
+        logs = [json.loads(line) for line in output.getvalue().splitlines()]
+        order_log = next(row for row in logs if row["service"] == "orders" and row["order_id"] == order_id)
+        self.assertEqual("1234567890abcdef1234567890abcdef", order_log["trace_id"])
+        buffered_log = next(row for row in orders.LOGS if row.get("order_id") == order_id)
+        self.assertEqual(order_log["trace_id"], buffered_log["trace_id"])
+        query_span = next(span for span in orders.TRACER.spans if span.name == "postgres.query")
+        self.assertEqual(order_id, query_span.attributes["opspilot.order_id"])
+        self.assertEqual("1234567890abcdef1234567890abcdef", format(query_span.get_span_context().trace_id, "032x"))
 
 
 if __name__ == "__main__":

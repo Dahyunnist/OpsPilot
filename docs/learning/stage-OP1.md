@@ -43,7 +43,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 .\lab\run-host-matrix.ps1 -OutputFile .tmp\op1-host-matrix-host.json
 ```
 
-需启动 Docker Desktop Linux Engine；七个映射 TCP 端口 `18080, 18081, 18082, 18083, 14318, 16686, 19090` 必须空闲；Compose 配置中的服务镜像及 Dockerfile `FROM` 基础镜像必须已在本地，缺镜像会拒绝运行且不自动拉取。需预留约 15–25 分钟，主要取决于本地镜像构建和各服务启动；每次启动最多等待 60 秒。结果写入 Git 忽略的 `.tmp/op1-host-matrix-host.json`；预检失败会写结构化错误结果并以非零码退出，场景失败也会保留逐案证据和 cleanup 状态。矩阵先跑 `none` 正常基线，再跑十二个故障；runner 逐场调用 `run-scenario.ps1`，通过 `docker compose up --build` 构建并启动服务。每次启动后检查 gateway/orders/inventory health 与 payment ready，再触发 checkout。每个案例检查 HTTP 状态、orders 版本，并逐项核对 `must_observe` 的日志与 trace 信号。每个故障取证后，runner 用新随机订单 ID 重启 `none` 健康配置，测恢复 checkout 状态、耗时、对应订单日志和 orders/v1 部署；四项缺一则该案例恢复失败，且整轮矩阵失败。矩阵使用唯一 Compose project；结束时停止该 project 的容器和网络，不删除其 PostgreSQL/Redis 数据卷，也不触及其他 project。脚本只调用本地服务与 Docker Compose，不调用付费模型。
+需启动 Docker Desktop Linux Engine；七个映射 TCP 端口 `18080, 18081, 18082, 18083, 14318, 16686, 19090` 必须空闲；Compose 配置中的服务镜像及 Dockerfile `FROM` 基础镜像必须已在本地，缺镜像会拒绝运行且不自动拉取。矩阵使用 `--no-build`，只用预先存在的本地镜像；每次启动最多等待 60 秒。结果写入 Git 忽略的 `.tmp/op1-host-matrix-host.json`；预检失败会写结构化错误结果并以非零码退出，场景失败也会保留逐案证据和 cleanup 状态。矩阵先跑 `none` 正常基线，再跑十二个故障；runner 逐场调用 `run-scenario.ps1`，通过 `docker compose up --no-build` 启动服务。每次启动后检查 gateway/orders/inventory health 与 payment ready，再触发 checkout。每个案例检查 HTTP 状态、orders 版本，并逐项核对 `must_observe` 的日志与 trace 信号。每个故障取证后，runner 用新随机订单 ID 重启 `none` 健康配置，测恢复 checkout 状态、耗时、对应订单日志和 orders/v1 部署；四项缺一则该案例恢复失败，且整轮矩阵失败。矩阵使用唯一 Compose project；结束时停止该 project 的容器和网络，不删除其 PostgreSQL/Redis 数据卷，也不触及其他 project。脚本只调用本地服务与 Docker Compose，不调用付费模型。
 
 针对用户回传的 bad_release 504/无部署记录，`run-scenario.ps1 -Scenario bad_release` 现先用正常 `inventory` DNS 启动实验台并发起唯一 ID checkout，要求 200；失败则在注入前停止。随后清理基线订单、重建 orders 为 v2 并注入唯一错误主机 `inventory-v2`。smoke 的 DNS 日志轮询现在同时匹配场景订单 ID，避免邻近请求的日志误作证据。新增进程内服务端 E2E 回归调用真实 Handler：正常 checkout 成功，bad_release 返回 502/504 类失败，orders `/logs` 回出对应 order ID/错误 hostname，gateway `/deployments` 回出时间窗内 orders/v2 记录。此合成回归不替代 Docker Compose DNS 实测。
 
@@ -78,6 +78,8 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 2026-11-12 执行环境前置检查：七个映射端口均空闲，但本执行环境无法连接 Docker Desktop Linux Engine，镜像状态无法读取；矩阵未启动、未注入故障、未生成 live 证据。用户此前提供的 Docker 版本输出显示其桌面 Engine 可运行；两者是不同执行环境，不能互相代替。
 
 ## 用户 bad_release 证据回看
+
+2026-11-16 slow SQL 宿主复核报告 `op1-slow-sql-recheck-2b82dfd9d35349e7b4c33d76bd0c741a.json` 标记通过：故障请求成功、恢复成功、遥测证据完整；cleanup 确认容器为空且未删除卷。该结果覆盖本次单场景慢 SQL 实验，不替代十二场景矩阵或生产验证。
 
 用户回传的 orders 日志包含 `inventory-v2` DNS 失败（日志时间 `2026-11-11T14:06:22Z`），与 bad_release 注入一致。随后部署查询应使用 gateway `127.0.0.1:18080/deployments`；orders `127.0.0.1:18081` 只提供 `/logs`，`18081/deployments` 是错误路径。后来正确端口查询返回空，但它使用的五分钟窗口未覆盖 deployment 记录 `2026-11-11T13:47:23Z`；这不是部署证据缺失的结论。
 
@@ -127,3 +129,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:18080/checkout -ContentType
 矩阵报告只投影必要日志字段；不输出完整 `error_reason`。trace 标签只保留订单 ID 和 HTTP 状态，不保留请求头或 SQL 内容。finally 期间保留随机 `COMPOSE_PROJECT_NAME`，只停止并检查该项目；检查完成后才恢复调用者环境变量。Compose stop 不删 PostgreSQL/Redis 卷。
 
 `tests/test_op1_truth_isolation.py tests/test_action_safety.py tests/test_action_cli.py tests/test_s3.py`：54 项和 11 子测试通过。未启动 Docker、未调用 Agent/模型。
+
+## 2026-11-16 slow SQL trace 宿主复验
+
+用户宿主复验报告 [slow SQL trace 复验](../../reports/op1-slow-sql-recheck-2b82dfd9d35349e7b4c33d76bd0c741a.json) 显示故障 checkout HTTP 200/1586.8 ms、恢复 HTTP 200/43.7 ms，trace 证据关联成功，`acceptance.status=passed`。隔离项目容器清理为空，卷保留。此为本机合成 Docker 验收，不是生产证据。
+
+只读报告检查未发现密钥字段、凭证模式、邮箱/SSN 模式或非 UUID 的订单 ID；遥测服务标记为 `orders`。报告 SHA-256：`0FFA058F3D9D4CDD18585D58607988D8170439A896CB31B41B211A48D4361383`。未修改报告内容、账本或 `.tmp/`；未调用模型。

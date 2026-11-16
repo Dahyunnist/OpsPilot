@@ -2,8 +2,6 @@ import json
 import unittest
 from types import SimpleNamespace
 
-import anyio
-
 from lab.verify_bad_release_mcp import EXPECTED_TOOLS, verify_client
 
 
@@ -46,6 +44,17 @@ class FakeMcpClient:
         return SimpleNamespace(isError=False, content=[SimpleNamespace(text=json.dumps(payloads[name]))])
 
 
+def run_immediate(coroutine):
+    """Drive fake-client verification without opening a Windows asyncio socketpair."""
+    try:
+        coroutine.send(None)
+    except StopIteration as completed:
+        return completed.value
+    finally:
+        coroutine.close()
+    raise AssertionError("fake MCP verification unexpectedly yielded for I/O")
+
+
 class Op2McpHostValidationTests(unittest.TestCase):
     def test_read_only_mcp_calls_correlate_new_order_deployment_and_trace(self):
         client = FakeMcpClient()
@@ -56,7 +65,7 @@ class Op2McpHostValidationTests(unittest.TestCase):
                 order_id="order-1", run_id="run-1", wait_seconds=0,
             )
 
-        report = anyio.run(exercise)
+        report = run_immediate(exercise())
         self.assertEqual("passed", report["status"])
         self.assertEqual("completed", report["protocol"]["initialize"])
         self.assertEqual("trace-bad-release", report["evidence"]["trace_id"])
@@ -74,7 +83,7 @@ class Op2McpHostValidationTests(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(RuntimeError, "Unexpected read-only MCP tool set"):
-            anyio.run(exercise)
+            run_immediate(exercise())
 
 
 if __name__ == "__main__":

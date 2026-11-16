@@ -66,3 +66,9 @@ UTC 时区、24 小时窗口与 limit 契约。回归以禁止任何查询的 fa
 `.\lab\verify-bad-release.ps1 -VerifyMcp` 在全新隔离项目中启动合成 `bad_release`，通过 Python MCP 标准客户端的 stdio transport 完成 initialize 与 tools/list。验证确认只暴露既有五个只读工具，然后对同一 UTC 窗口调用 logs、deployments、traces 与 `investigate_live_incident`。结果绑定唯一 order ID、run ID、orders/v2 deployment、inventory-v2 DNS 错误日志和同订单/同 trace 的 orders span；只读调查结果引用了这三类记录。
 
 完整结构化结果见[新窗口 MCP 宿主验收报告](../../reports/op2-mcp-bad-release-host-a06d8717-5d71-497c-af8b-04dfbea9029f.json)。cleanup 显示容器清空，卷保留。测试只访问本地合成实验台，没有调用模型或生产遥测；这补齐新 Docker 故障窗口上的 MCP 全链路证据，不构成生产连接验收。离线回归 `tests.test_op2_mcp_host_validation tests.test_mcp tests.test_live_telemetry tests.test_op2_telemetry_robustness tests.test_op2_source_status`：49 项通过。
+
+## 2026-11-16 缺 trace 与矛盾发布负例
+
+扩展 `test_missing_trace_and_conflicting_release_signals_force_abstention`：orders DNS 错误和 v2 deployment 提供相互冲突的发布线索，同时 trace 查询返回空集且日志缺 trace context。调查必须保持 `confidence=abstain`、无根因，保留可解析的日志/部署引用，并明确 `traces=empty` 与 `missing_trace_context`。纯合成离线回归，不请求服务或模型。
+
+同日宿主 MCP bad_release 报告 `op2-mcp-bad-release-host-5ff7d94f-01ed-4453-94b2-4551e347d2da.json` 通过：HTTP 502、orders/v2 部署与 `inventory-v2` DNS 日志匹配；5 个 MCP 工具均为只读查询/调查工具。结束时容器数为 0，未删除卷。此为本机合成宿主证据，不证明生产系统或真实 MCP 主机安全。

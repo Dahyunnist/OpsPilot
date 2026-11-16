@@ -79,3 +79,23 @@ OP-4 复核确认过期/恰好到期、重复消费、错误环境、越权角�
 ## 2026-11-15 审批拒绝审计字段补齐
 
 过期、签名拒绝、已撤销和重复消费路径原有 `external_system_calls=0`，但 dry-run rejection 事件未一致写 `external_writes`。统一补为 0；新增断言锁定过期、重放、错环境/篡改/越权审计都无调用、无写入。原有 8 线程与 6 进程消费竞态测试继续验证单次消费。定向 OP-4 测试随 OP-1/OP-2 合并运行；没有真实审批执行或修复。
+
+## 2026-11-16 宿主遥测报告安全检查
+
+只读检查 OP-1 slow SQL 宿主报告 [报告文件](../../reports/op1-slow-sql-recheck-2b82dfd9d35349e7b4c33d76bd0c741a.json)：未发现疑似密钥字段、凭证/邮箱/SSN 模式；订单 ID 均为 UUID，日志只标记合成 `orders` 服务。报告 SHA-256 与 OP-1 记录一致。该模式扫描是报告卫生检查，不证明数据来源；宿主确认其为本机合成实验。未检查或改写费用账本与 `.tmp/`。
+
+## 2026-11-16 离线安全验收
+
+复核审批 CLI、签名执行器、主体 resolver、MCP 工具注册和 OP-1/OP-2 宿主报告。批准/撤销都要求精确人工确认；CLI 不接收自报角色，resolver 缺失、主体或角色不符均拒绝；审批绑定调查 run、证据与建议摘要，并限时、单次消费。执行器只提供 test 环境 dry-run；源码无网络、子进程、Docker 或业务客户端依赖。`.env`、`var/` 在 `.gitignore` 中。密钥文件内容未读取。
+
+定向回归：`test_action_safety.py` 与 `test_action_cli.py` 通过 39 项及 11 子测试，排除 1 项跨进程用例。组合运行 MCP、OP-1/OP-2 测试时未在本机及时结束，手动中止；因此这些项本轮状态为未完成，不记作通过或失败。未改动账本、`.tmp/`、报告或费用记录。
+
+宿主证据抽查：OP-1 slow SQL 报告通过，故障/恢复及 telemetry 完整，容器清空且卷保留；OP-2 MCP bad_release 报告通过，HTTP 502、发布与 DNS 日志匹配，5 个工具只读，容器清空且卷保留。以上仅证明所列本机合成运行。生产身份提供者、独立审批人、真实回滚、生产验证仍未覆盖。
+
+## 2026-11-16 本地动作审计关联字段
+
+复核发现：成功 dry-run 的 manifest 有 run/trace ID，但没有 span ID；过期、重放、拒绝和撤销事件没有统一关联字段。成功事件还把原始 nonce 和审批人标识写入 JSONL。
+
+本地 action-audit JSONL 现在为每条完成、拒绝和撤销事件写入独立 `run_id`、32 位十六进制 `trace_id`、16 位十六进制 `span_id`。成功 dry-run manifest 使用同一组 run/trace ID，并在参数中绑定 span ID。审计事件只保存 nonce SHA-256 与审批人引用摘要；重放检查仍兼容旧账本中的原始 nonce。确定性负例验证过期、重放、撤销拒绝都有可关联事件，且 `external_system_calls=0`、`external_writes=0`。
+
+这些字段仅用于本地 JSONL 关联，不是 OTLP 导出或跨服务 trace。CLI 成功签发票据后追加 `approval_issued`；人工确认不匹配、resolver 未配置/主体无效、角色越权时追加 `approval_issue_rejected`；撤销确认不匹配及票据读/解析失败时追加 `approval_revoke_rejected`。调查报告读取失败、run 绑定失败及绑定不匹配也写固定原因码。已识别子命令的 argparse 拒绝追加 `cli_arguments_rejected`，不保存原始参数。事件只存固定原因码和必要关联字段，不保存报告正文、文件路径、用户输入、身份原文、nonce、签名或密钥。所有事件含关联 ID，外部调用/写入计数为 0。根命令缺失或未知、身份 resolver 之前的 CLI 启动错误仍无命令级事件；记录不代表完整审批生命周期都有事件。真实 IdP、独立审批人、生产服务调用和真实回滚仍未覆盖。

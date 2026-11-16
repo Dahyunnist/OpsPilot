@@ -1,6 +1,10 @@
 param(
+    [ValidateRange(10, 180)]
     [int] $ReadyTimeoutSeconds = 90,
+    [ValidateRange(1, 60)]
     [int] $EvidenceTimeoutSeconds = 20,
+    [ValidateRange(10, 120)]
+    [int] $McpTimeoutSeconds = 45,
     [switch] $VerifyMcp
 )
 
@@ -11,6 +15,9 @@ Import-Module $telemetryEvidenceModule -Force
 $composeFile = Join-Path $PSScriptRoot "compose.yaml"
 $reportDirectory = Join-Path $root "reports"
 $runId = [guid]::NewGuid().ToString()
+$startedAtUtc = [DateTime]::UtcNow.ToString("o")
+$gitSha = (& git -C $root rev-parse HEAD 2>$null | Select-Object -Last 1).Trim()
+if ($LASTEXITCODE -ne 0 -or $gitSha -notmatch '^[0-9a-fA-F]{40}$') { throw "Could not identify the OpsPilot source revision." }
 $orderId = "bad-release-$runId"
 $projectName = "opspilot-bad-release-$($runId.Replace('-', '').Substring(0, 12))".ToLowerInvariant()
 $ports = @(18080, 18081, 18082, 18083, 14318, 16686, 19090)
@@ -25,6 +32,9 @@ $result = [ordered]@{
     artifact_type = $(if ($VerifyMcp) { "op2_mcp_bad_release_host_verification" } else { "op4_bad_release_host_verification" })
     status = "running"
     run_id = $runId
+    git_sha = $gitSha.ToLowerInvariant()
+    started_at_utc = $startedAtUtc
+    ended_at_utc = $null
     compose_project = $projectName
     order_id = $orderId
     synthetic_only = $true
@@ -142,7 +152,7 @@ try {
         if (-not (Test-Path -LiteralPath $python)) { throw 'Run .\scripts\setup.ps1 first.' }
         $mcpOutput = & $python -m lab.verify_bad_release_mcp `
             --start $result.window_start_utc --end $result.window_end_utc `
-            --order-id $orderId --run-id $runId
+            --order-id $orderId --run-id $runId --timeout-seconds $McpTimeoutSeconds
         if ($LASTEXITCODE -ne 0) { throw "MCP host verification failed for order $orderId." }
         $result.mcp_verification = ($mcpOutput -join [Environment]::NewLine) | ConvertFrom-Json
     }
@@ -171,6 +181,7 @@ try {
         $result.cleanup.note = "Compose did not report successful startup; no down command was sent. Check only project $projectName if startup was partial."
     }
     $result.cleanup.volumes_deleted = $false
+    $result.ended_at_utc = [DateTime]::UtcNow.ToString("o")
     foreach ($name in $savedEnvironment.Keys) {
         [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], "Process")
     }
@@ -179,7 +190,24 @@ try {
     $reportPrefix = if ($VerifyMcp) { "op2-mcp-bad-release-host" } else { "op4-bad-release-host" }
     $reportPath = Join-Path $reportDirectory "$reportPrefix-$runId.json"
     $result.report = "reports/$reportPrefix-$runId.json"
+    $result.run_manifest = "reports/$reportPrefix-$runId.run-manifest.json"
     [IO.File]::WriteAllText($reportPath, (($result | ConvertTo-Json -Depth 8) + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+    $manifestPython = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $manifestPython)) { $manifestPython = (Get-Command python -ErrorAction SilentlyContinue).Source }
+    if (-not $manifestPython) {
+        $failure = [InvalidOperationException]::new('Python is required to write the shared run manifest.')
+        $result.status = "failed"
+        $result.manifest_error = $failure.Message
+        [IO.File]::WriteAllText($reportPath, (($result | ConvertTo-Json -Depth 8) + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+    } else {
+        & $manifestPython (Join-Path $root 'scripts\write_host_verification_manifest.py') --report-path $result.report
+        if ($LASTEXITCODE -ne 0) {
+            $failure = [InvalidOperationException]::new('Shared run manifest generation failed; host report is preserved.')
+            $result.status = "failed"
+            $result.manifest_error = $failure.Message
+            [IO.File]::WriteAllText($reportPath, (($result | ConvertTo-Json -Depth 8) + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+        }
+    }
 }
 
 $result | ConvertTo-Json -Depth 8

@@ -3,6 +3,7 @@ name: opspilot-lab
 services:
   gateway:
     build: ./service
+    image: opspilot-lab-gateway:latest
     environment:
       SERVICE_NAME: gateway
       SERVICE_VERSION: ${LAB_GATEWAY_VERSION:-v1}
@@ -32,6 +33,7 @@ services:
 
   orders:
     build: ./service
+    image: opspilot-lab-orders:latest
     environment:
       SERVICE_NAME: orders
       SERVICE_VERSION: ${LAB_ORDERS_VERSION:-v1}
@@ -58,6 +60,7 @@ services:
 
   inventory:
     build: ./service
+    image: opspilot-lab-inventory:latest
     environment:
       SERVICE_NAME: inventory
       SERVICE_VERSION: v1
@@ -80,6 +83,7 @@ services:
 
   payment:
     build: ./service
+    image: opspilot-lab-payment:latest
     environment:
       SERVICE_NAME: payment
       SERVICE_VERSION: v1

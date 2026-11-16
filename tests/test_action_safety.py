@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 import ast
+import hashlib
 import json
 import multiprocessing
 from pathlib import Path
@@ -68,11 +69,26 @@ class ActionSafetyTests(unittest.TestCase):
     def events(self) -> list[dict]:
         return [json.loads(line) for line in self.ledger.read_text(encoding="utf-8").splitlines()]
 
+    def assert_observable_redacted_event(self, event: dict) -> None:
+        self.assertTrue(event["event_id"])
+        self.assertTrue(event["run_id"])
+        self.assertRegex(event["trace_id"], r"^[0-9a-f]{32}$")
+        self.assertRegex(event["span_id"], r"^[0-9a-f]{16}$")
+        self.assertNotIn("nonce", event)
+        self.assertNotIn("approved_by", event)
+        self.assertNotIn("approved_by_issuer", event)
+        self.assertEqual(0, event["external_system_calls"])
+        self.assertEqual(0, event["external_writes"])
+
     def test_signed_rollback_is_test_only_and_reports_simulated_verification(self) -> None:
         result = execute_dry_run(self.approval(), key=self.key, environment="test", ledger_path=self.ledger, investigation_report=self.report(), principal=self.principal(), now=NOW)
         self.assertEqual(result["status"], "simulated_execution")
         self.assertEqual([], validate_op_run_artifact(result, is_new_run=True))
         self.assertEqual("action_dry_run", result["op_run_manifest"]["parameters"]["artifact_type"])
+        self.assertEqual(result["run_id"], result["op_run_manifest"]["run_id"])
+        self.assertEqual(result["trace_id"], result["op_run_manifest"]["trace_id"])
+        self.assertEqual(result["span_id"], result["op_run_manifest"]["parameters"]["span_id"])
+        self.assert_observable_redacted_event(result)
         self.assertIsNone(result["op_run_manifest"]["truth_sha256"])
         self.assertEqual(result["external_system_calls"], 0)
         self.assertEqual(result["external_writes"], 0)
@@ -87,6 +103,7 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(self.events()[0]["reason"], "approval_expired_or_invalid")
         self.assertEqual(0, self.events()[0]["external_system_calls"])
         self.assertEqual(0, self.events()[0]["external_writes"])
+        self.assert_observable_redacted_event(self.events()[0])
 
     def test_approval_expires_at_exact_boundary(self) -> None:
         approval = self.approval(ttl_seconds=120)
@@ -125,6 +142,8 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual("approval_revoked", events[-1]["reason"])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in events))
         self.assertTrue(all(event.get("external_writes", 0) == 0 for event in events))
+        for event in events:
+            self.assert_observable_redacted_event(event)
 
     def test_revocation_requires_original_authenticated_approver(self) -> None:
         approval = self.approval()
@@ -136,6 +155,7 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual("actor_principal_mismatch", self.events()[0]["reason"])
         self.assertEqual(0, self.events()[0]["external_system_calls"])
         self.assertEqual(0, self.events()[0]["external_writes"])
+        self.assert_observable_redacted_event(self.events()[0])
 
     def test_revocation_is_idempotent_and_cannot_claim_consumed_approval(self) -> None:
         approval = self.approval()
@@ -226,6 +246,23 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual([event["event_type"] for event in self.events()], ["dry_run_completed", "dry_run_rejected"])
         self.assertTrue(all(event["external_system_calls"] == 0 for event in self.events()))
         self.assertTrue(all(event["external_writes"] == 0 for event in self.events()))
+        for event in self.events():
+            self.assert_observable_redacted_event(event)
+        completed = self.events()[0]
+        self.assertEqual(hashlib.sha256(approval["nonce"].encode("utf-8")).hexdigest(),
+            completed["nonce_sha256"])
+
+    def test_legacy_raw_nonce_audit_still_blocks_replay(self) -> None:
+        approval = self.approval()
+        self.ledger.write_text(json.dumps({"event_type": "dry_run_completed",
+            "nonce": approval["nonce"]}) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ActionRejected, "approval_replayed"):
+            execute_dry_run(approval, key=self.key, environment="test", ledger_path=self.ledger,
+                investigation_report=self.report(), principal=self.principal(), now=NOW)
+        event = self.events()[-1]
+        self.assertEqual("dry_run_rejected", event["event_type"])
+        self.assertEqual("approval_replayed", event["reason"])
+        self.assert_observable_redacted_event(event)
 
     def test_concurrent_replay_consumes_approval_once_within_process(self) -> None:
         approval = self.approval()

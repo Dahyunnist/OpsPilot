@@ -128,17 +128,36 @@ async def verify_client(client: Any, *, start: str, end: str, order_id: str,
 
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
-    environment = dict(os.environ)
-    environment["PYTHONPATH"] = str(ROOT)
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "opspilot.mcp_servers", "live"],
-        env=environment,
+        env=_live_lab_environment(os.environ),
     )
     async with Client(params) as client:
         return await verify_client(
             client, start=args.start, end=args.end, order_id=args.order_id, run_id=args.run_id
         )
+
+
+def _live_lab_environment(inherited: Any) -> dict[str, str]:
+    environment = dict(inherited)
+    environment["PYTHONPATH"] = str(ROOT)
+    environment.update({
+        "OPSPILOT_PROMETHEUS_URL": "http://127.0.0.1:19090",
+        "OPSPILOT_JAEGER_URL": "http://127.0.0.1:16686",
+        "OPSPILOT_LAB_GATEWAY_URL": "http://127.0.0.1:18080",
+        "OPSPILOT_LAB_ORDERS_URL": "http://127.0.0.1:18081",
+        "OPSPILOT_LAB_INVENTORY_URL": "http://127.0.0.1:18082",
+        "OPSPILOT_LAB_PAYMENT_URL": "http://127.0.0.1:18083",
+    })
+    return environment
+
+
+def _timeout_seconds(value: str) -> float:
+    timeout = float(value)
+    if not 10.0 <= timeout <= 120.0:
+        raise argparse.ArgumentTypeError("timeout must be between 10 and 120 seconds")
+    return timeout
 
 
 def main() -> int:
@@ -147,9 +166,14 @@ def main() -> int:
     parser.add_argument("--end", required=True)
     parser.add_argument("--order-id", required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--timeout-seconds", type=_timeout_seconds, default=45.0)
     args = parser.parse_args()
     try:
-        print(json.dumps(asyncio.run(run(args)), ensure_ascii=False))
+        result = asyncio.run(asyncio.wait_for(run(args), timeout=args.timeout_seconds))
+        print(json.dumps(result, ensure_ascii=False))
+    except asyncio.TimeoutError:
+        print(f"MCP host verification exceeded {args.timeout_seconds:g} seconds", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(f"MCP host verification failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1

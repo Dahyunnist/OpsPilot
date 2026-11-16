@@ -1,0 +1,4 @@
+FROM opspilot-lab-orders:latest
+WORKDIR /app
+COPY app.py ./app.py
+COPY trace_flush.py ./trace_flush.py
