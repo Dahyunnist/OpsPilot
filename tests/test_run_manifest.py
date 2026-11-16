@@ -6,6 +6,7 @@ from pathlib import Path
 import unittest
 
 from opspilot.run_manifest import validate_run_manifest
+from opspilot.hashing import verify_text_sha256
 
 
 def valid_manifest():
@@ -94,8 +95,10 @@ class RunManifestTests(unittest.TestCase):
         report = (root / manifest["report_path"]).read_bytes()
         truth = (root / "lab/scenarios/truth.json").read_bytes()
         self.assertEqual([], validate_run_manifest(manifest))
-        self.assertEqual(hashlib.sha256(report).hexdigest(), manifest["report_sha256"])
-        self.assertEqual(hashlib.sha256(truth).hexdigest(), manifest["dataset_sha256"])
+        self.assertEqual(manifest["report_sha256"],
+            verify_text_sha256(root / manifest["report_path"], manifest["report_sha256"]))
+        self.assertEqual(manifest["dataset_sha256"],
+            verify_text_sha256(root / "lab/scenarios/truth.json", manifest["dataset_sha256"]))
         self.assertEqual("967a4ecd65dd58a37680cff3cdf707c6174a3cae", manifest["git_sha"])
         self.assertEqual("unknown", manifest["docker_engine_server"])
         self.assertEqual("none", manifest["model_id"])

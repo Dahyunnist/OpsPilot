@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from opspilot.strategy_eval import CAUSES, STRATEGIES
 from opspilot.run_manifest import validate_op_run_artifact
+from opspilot.hashing import sha256_text_file
 from scripts.evaluate_op2_frozen import (STRATEGIES as RUNNER_STRATEGIES, _load_frozen_cases,
     _load_request_checkpoints, _prior_completed_requests, _prior_subset_spend,
     _refuse_unavailable_paid_response, _check_prior_paid_replay_key, _total_cap_covers,
@@ -313,7 +314,7 @@ class FrozenOp3EvaluationTests(unittest.TestCase):
         self.assertEqual("partial", audit["evaluation_status"])
         self.assertEqual("df44a763fb8ea44762b8f97cf766d64414937a92be7c982d470a2d50807317bb",
             audit["source_report_sha256"])
-        self.assertEqual(hashlib.sha256((root / "opspilot" / "strategy_eval.py").read_bytes()).hexdigest(),
+        self.assertEqual(sha256_text_file(root / "opspilot" / "strategy_eval.py"),
             audit["scorer_sha256"])
         self.assertEqual(3, audit["case_count"])
         self.assertEqual(17, audit["provider_request_attempts"])

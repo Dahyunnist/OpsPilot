@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -10,12 +11,26 @@ from unittest.mock import patch
 from opspilot.model_client import ChatModel
 from opspilot.cli import load_incidents
 from opspilot.run_manifest import validate_op_run_artifact
+from opspilot.hashing import sha256_text_bytes, sha256_text_file
 from scripts.evaluate_s15_mock_ablation import (
-    ROOT, STRATEGIES, _candidate_predictions, build_s15_op_manifest, evaluate,
+    FROZEN_TEST_HASHES, ROOT, STRATEGIES, _candidate_predictions, build_s15_op_manifest, evaluate,
 )
 
 
 class S15MockAblationTests(unittest.TestCase):
+    def test_frozen_inputs_match_git_blobs_across_checkout_newlines(self):
+        frozen_inputs = (
+            ("data/causal-benchmark/manifest.json", FROZEN_TEST_HASHES["manifest_sha256"]),
+            ("data/causal-benchmark/test.jsonl", FROZEN_TEST_HASHES["data_sha256"]),
+            ("data/causal-benchmark/labels/test.json", FROZEN_TEST_HASHES["labels_sha256"]),
+        )
+        for relative, expected in frozen_inputs:
+            with self.subTest(path=relative):
+                blob = subprocess.check_output(["git", "show", f"HEAD:{relative}"], cwd=ROOT)
+                self.assertEqual(expected, sha256_text_bytes(blob))
+                self.assertEqual(expected, sha256_text_file(ROOT / relative))
+                self.assertEqual(expected, sha256_text_bytes(blob.replace(b"\n", b"\r\n")))
+
     def test_frozen_paired_run_is_deterministic_and_never_calls_model(self):
         with patch.object(ChatModel, "complete", side_effect=AssertionError("model calls forbidden")):
             first = evaluate()

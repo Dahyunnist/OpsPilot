@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "normalizer_sha256": "c9b5c8d967af0e15a02124c9ac36fdf7caff74e33ca46150fcdda41b30ca3f3f",
+  "normalizer_sha256": "0f4d30fcf0bf1a8a2d232be5dc65725660258783701e82b7e1e7a75394149188",
   "project": "OpsPilot",
   "run_id": "opspilot-matrix-ed1798ae",
   "trace_id": null,

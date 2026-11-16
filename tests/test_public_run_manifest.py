@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 import unittest
 
 from opspilot.run_manifest import normalize_host_manifest, validate_public_manifest
+from opspilot.hashing import verify_text_sha256
 from scripts.normalize_public_host_manifest import normalizer_code_sha256
 
 
@@ -14,15 +14,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def normalized_host_manifest():
     manifest_path = ROOT / "reports" / "op1-host-matrix-run-manifest.json"
-    source_bytes = manifest_path.read_bytes()
-    source = json.loads(source_bytes.decode("utf-8"))
+    source = json.loads(manifest_path.read_text(encoding="utf-8"))
+    committed_public = json.loads((ROOT / "reports" / "op1-host-matrix-public-manifest.json")
+        .read_text(encoding="utf-8"))
     report_path = ROOT / source["report_path"]
     truth_path = ROOT / source["gold_source"]
     return normalize_host_manifest(
         source,
-        source_manifest_sha256=hashlib.sha256(source_bytes).hexdigest(),
-        report_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),
-        truth_sha256=hashlib.sha256(truth_path.read_bytes()).hexdigest(),
+        source_manifest_sha256=verify_text_sha256(
+            manifest_path, committed_public["source_artifacts"]["manifest_sha256"]),
+        report_sha256=verify_text_sha256(report_path, source["report_sha256"]),
+        truth_sha256=verify_text_sha256(truth_path, source["dataset_sha256"]),
         normalizer_sha256=normalizer_code_sha256(),
     )
 

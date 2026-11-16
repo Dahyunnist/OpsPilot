@@ -24,6 +24,7 @@ from opspilot.cli import load_incidents  # noqa: E402
 from opspilot.investigator import investigate  # noqa: E402
 from opspilot.routing import select_route  # noqa: E402
 from opspilot.run_manifest import build_op_run_manifest, validate_op_run_artifact  # noqa: E402
+from opspilot.hashing import sha256_text_file  # noqa: E402
 
 STRATEGIES = ("rules", "single", "always-multi", "auto")
 QUERY_BUDGET = 8
@@ -37,7 +38,7 @@ SOURCE_FILES = {
     "incident_loader": ROOT / "opspilot" / "cli.py",
 }
 FROZEN_TEST_HASHES = {
-    "manifest_sha256": "4544ae9a7d48b760db9323633a00d50b9bfb29f1d55918b84518a951f1afdc4f",
+    "manifest_sha256": "073adc8e9df3587ea1be7b9611cf5ad57a21c9179da5752a53deea88b0ea10dd",
     "data_sha256": "78d0b6576a39ac7c8475442511b01d70707014113b014da2d01c95fa3f940efd",
     "labels_sha256": "223bc0e4c9f4d61f838da36324b2477c8eb97caf8c08ee38ee299bf52c5df9e1",
 }
@@ -56,9 +57,9 @@ def _load_frozen_cases(benchmark_dir: Path) -> tuple[dict[str, dict[str, Any]], 
     data_path = benchmark_dir / "test.jsonl"
     labels_path = benchmark_dir / "labels" / "test.json"
     actual_hashes = {
-        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
-        "data_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
-        "labels_sha256": hashlib.sha256(labels_path.read_bytes()).hexdigest(),
+        "manifest_sha256": sha256_text_file(manifest_path),
+        "data_sha256": sha256_text_file(data_path),
+        "labels_sha256": sha256_text_file(labels_path),
     }
     split_keys = ("data_sha256", "labels_sha256")
     if actual_hashes != FROZEN_TEST_HASHES or any(split_manifest.get(key) != actual_hashes[key] for key in split_keys):
@@ -295,7 +296,7 @@ def evaluate(benchmark_dir: Path | None = None, injected_faults: dict[tuple[str,
                             for (strategy, incident_id), fault in sorted(faults.items())],
     }
     summaries = {strategy: _summarize(cases) for strategy, cases in paired.items()}
-    code_hashes = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in SOURCE_FILES.items()}
+    code_hashes = {name: sha256_text_file(path) for name, path in SOURCE_FILES.items()}
     python_version = platform.python_version()
     route_counts = {
         strategy: {
