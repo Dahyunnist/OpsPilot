@@ -67,6 +67,44 @@ Write-Output "Windows PowerShell 5.1 DNS evidence count: $($dnsEvidence.Count); 
     assert "Windows PowerShell 5.1 DNS evidence count: 2; reason-only: 1" in result.stdout
 
 
+def test_invoke_restmethod_records_wrapper_with_one_dns_row_passes_ps51_filter():
+    executable = shutil.which("powershell.exe")
+    if not executable:
+        import pytest
+        pytest.skip("Windows PowerShell 5.1 is unavailable")
+    powershell = r'''
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) {
+    throw "Expected Windows PowerShell 5.1, got $($PSVersionTable.PSVersion)."
+}
+$orderId = 'bad-release-8a23a2cd-779d-4d65-9027-bb12cc9e673b'
+$json = @'
+{"records":[
+ {"order_id":"bad-release-8a23a2cd-779d-4d65-9027-bb12cc9e673b","dependency_host":"inventory-v2","error_reason":"[Errno -5] No address associated with hostname"},
+ {"order_id":"bad-release-8a23a2cd-779d-4d65-9027-bb12cc9e673b","error_type":"RuntimeError"},
+ {"order_id":"another-order","dependency_host":"inventory-v2","error_reason":"No address associated with hostname"}
+]}
+'@
+# Invoke-RestMethod returns this PSCustomObject wrapper with records collection.
+$logResponse = ConvertFrom-Json -InputObject $json
+$matchingLogs = @($logResponse.records | Where-Object { $_.order_id -eq $orderId })
+$dnsEvidence = @($matchingLogs | Where-Object {
+    $dependencyHost = [string]$_.dependency_host
+    $errorReason = [string]$_.error_reason
+    $dependencyHost -eq 'inventory-v2' -or
+    $errorReason -match 'inventory-v2|Name or service not known|No address associated with hostname'
+})
+if ($matchingLogs.Count -ne 2 -or $dnsEvidence.Count -ne 1) {
+    throw "Expected two order logs and one DNS row, got $($matchingLogs.Count) and $($dnsEvidence.Count)."
+}
+Write-Output "Invoke-RestMethod wrapper matched 2 order logs and 1 DNS row."
+'''
+    result = subprocess.run([executable, "-NoProfile", "-NonInteractive", "-Command", powershell],
+        capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "Invoke-RestMethod wrapper matched 2 order logs and 1 DNS row." in result.stdout
+
+
 def test_host_validation_guide_lists_each_blocked_socket_test_separately():
     guide = (ROOT / "docs" / "learning" / "op4-host-validation.md").read_text(encoding="utf-8")
     commands = [line for line in guide.splitlines() if line.startswith("& .\\.venv\\Scripts\\python.exe -m pytest")]
